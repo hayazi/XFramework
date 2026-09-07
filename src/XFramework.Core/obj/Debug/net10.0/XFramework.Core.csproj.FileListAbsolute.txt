@@ -1,0 +1,11 @@
+F:\XFramework\src\XFramework.Core\bin\Debug\net10.0\XFramework.Core.deps.json
+F:\XFramework\src\XFramework.Core\bin\Debug\net10.0\XFramework.Core.dll
+F:\XFramework\src\XFramework.Core\bin\Debug\net10.0\XFramework.Core.pdb
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.GeneratedMSBuildEditorConfig.editorconfig
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.AssemblyInfoInputs.cache
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.AssemblyInfo.cs
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.csproj.CoreCompileInputs.cache
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.dll
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\refint\XFramework.Core.dll
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\XFramework.Core.pdb
+F:\XFramework\src\XFramework.Core\obj\Debug\net10.0\ref\XFramework.Core.dll

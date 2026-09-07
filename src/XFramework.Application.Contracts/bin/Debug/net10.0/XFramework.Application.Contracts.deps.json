@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "XFramework.Application.Contracts/1.0.0": {
+        "dependencies": {
+          "XFramework.Core": "1.0.0"
+        },
+        "runtime": {
+          "XFramework.Application.Contracts.dll": {}
+        }
+      },
+      "XFramework.Core/1.0.0": {
+        "runtime": {
+          "XFramework.Core.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "XFramework.Application.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "XFramework.Core/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

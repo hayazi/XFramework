@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/XFramework.Application.Contracts/XFramework.Application.Contracts.csproj" />
+    <Project Path="src/XFramework.Application/XFramework.Application.csproj" />
+    <Project Path="src/XFramework.Blazor/XFramework.Blazor.csproj" />
+    <Project Path="src/XFramework.Core/XFramework.Core.csproj" />
+    <Project Path="src/XFramework.Domain/XFramework.Domain.csproj" />
+    <Project Path="src/XFramework.EntityFrameworkCore/XFramework.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/XFramework.Tests/XFramework.Tests.csproj" />
+  </Folder>
+</Solution>
