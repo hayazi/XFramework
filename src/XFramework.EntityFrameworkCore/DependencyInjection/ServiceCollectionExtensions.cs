@@ -1,36 +1,29 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using XFramework.Application.Abstractions;
+using XFramework.Application.Contracts.Authorization;
+using XFramework.Application.Contracts.Services;
+using XFramework.Application.Authorization;
+using XFramework.EntityFrameworkCore.Authorization;
 using XFramework.EntityFrameworkCore.Repositories;
-using XFramework.EntityFrameworkCore.UnitOfWork;
 
 namespace XFramework.EntityFrameworkCore.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection
-        AddXFrameworkEntityFrameworkCore(
-            this IServiceCollection services,
-            IConfiguration configuration)
+    public static IServiceCollection AddXFrameworkEntityFrameworkCore(
+        this IServiceCollection services,
+        Action<DbContextOptionsBuilder> optionsAction)
     {
-        services.AddDbContext<ERPDbContext>(options =>
-        {
-            options.UseSqlServer(
-                configuration.GetConnectionString("Default"));
-        });
-
-        services.AddScoped<XFrameworkDbContext>(
-            provider =>
-                provider.GetRequiredService<ERPDbContext>());
+        services.AddDbContext<XFrameworkDbContext>(
+            optionsAction);
 
         services.AddScoped(
             typeof(IRepository<,>),
-            typeof(EfRepository<,>));
+            typeof(EfCoreRepository<,>));
 
-        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-        services.AddScoped<IPermissionRepository, EfCorePermissionRepository>();
-        services.AddScoped<IRoleRepository, EfCoreRoleRepository>();
+        services.AddScoped<
+            IPermissionRepository,
+            EfCorePermissionRepository>();
 
         return services;
     }

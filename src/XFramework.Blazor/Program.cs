@@ -13,8 +13,11 @@ builder.Services
 builder.Services.AddXFrameworkApplication(
     typeof(XFrameworkApplicationAssembly).Assembly);
 
-builder.Services.AddXFrameworkEntityFrameworkCore(
-    builder.Configuration);
+builder.Services..AddXFrameworkApplication()
+    .AddXFrameworkEntityFrameworkCore(options =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+    });
 
 var app = builder.Build();
 
