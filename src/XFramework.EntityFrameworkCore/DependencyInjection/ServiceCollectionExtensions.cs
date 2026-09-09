@@ -29,6 +29,8 @@ public static class ServiceCollectionExtensions
             typeof(EfRepository<,>));
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IPermissionRepository, EfCorePermissionRepository>();
+        services.AddScoped<IRoleRepository, EfCoreRoleRepository>();
 
         return services;
     }

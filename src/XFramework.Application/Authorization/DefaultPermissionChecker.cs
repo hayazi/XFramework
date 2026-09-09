@@ -1,33 +1,44 @@
 using XFramework.Application.Contracts.Authorization;
+using XFramework.Domain.Authorization;
 
 namespace XFramework.Application.Authorization;
 
 public sealed class DefaultPermissionChecker
     : IPermissionChecker
 {
-    private readonly PermissionDefinitionRegistry _registry;
+    private readonly ICurrentUser _currentUser;
+    private readonly IPermissionRepository _permissionRepository;
 
     public DefaultPermissionChecker(
-        PermissionDefinitionRegistry registry)
+        ICurrentUser currentUser,
+        IPermissionRepository permissionRepository)
     {
-        _registry = registry;
+        _currentUser = currentUser;
+        _permissionRepository = permissionRepository;
     }
 
-    public Task<bool> IsGrantedAsync(
+    public async Task<bool> IsGrantedAsync(
         string permissionName,
         CancellationToken cancellationToken = default)
     {
-        var permission =
-            _registry.GetPermission(permissionName);
-
-        if (permission is null)
+        if (!_currentUser.IsAuthenticated)
         {
-            return Task.FromResult(false);
+            return false;
         }
 
-        // Temporary:
-        // Permission exists, but user authorization
-        // is not implemented yet.
-        return Task.FromResult(false);
+        if (_currentUser.UserId is not Guid userId)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(permissionName))
+        {
+            return false;
+        }
+
+        return await _permissionRepository.IsGrantedAsync(
+            userId,
+            permissionName,
+            cancellationToken);
     }
 }

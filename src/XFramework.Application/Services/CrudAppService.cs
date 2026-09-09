@@ -16,14 +16,18 @@ public abstract class CrudAppService<
         TEntityDto,
         TKey,
         TCreateDto,
-        TUpdateDto>
+        TUpdateDto>  : ApplicationService 
     where TEntity : Entity<TKey>
+    
 {
     protected IRepository<TEntity, TKey> Repository { get; }
     protected IUnitOfWork UnitOfWork { get; }
+    protected ICurrentUser CurrentUser { get; }
     protected CrudAppService(
         IRepository<TEntity, TKey> repository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUser currentUser) 
+        : base(currentUser)
     {
         Repository = repository;
         UnitOfWork = unitOfWork;

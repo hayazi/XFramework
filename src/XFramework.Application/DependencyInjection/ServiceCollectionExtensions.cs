@@ -19,11 +19,24 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ValidationInterceptor>();
 
-        services.AddScoped<AuthorizationInterceptor>();
+        
+        services.AddHttpContextAccessor();
+
+        services.AddScoped<
+            ICurrentUser,
+            CurrentUser>();
 
         services.AddScoped<
             IPermissionChecker,
             DefaultPermissionChecker>();
+
+        services.AddScoped<
+            IPermissionSynchronizer,
+            PermissionSynchronizer>();
+
+        services.AddScoped<
+            AuthorizationInterceptor>();
+
 
         services.AddSingleton<ProxyGenerator>();
 
