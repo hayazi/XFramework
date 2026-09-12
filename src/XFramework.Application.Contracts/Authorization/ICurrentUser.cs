@@ -4,11 +4,13 @@ public interface ICurrentUser
 {
     bool IsAuthenticated { get; }
 
-    Guid? UserId { get; }
+    string? UserId { get; }
 
     string? UserName { get; }
 
-    IReadOnlyList<string> Roles { get; }
+    string? UserNameDisplay { get; }
 
-    bool IsInRole(string roleName);
+    IReadOnlyCollection<string> Roles { get; }
+
+    bool IsInRole(string role);
 }

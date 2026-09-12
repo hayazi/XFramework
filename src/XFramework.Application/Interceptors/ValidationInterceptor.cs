@@ -5,7 +5,28 @@ using XFramework.Application.Metadata;
 using XFramework.Application.Validation;
 
 namespace XFramework.Application.Interceptors;
+public sealed class ValidationInterceptor
+    : IApplicationServiceInterceptor
+{
+    private readonly IValidator _validator;
 
+    public ValidationInterceptor(IValidator validator)
+    {
+        _validator = validator;
+    }
+
+    public async Task InvokeAsync(
+        ApplicationServiceInvocationContext context,
+        Func<Task> next)
+    {
+        await _validator.ValidateAsync(
+            context.Method,
+            context.Arguments);
+
+        await next();
+    }
+}
+/*
 public sealed class ValidationInterceptor : IInterceptor
 {
     private readonly IServiceProvider _serviceProvider;
@@ -99,3 +120,4 @@ public sealed class ValidationInterceptor : IInterceptor
         }
     }
 }
+*/

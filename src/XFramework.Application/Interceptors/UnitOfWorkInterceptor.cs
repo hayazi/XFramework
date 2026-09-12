@@ -6,7 +6,30 @@ using XFramework.Application.Metadata;
 
 
 namespace XFramework.Application.Interceptors;
+public sealed class UnitOfWorkInterceptor
+    : IApplicationServiceInterceptor
+{
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
 
+    public UnitOfWorkInterceptor(
+        IUnitOfWorkManager unitOfWorkManager)
+    {
+        _unitOfWorkManager = unitOfWorkManager;
+    }
+
+    public async Task InvokeAsync(
+        ApplicationServiceInvocationContext context,
+        Func<Task> next)
+    {
+        await using var uow =
+            await _unitOfWorkManager.BeginAsync();
+
+        await next();
+
+        await uow.CommitAsync();
+    }
+}
+/*
 public sealed class UnitOfWorkInterceptor : IInterceptor
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -75,3 +98,4 @@ public sealed class UnitOfWorkInterceptor : IInterceptor
         }
     }
 }
+*/

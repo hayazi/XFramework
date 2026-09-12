@@ -1,41 +1,30 @@
-```csharp
 using XFramework.Application.Contracts.Authorization;
 using XFramework.Application.Contracts.Services;
 
-namespace XFramework.Application;
+namespace XFramework.Application.Services;
 
-/// <summary>
-/// Base application service providing reusable CRUD behavior.
-///
-/// The framework pipeline is responsible for:
-/// - Authorization
-/// - Validation
-/// - Unit of Work
-/// - Interception
-///
-/// This class is responsible for:
-/// - CRUD orchestration
-/// - Repository interaction
-/// - DTO mapping
-/// - Application-service hooks
-/// </summary>
-public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto>
-    : ApplicationService
+public abstract class CrudAppService<TEntity, TDto, TKey>(
+    IRepository<TEntity, TKey> repository,
+    IUnitOfWork unitOfWork,
+    ApplicationServicePipeline pipeline)
+    : ICrudAppService<TDto, TKey>
     where TEntity : class
 {
-    protected IRepository<TEntity, TKey> Repository { get; }
+    protected IRepository<TEntity, TKey> Repository { get; } = repository;
+    protected IUnitOfWork UnitOfWork { get; } = unitOfWork;
+    protected ApplicationServicePipeline Pipeline { get; } = pipeline;
 
-    protected CrudAppService(
-        ICurrentUser currentUser,
-        IRepository<TEntity, TKey> repository)
-        : base(currentUser)
-    {
-        Repository = repository;
-    }
+    // protected CrudAppService(
+    //     ICurrentUser currentUser,
+    //     IRepository<TEntity, TKey> repository)
+    //     : base(currentUser)
+    // {
+    //     Repository = repository;
+    // }
 
-    // ---------------------------------------------------------
-    // Get
-    // ---------------------------------------------------------
+    // =========================================================
+    // GET
+    // =========================================================
 
     public virtual async Task<TDto> GetAsync(
         TKey id,
@@ -56,9 +45,9 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
             cancellationToken);
     }
 
-    // ---------------------------------------------------------
-    // Get List
-    // ---------------------------------------------------------
+    // =========================================================
+    // GET LIST
+    // =========================================================
 
     public virtual async Task<PagedResult<TDto>> GetListAsync(
         PagedRequest request,
@@ -101,9 +90,9 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
             request.MaxResultCount);
     }
 
-    // ---------------------------------------------------------
-    // Create
-    // ---------------------------------------------------------
+    // =========================================================
+    // CREATE
+    // =========================================================
 
     public virtual async Task<TDto> CreateAsync(
         TCreateDto input,
@@ -134,9 +123,9 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
             cancellationToken);
     }
 
-    // ---------------------------------------------------------
-    // Update
-    // ---------------------------------------------------------
+    // =========================================================
+    // UPDATE
+    // =========================================================
 
     public virtual async Task<TDto> UpdateAsync(
         TKey id,
@@ -181,9 +170,9 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
             cancellationToken);
     }
 
-    // ---------------------------------------------------------
-    // Delete
-    // ---------------------------------------------------------
+    // =========================================================
+    // DELETE
+    // =========================================================
 
     public virtual async Task DeleteAsync(
         TKey id,
@@ -213,7 +202,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Query Hooks
+    // QUERY HOOK
     // =========================================================
 
     protected virtual Task<IQueryable<TEntity>> ApplyQueryAsync(
@@ -234,7 +223,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Validation Hooks
+    // VALIDATION HOOKS
     // =========================================================
 
     protected virtual Task ValidateCreateAsync(
@@ -253,7 +242,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Create Hooks
+    // CREATE HOOKS
     // =========================================================
 
     protected virtual Task BeforeCreateAsync(
@@ -271,7 +260,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Update Hooks
+    // UPDATE HOOKS
     // =========================================================
 
     protected virtual Task BeforeUpdateAsync(
@@ -290,7 +279,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Delete Hooks
+    // DELETE HOOKS
     // =========================================================
 
     protected virtual Task BeforeDeleteAsync(
@@ -308,7 +297,7 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
     }
 
     // =========================================================
-    // Mapping
+    // MAPPING
     // =========================================================
 
     protected virtual Task<TDto> MapToDtoAsync(
@@ -336,4 +325,3 @@ public abstract class CrudAppService<TEntity, TDto, TKey, TCreateDto, TUpdateDto
             "Override MapToEntityAsync for update in the derived application service.");
     }
 }
-```
