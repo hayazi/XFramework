@@ -18,8 +18,25 @@ builder.Services..AddXFrameworkApplication()
     {
         options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
     });
+builder.Services.AddLocalization(options =>
+    {
+        options.ResourcesPath = "Localization/Resources";
+    });
+var supportedCultures = new[]
+{
+    "fa",
+    "en"
+};
 
+var localizationOptions =
+    new RequestLocalizationOptions()
+        .SetDefaultCulture("fa")
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+builder.Services.AddScoped<ILocalizationService, BlazorLocalizationService>();
 var app = builder.Build();
+
+app.UseRequestLocalization(localizationOptions);
 
 if (!app.Environment.IsDevelopment())
 {

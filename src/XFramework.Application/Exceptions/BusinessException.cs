@@ -1,14 +1,17 @@
 namespace XFramework.Application.Exceptions;
 
-public class BusinessException : XFrameworkException
+public sealed class BusinessException : XFrameworkException
 {
     public string Code { get; }
 
+    public object[] Arguments { get; }
+
     public BusinessException(
         string code,
-        string message)
-        : base(message)
+        params object[] arguments)
+        : base(code)
     {
         Code = code;
+        Arguments = arguments;
     }
 }

@@ -5,7 +5,7 @@ public sealed class ForbiddenException : XFrameworkException
     public string Permission { get; }
 
     public ForbiddenException(string permission)
-        : base($"Permission '{permission}' is required.")
+        : base("Authorization.Forbidden")
     {
         Permission = permission;
     }

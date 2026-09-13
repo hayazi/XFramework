@@ -1,0 +1,46 @@
+XFramework
+│
+├── Domain
+│   ├── Entities
+│   ├── AggregateRoots
+│   ├── BusinessRules
+│   └── DomainEvents
+│
+├── Application.Contracts
+│   ├── DTOs
+│   ├── CRUD Contracts
+│   ├── Paging
+│   ├── Errors
+│   ├── Authorization
+│   └── Localization
+│
+├── Application
+│   ├── ApplicationServices
+│   ├── CrudAppService
+│   ├── Exceptions
+│   ├── Authorization
+│   ├── CurrentUser
+│   └── Pipeline
+│       ├── ExceptionHandling
+│       ├── Authorization
+│       ├── Logging
+│       ├── Validation
+│       └── UnitOfWork
+│
+├── EntityFrameworkCore
+│   ├── DbContext
+│   ├── Repositories
+│   ├── UnitOfWork
+│   ├── Transactions
+│   ├── Audit
+│   └── SQL Server
+│
+└── Blazor
+    ├── Pages
+    ├── Components
+    ├── Radzen
+    ├── Localization
+    │   ├── fa
+    │   └── en
+    ├── RTL
+    └── Responsive
