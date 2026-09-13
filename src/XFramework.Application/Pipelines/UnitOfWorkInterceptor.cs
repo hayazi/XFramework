@@ -1,12 +1,35 @@
 using XFramework.Application.Abstractions;
+
 namespace XFramework.Application.Pipelines;
 
-public sealed class UnitOfWorkInterceptor(IUnitOfWorkManager manager) : IApplicationServiceInterceptor
+public sealed class UnitOfWorkInterceptor(
+    IUnitOfWork unitOfWork)
+    : IApplicationServiceInterceptor
 {
-    public async Task InvokeAsync(ApplicationServiceInvocationContext context, Func<Task> next)
+    public async Task InvokeAsync(
+        ApplicationServiceInvocationContext context,
+        Func<Task> next)
     {
-        await using var scope = await manager.BeginAsync(context.CancellationToken);
-        await next();
-        await scope.CommitAsync(context.CancellationToken);
+        await using var transaction =
+            await unitOfWork.BeginAsync(
+                context.CancellationToken);
+
+        try
+        {
+            await next();
+
+            await transaction.SaveChangesAsync(
+                context.CancellationToken);
+
+            await transaction.CommitAsync(
+                context.CancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(
+                context.CancellationToken);
+
+            throw;
+        }
     }
 }

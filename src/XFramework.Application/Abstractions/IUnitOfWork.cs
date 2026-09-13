@@ -2,9 +2,6 @@ namespace XFramework.Application.Abstractions;
 
 public interface IUnitOfWork
 {
-    Task<int> SaveChangesAsync(
-        CancellationToken cancellationToken = default);
-    
-    Task<IUnitOfWorkTransaction> BeginTransactionAsync(
+    Task<IUnitOfWorkTransaction> BeginAsync(
         CancellationToken cancellationToken = default);
 }
