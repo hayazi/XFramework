@@ -1,47 +1,45 @@
 namespace XFramework.Domain.Identity;
 
-public class User
+public sealed class User
 {
-    public Guid Id { get; protected set; }
+    private readonly List<UserRole> _roles = new();
+    private readonly List<UserPermission> _permissions = new();
 
-    public string UserName { get; protected set; }
-
-    public string? Email { get; protected set; }
-
-    public string? FirstName { get; protected set; }
-
-    public string? LastName { get; protected set; }
-
-    public bool IsActive { get; protected set; }
-
-    public bool IsSystemUser { get; protected set; }
-
-    protected User()
+    private User()
     {
-        UserName = string.Empty;
     }
 
-    public User(
+    public Guid Id { get; private set; }
+
+    public string UserName { get; private set; } = string.Empty;
+
+    public string? DisplayName { get; private set; }
+
+    public bool IsActive { get; private set; }
+
+    public DateTime CreatedAt { get; private set; }
+
+    public IReadOnlyCollection<UserRole> Roles => _roles;
+
+    public IReadOnlyCollection<UserPermission> Permissions => _permissions;
+
+    public static User Create(
         string userName,
-        string? email = null,
-        string? firstName = null,
-        string? lastName = null,
-        bool isSystemUser = false)
+        string? displayName = null)
     {
         if (string.IsNullOrWhiteSpace(userName))
-        {
             throw new ArgumentException(
-                "User name cannot be empty.",
+                "User name is required.",
                 nameof(userName));
-        }
 
-        Id = Guid.NewGuid();
-        UserName = userName;
-        Email = email;
-        FirstName = firstName;
-        LastName = lastName;
-        IsActive = true;
-        IsSystemUser = isSystemUser;
+        return new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = userName,
+            DisplayName = displayName,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
     }
 
     public void Activate()

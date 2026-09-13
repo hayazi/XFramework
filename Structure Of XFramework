@@ -4,7 +4,14 @@ XFramework
 │   ├── Entities
 │   ├── AggregateRoots
 │   ├── BusinessRules
-│   └── DomainEvents
+│   ├── DomainEvents
+│   └── Identity
+│       ├── User
+│       ├── Role
+│       ├── Permission
+│       ├── UserRole
+│       ├── RolePermission
+│       └── UserPermission
 │
 ├── Application.Contracts
 │   ├── DTOs
@@ -19,13 +26,7 @@ XFramework
 │   ├── CrudAppService
 │   ├── Exceptions
 │   ├── Authorization
-│   ├── CurrentUser
 │   └── Pipeline
-│       ├── ExceptionHandling
-│       ├── Authorization
-│       ├── Logging
-│       ├── Validation
-│       └── UnitOfWork
 │
 ├── EntityFrameworkCore
 │   ├── DbContext
@@ -33,6 +34,7 @@ XFramework
 │   ├── UnitOfWork
 │   ├── Transactions
 │   ├── Audit
+│   ├── Authorization
 │   └── SQL Server
 │
 └── Blazor
@@ -40,7 +42,5 @@ XFramework
     ├── Components
     ├── Radzen
     ├── Localization
-    │   ├── fa
-    │   └── en
     ├── RTL
     └── Responsive

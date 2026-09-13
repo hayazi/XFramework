@@ -1,48 +1,39 @@
 namespace XFramework.Domain.Identity;
 
-public class Role
+public sealed class Role
 {
-    public Guid Id { get; protected set; }
+    private readonly List<RolePermission> _permissions = new();
 
-    public string Name { get; protected set; }
-
-    public string? DisplayName { get; protected set; }
-
-    public bool IsSystemRole { get; protected set; }
-
-    public bool IsActive { get; protected set; }
-
-    protected Role()
+    private Role()
     {
-        Name = string.Empty;
     }
 
-    public Role(
+    public Guid Id { get; private set; }
+
+    public string Name { get; private set; } = string.Empty;
+
+    public string? Description { get; private set; }
+
+    public bool IsActive { get; private set; }
+
+    public IReadOnlyCollection<RolePermission> Permissions =>
+        _permissions;
+
+    public static Role Create(
         string name,
-        string? displayName = null,
-        bool isSystemRole = false)
+        string? description = null)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             throw new ArgumentException(
-                "Role name cannot be empty.",
+                "Role name is required.",
                 nameof(name));
-        }
 
-        Id = Guid.NewGuid();
-        Name = name;
-        DisplayName = displayName;
-        IsSystemRole = isSystemRole;
-        IsActive = true;
-    }
-
-    public void Activate()
-    {
-        IsActive = true;
-    }
-
-    public void Deactivate()
-    {
-        IsActive = false;
+        return new Role
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Description = description,
+            IsActive = true
+        };
     }
 }

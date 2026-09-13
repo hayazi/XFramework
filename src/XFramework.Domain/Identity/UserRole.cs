@@ -1,38 +1,27 @@
 namespace XFramework.Domain.Identity;
 
-public class UserRole
+public sealed class UserRole
 {
-    public Guid UserId { get; protected set; }
-
-    public Guid RoleId { get; protected set; }
-
-    public User? User { get; protected set; }
-
-    public Role? Role { get; protected set; }
-
-    protected UserRole()
+    private UserRole()
     {
     }
 
-    public UserRole(
+    public Guid UserId { get; private set; }
+
+    public Guid RoleId { get; private set; }
+
+    public User User { get; private set; } = null!;
+
+    public Role Role { get; private set; } = null!;
+
+    public static UserRole Create(
         Guid userId,
         Guid roleId)
     {
-        if (userId == Guid.Empty)
+        return new UserRole
         {
-            throw new ArgumentException(
-                "UserId cannot be empty.",
-                nameof(userId));
-        }
-
-        if (roleId == Guid.Empty)
-        {
-            throw new ArgumentException(
-                "RoleId cannot be empty.",
-                nameof(roleId));
-        }
-
-        UserId = userId;
-        RoleId = roleId;
+            UserId = userId,
+            RoleId = roleId
+        };
     }
 }
