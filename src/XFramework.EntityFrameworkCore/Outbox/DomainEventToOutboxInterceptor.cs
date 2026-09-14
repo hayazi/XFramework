@@ -9,6 +9,8 @@ public sealed class DomainEventToOutboxInterceptor
     : SaveChangesInterceptor
 {
     private readonly IEventTypeRegistry _eventTypeRegistry;
+    private readonly IEventSerializer _eventSerializer;
+    private readonly IEventTypeRegistry _eventTypeRegistry;
 
     public DomainEventToOutboxInterceptor(
         IEventTypeRegistry eventTypeRegistry,
@@ -58,28 +60,30 @@ public sealed class DomainEventToOutboxInterceptor
 
             foreach (var domainEvent in events)
             {
+                var descriptor =
+                    _eventTypeRegistry.GetDescriptor(
+                        domainEvent.GetType());
                 var outboxMessage = new OutboxMessage
                 {
-                    Id = Guid.NewGuid(),
+                    Id = domainEvent.EventId,
 
-                    EventType = domainEvent
-                        .GetType()
-                        .AssemblyQualifiedName!,
+                    EventType = descriptor.EventType,
 
-                    Payload = JsonSerializer.Serialize(
-                        domainEvent,
-                        domainEvent.GetType(),
-                        JsonOptions),
+                    EventVersion = descriptor.Version,
 
-                    OccurredOnUtc =
-                        domainEvent.OccurredOnUtc,
+                    Payload = _eventSerializer.Serialize(domainEvent),
 
-                    CreatedOnUtc =
-                        DateTime.UtcNow,
+                    OccurredOnUtc = domainEvent.OccurredOnUtc,
 
-                    Status =
-                        OutboxMessageStatus.Pending,
+                    CreatedOnUtc = DateTime.UtcNow,
 
+                    Status = OutboxMessageStatus.Pending,
+
+                    CorrelationId =
+                        domainEvent.CorrelationId?.ToString(),
+
+                    CausationId =
+                        domainEvent.CausationId?.ToString()
                     RetryCount = 0
                 };
 

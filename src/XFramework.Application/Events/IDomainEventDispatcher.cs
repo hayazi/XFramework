@@ -5,6 +5,6 @@ namespace XFramework.Application.Events;
 public interface IDomainEventDispatcher
 {
     Task DispatchAsync(
-        IReadOnlyCollection<IDomainEvent> events,
+        IDomainEvent domainEvent,
         CancellationToken cancellationToken = default);
 }
