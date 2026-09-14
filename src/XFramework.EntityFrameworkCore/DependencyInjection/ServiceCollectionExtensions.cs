@@ -12,19 +12,34 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddXFrameworkEntityFrameworkCore(
         this IServiceCollection services,
-        Action<DbContextOptionsBuilder> optionsAction)
+        //Action<DbContextOptionsBuilder> optionsAction
+        string connectionString)
     {
+        services.AddScoped<DomainEventToOutboxInterceptor>();
+
         services.AddDbContext<XFrameworkDbContext>(
-            optionsAction);
+            (serviceProvider, options) =>
+            {
+                var interceptor =
+                    serviceProvider.GetRequiredService<
+                        DomainEventToOutboxInterceptor>();
 
-        services.AddScoped(
-            typeof(IRepository<,>),
-            typeof(EfCoreRepository<,>));
+                options
+                    .UseSqlServer(connectionString)
+                    .AddInterceptors(interceptor);
+            });
+        
+        //services.AddDbContext<XFrameworkDbContext>(optionsAction);
 
-        services.AddScoped<
-            IPermissionRepository,
-            EfCorePermissionRepository>();
+        services.AddScoped(typeof(IRepository<,>), typeof(EfCoreRepository<,>));
 
+        services.AddScoped<IPermissionRepository, EfCorePermissionRepository>();
+
+        services.AddHttpContextAccessor();
+
+        services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
+        
         return services;
     }
 }

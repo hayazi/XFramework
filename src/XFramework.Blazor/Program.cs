@@ -4,12 +4,35 @@ using XFramework.Application.DependencyInjection;
 using XFramework.EntityFrameworkCore.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services
+    .AddIdentityCore<XFrameworkIdentityUser>(options =>
+    {
+        options.Password.RequiredLength = 8;
+
+        options.Password.RequireDigit = true;
+
+        options.Password.RequireUppercase = true;
+
+        options.Password.RequireLowercase = true;
+
+        options.Password.RequireNonAlphanumeric = false;
+
+        options.User.RequireUniqueEmail = false;
+    })
+    .AddRoles<IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<XFrameworkIdentityDbContext>()
+    .AddSignInManager();
+
+builder.Services
+    .AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+builder.Services.AddAuthorization();
 
 builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// builder.Services.AddXFrameworkApplication();
+
 builder.Services.AddXFrameworkApplication(
     typeof(XFrameworkApplicationAssembly).Assembly);
 

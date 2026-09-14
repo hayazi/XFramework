@@ -4,8 +4,11 @@ using XFramework.Domain.Identity;
 
 namespace XFramework.EntityFrameworkCore.Identity;
 
-public class XFrameworkIdentityDbContext
-    : DbContext
+public sealed class XFrameworkIdentityDbContext
+    : IdentityDbContext<
+        XFrameworkIdentityUser,
+        IdentityRole<Guid>,
+        Guid>
 {
     public XFrameworkIdentityDbContext(
         DbContextOptions<XFrameworkIdentityDbContext> options)
