@@ -17,6 +17,9 @@ public sealed class OutboxMessageConfiguration
             .HasMaxLength(500)
             .IsRequired();
 
+        builder.Property(x => x.EventVersion)
+            .IsRequired();
+
         builder.Property(x => x.Payload)
             .IsRequired();
 
@@ -46,6 +49,11 @@ public sealed class OutboxMessageConfiguration
             x.Status,
             x.NextAttemptOnUtc,
             x.LockedUntilUtc
+        });
+        builder.HasIndex(x => new
+        {
+            x.EventType,
+            x.EventVersion
         });
     }
 }

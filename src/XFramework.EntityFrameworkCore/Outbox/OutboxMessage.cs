@@ -6,6 +6,8 @@ public class OutboxMessage
 
     public string EventType { get; set; } = null!;
 
+    public int EventVersion { get; set; }
+
     public string Payload { get; set; } = null!;
 
     public DateTime OccurredOnUtc { get; set; }
@@ -30,7 +32,6 @@ public class OutboxMessage
 
     public string? AggregateId { get; set; }
 
-    // Concurrency / lease
     public string? LockId { get; set; }
 
     public DateTime? LockedUntilUtc { get; set; }

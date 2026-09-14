@@ -8,6 +8,15 @@ namespace XFramework.EntityFrameworkCore.Outbox;
 public sealed class DomainEventToOutboxInterceptor
     : SaveChangesInterceptor
 {
+    private readonly IEventTypeRegistry _eventTypeRegistry;
+
+    public DomainEventToOutboxInterceptor(
+        IEventTypeRegistry eventTypeRegistry,
+        JsonSerializerOptions? jsonOptions = null)
+    {
+        _eventTypeRegistry = eventTypeRegistry;
+        _jsonOptions = jsonOptions ?? new JsonSerializerOptions();
+    }
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
