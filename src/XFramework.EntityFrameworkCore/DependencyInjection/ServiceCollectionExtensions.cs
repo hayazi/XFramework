@@ -39,6 +39,13 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
 
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+
+        services.AddSingleton<OutboxRetryPolicy>();
+
+        services.AddScoped<OutboxProcessor>();
+
+        services.AddHostedService<OutboxBackgroundService>();
         
         return services;
     }

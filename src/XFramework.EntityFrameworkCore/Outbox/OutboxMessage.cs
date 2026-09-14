@@ -12,15 +12,15 @@ public class OutboxMessage
 
     public DateTime CreatedOnUtc { get; set; }
 
-    public DateTime? ProcessedOnUtc { get; set; }
+    public OutboxMessageStatus Status { get; set; }
 
     public int RetryCount { get; set; }
 
-    public string? LastError { get; set; }
-
     public DateTime? NextAttemptOnUtc { get; set; }
 
-    public OutboxMessageStatus Status { get; set; } = OutboxMessageStatus.Pending;
+    public DateTime? ProcessedOnUtc { get; set; }
+
+    public string? LastError { get; set; }
 
     public string? CorrelationId { get; set; }
 
@@ -29,4 +29,9 @@ public class OutboxMessage
     public string? AggregateType { get; set; }
 
     public string? AggregateId { get; set; }
+
+    // Concurrency / lease
+    public string? LockId { get; set; }
+
+    public DateTime? LockedUntilUtc { get; set; }
 }

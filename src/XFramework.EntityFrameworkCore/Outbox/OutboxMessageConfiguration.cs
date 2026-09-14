@@ -38,10 +38,14 @@ public sealed class OutboxMessageConfiguration
         builder.Property(x => x.AggregateId)
             .HasMaxLength(100);
 
+        builder.Property(x => x.LockId)
+            .HasMaxLength(100);
+
         builder.HasIndex(x => new
         {
             x.Status,
-            x.NextAttemptOnUtc
+            x.NextAttemptOnUtc,
+            x.LockedUntilUtc
         });
     }
 }
