@@ -8,22 +8,17 @@ public sealed class EventTypeAttribute : Attribute
 {
     public EventTypeAttribute(
         string name,
-        int version)
+        int version,
+        string routingKey)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(
-                "Event type name cannot be empty.",
-                nameof(name));
-
-        if (version <= 0)
-            throw new ArgumentOutOfRangeException(
-                nameof(version));
-
         Name = name;
         Version = version;
+        RoutingKey = routingKey;
     }
 
     public string Name { get; }
 
     public int Version { get; }
+
+    public string RoutingKey { get; }
 }

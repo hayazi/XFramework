@@ -10,18 +10,16 @@ public sealed class RabbitMqEventBus : IEventBus
 {
     private readonly RabbitMqConnectionManager _connectionManager;
     private readonly RabbitMqOptions _options;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
+    private readonly IEventRoutingResolver _routingResolver;
 
     public RabbitMqEventBus(
         RabbitMqConnectionManager connectionManager,
-        RabbitMqOptions options)
+        RabbitMqOptions options,
+        IEventRoutingResolver routingResolver)
     {
         _connectionManager = connectionManager;
         _options = options;
+        _routingResolver = routingResolver;
     }
 
     public async Task PublishAsync(
@@ -38,55 +36,39 @@ public sealed class RabbitMqEventBus : IEventBus
             await connection.CreateChannelAsync(
                 cancellationToken: cancellationToken);
 
-        var body = Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(
-                envelope,
-                JsonOptions));
-
-        var properties = new BasicProperties
-        {
-            Persistent = true,
-            ContentType = "application/json",
-            ContentEncoding = "utf-8",
-            MessageId = envelope.EventId.ToString(),
-            Type = envelope.EventType,
-            Headers = CreateHeaders(envelope)
-        };
-
         var routingKey =
-            ToRoutingKey(envelope.EventType);
+            _routingResolver.GetRoutingKey(
+                envelope.EventType,
+                envelope.EventVersion);
 
+        var body =
+            Serialize(envelope);
+
+        var properties =
+            CreateProperties(envelope);
+
+        await PublishAndConfirmAsync(
+            channel,
+            routingKey,
+            properties,
+            body,
+            cancellationToken);
+    }
+    private async Task PublishAndConfirmAsync(
+        IChannel channel,
+        string routingKey,
+        BasicProperties properties,
+        ReadOnlyMemory<byte> body,
+        CancellationToken cancellationToken)
+    {
         await channel.BasicPublishAsync(
             exchange: _options.ExchangeName,
             routingKey: routingKey,
             mandatory: true,
             basicProperties: properties,
             body: body,
-            cancellationToken: cancellationToken);
-    }
+            cancellationToken);
 
-    private static Dictionary<string, object?> CreateHeaders(
-        EventEnvelope envelope)
-    {
-        return new Dictionary<string, object?>
-        {
-            ["event-id"] = envelope.EventId.ToString(),
-            ["event-type"] = envelope.EventType,
-            ["event-version"] = envelope.EventVersion,
-            ["occurred-on-utc"] =
-                envelope.OccurredOnUtc.ToString("O"),
-            ["correlation-id"] =
-                envelope.CorrelationId?.ToString(),
-            ["causation-id"] =
-                envelope.CausationId?.ToString()
-        };
-    }
-
-    private static string ToRoutingKey(
-        string eventType)
-    {
-        return eventType
-            .Replace('.', '.')
-            .ToLowerInvariant();
+        // Broker confirmation is required here.
     }
 }

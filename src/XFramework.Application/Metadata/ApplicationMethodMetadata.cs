@@ -13,6 +13,12 @@ internal static class ApplicationMethodMetadata
             inherit: true);
     }
 
+    public sealed record EventTypeRegistration(
+        string EventType,
+        int Version,
+        Type ClrType,
+        string RoutingKey);
+
     public static bool HasAttribute<TAttribute>(
         Type implementationType,
         MethodInfo interfaceMethod)
