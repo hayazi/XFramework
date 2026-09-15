@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
@@ -8,7 +9,7 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public sealed class RabbitMqMessageHandler
 {
-    private readonly IEventProcessor _eventProcessor;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -16,9 +17,9 @@ public sealed class RabbitMqMessageHandler
     };
 
     public RabbitMqMessageHandler(
-        IEventProcessor eventProcessor)
+        IServiceScopeFactory scopeFactory)
     {
-        _eventProcessor = eventProcessor;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task HandleAsync(
@@ -29,7 +30,8 @@ public sealed class RabbitMqMessageHandler
     {
         try
         {
-            var json = Encoding.UTF8.GetString(body.Span);
+            var json =
+                Encoding.UTF8.GetString(body.Span);
 
             var envelope =
                 JsonSerializer.Deserialize<EventEnvelope>(
@@ -39,10 +41,17 @@ public sealed class RabbitMqMessageHandler
             if (envelope is null)
             {
                 throw new InvalidOperationException(
-                    "RabbitMQ message envelope is invalid.");
+                    "Invalid event envelope.");
             }
 
-            await _eventProcessor.ProcessAsync(
+            await using var scope =
+                _scopeFactory.CreateAsyncScope();
+
+            var processor =
+                scope.ServiceProvider
+                    .GetRequiredService<IEventProcessor>();
+
+            await processor.ProcessAsync(
                 envelope,
                 cancellationToken);
 

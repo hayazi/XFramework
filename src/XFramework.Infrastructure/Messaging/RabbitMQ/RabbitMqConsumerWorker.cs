@@ -5,19 +5,32 @@ using RabbitMQ.Client.Events;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
-public sealed class RabbitMqConsumer : BackgroundService
+public sealed class RabbitMqConsumerWorker : BackgroundService
 {
-    private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly RabbitMqTopology _topology;
-    private readonly RabbitMqMessageHandler _messageHandler;
-    private readonly ILogger<RabbitMqConsumer> _logger;
+    private readonly string _module;
+    private readonly ushort _prefetchCount;
 
-    public RabbitMqConsumer(
+    private readonly RabbitMqConnectionManager
+        _connectionManager;
+
+    private readonly RabbitMqTopology _topology;
+
+    private readonly RabbitMqMessageHandler
+        _messageHandler;
+
+    private readonly ILogger<RabbitMqConsumerWorker>
+        _logger;
+
+    public RabbitMqConsumerWorker(
+        string module,
+        ushort prefetchCount,
         RabbitMqConnectionManager connectionManager,
         RabbitMqTopology topology,
         RabbitMqMessageHandler messageHandler,
-        ILogger<RabbitMqConsumer> logger)
+        ILogger<RabbitMqConsumerWorker> logger)
     {
+        _module = module;
+        _prefetchCount = prefetchCount;
         _connectionManager = connectionManager;
         _topology = topology;
         _messageHandler = messageHandler;
@@ -28,7 +41,8 @@ public sealed class RabbitMqConsumer : BackgroundService
         CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "RabbitMQ consumer starting.");
+            "RabbitMQ consumer for module {Module} starting.",
+            _module);
 
         var connection =
             await _connectionManager.GetConnectionAsync(
@@ -44,7 +58,7 @@ public sealed class RabbitMqConsumer : BackgroundService
 
         await channel.BasicQosAsync(
             prefetchSize: 0,
-            prefetchCount: 20,
+            prefetchCount: _prefetchCount,
             global: false,
             cancellationToken: stoppingToken);
 
@@ -60,14 +74,19 @@ public sealed class RabbitMqConsumer : BackgroundService
                 stoppingToken);
         };
 
+        var queue =
+            RabbitMqNames.Queue(_module);
+
         await channel.BasicConsumeAsync(
-            queue: RabbitMqNames.Queue("accounting"),
+            queue: queue,
             autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);
 
         _logger.LogInformation(
-            "RabbitMQ consumer started.");
+            "RabbitMQ consumer for {Module} listening on {Queue}.",
+            _module,
+            queue);
 
         try
         {
@@ -81,6 +100,7 @@ public sealed class RabbitMqConsumer : BackgroundService
         }
 
         _logger.LogInformation(
-            "RabbitMQ consumer stopped.");
+            "RabbitMQ consumer for {Module} stopped.",
+            _module);
     }
 }
