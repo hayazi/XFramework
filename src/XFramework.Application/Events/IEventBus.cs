@@ -1,9 +1,10 @@
+using XFramework.Application.Contracts.Events;
+
 namespace XFramework.Application.Events;
 
 public interface IEventBus
 {
     Task PublishAsync(
-        string eventType,
-        string payload,
+        EventEnvelope envelope,
         CancellationToken cancellationToken = default);
 }

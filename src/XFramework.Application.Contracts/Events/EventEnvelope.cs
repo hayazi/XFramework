@@ -15,4 +15,10 @@ public sealed record EventEnvelope
     public Guid? CorrelationId { get; init; }
 
     public Guid? CausationId { get; init; }
+
+    public int RetryCount { get; init; }
+
+    public string? LastError { get; init; }
+
+    public DateTime? LastAttemptOnUtc { get; init; }
 }

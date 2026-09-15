@@ -8,16 +8,22 @@ namespace XFramework.Infrastructure.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddXFrameworkInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    this IServiceCollection services,
+    IConfiguration configuration)
     {
         services
             .AddOptions<RabbitMqOptions>()
-            .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
+            .Bind(configuration.GetSection(
+                RabbitMqOptions.SectionName))
             .ValidateOnStart();
 
         services.AddSingleton<RabbitMqConnectionFactory>();
 
+        services.AddSingleton<RabbitMqConnectionManager>();
+
+        services.AddSingleton<IEventBus, RabbitMqEventBus>();
+
+        
         return services;
     }
 }
