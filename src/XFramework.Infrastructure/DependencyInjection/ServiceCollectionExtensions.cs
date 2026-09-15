@@ -5,25 +5,43 @@ using XFramework.Infrastructure.Messaging.RabbitMQ;
 
 namespace XFramework.Infrastructure.DependencyInjection;
 
-public static class ServiceCollectionExtensions
+public static IServiceCollection
+    AddXFrameworkInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
 {
-    public static IServiceCollection AddXFrameworkInfrastructure(
-    this IServiceCollection services,
-    IConfiguration configuration)
-    {
-        services
-            .AddOptions<RabbitMqOptions>()
-            .Bind(configuration.GetSection(
-                RabbitMqOptions.SectionName))
-            .ValidateOnStart();
+    services
+        .AddOptions<RabbitMqOptions>()
+        .Bind(configuration.GetSection(
+            RabbitMqOptions.SectionName))
+        .ValidateOnStart();
 
-        services.AddSingleton<RabbitMqConnectionFactory>();
+    services
+        .AddOptions<RabbitMqRetryOptions>()
+        .Bind(configuration.GetSection(
+            RabbitMqRetryOptions.SectionName))
+        .ValidateOnStart();
 
-        services.AddSingleton<RabbitMqConnectionManager>();
+    services.AddSingleton<
+        RabbitMqConnectionFactory>();
 
-        services.AddSingleton<IEventBus, RabbitMqEventBus>();
+    services.AddSingleton<
+        RabbitMqConnectionManager>();
 
-        
-        return services;
-    }
+    services.AddSingleton<
+        RabbitMqChannelManager>();
+
+    services.AddSingleton<
+        IEventBus,
+        RabbitMqEventBus>();
+
+    services.AddSingleton<
+        IEventRetryPublisher,
+        RabbitMqRetryPublisher>();
+
+    services.AddSingleton<
+        IEventDeadLetterPublisher,
+        RabbitMqDeadLetterPublisher>();
+
+    return services;
 }

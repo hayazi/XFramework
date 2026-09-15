@@ -14,9 +14,11 @@ public sealed class RabbitMqOptions
 
     public string VirtualHost { get; set; } = "/";
 
-    public string ExchangeName { get; set; } = "xframework.events";
+    public string ExchangeName { get; set; }
+        = "xframework.events";
 
-    public string ExchangeType { get; set; } = "topic";
+    public string ExchangeType { get; set; }
+        = "topic";
 
     public bool Durable { get; set; } = true;
 
@@ -25,4 +27,8 @@ public sealed class RabbitMqOptions
     public bool PublisherConfirms { get; set; } = true;
 
     public int ConnectionTimeoutSeconds { get; set; } = 10;
+
+    public bool AutomaticRecoveryEnabled { get; set; } = true;
+
+    public int NetworkRecoveryIntervalSeconds { get; set; } = 5;
 }

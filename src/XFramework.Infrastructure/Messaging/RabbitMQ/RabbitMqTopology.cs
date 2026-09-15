@@ -1,14 +1,22 @@
 using RabbitMQ.Client;
+using Microsoft.Extensions.Options;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public sealed class RabbitMqTopology
 {
-    private readonly RabbitMqOptions _options;
+    private readonly RabbitMqConnectionManager _connectionManager;
+    private readonly IOptions<RabbitMqOptions> _options;
+    private readonly IEventRoutingResolver _routingResolver;
 
-    public RabbitMqTopology(RabbitMqOptions options)
+    public RabbitMqTopology(
+        RabbitMqChannelManager channelManager,
+        IOptions<RabbitMqOptions> options,
+        IEventRoutingResolver routingResolver)
     {
-        _options = options;
+        _channelManager = channelManager;
+        _options = options.Value;
+        _routingResolver = routingResolver;
     }
 
     public async Task DeclareAsync(

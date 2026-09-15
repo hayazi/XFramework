@@ -2,13 +2,13 @@ using RabbitMQ.Client;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
-public sealed class RabbitMqConnectionManager : IAsyncDisposable
+public sealed class RabbitMqConnectionManager
+    : IAsyncDisposable
 {
     private readonly RabbitMqConnectionFactory _factory;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     private IConnection? _connection;
-
-    private readonly SemaphoreSlim _lock = new(1, 1);
 
     public RabbitMqConnectionManager(
         RabbitMqConnectionFactory factory)
@@ -29,10 +29,13 @@ public sealed class RabbitMqConnectionManager : IAsyncDisposable
             if (_connection is { IsOpen: true })
                 return _connection;
 
+            await DisposeConnectionAsync();
+
             var factory = _factory.Create();
 
-            _connection = await factory.CreateConnectionAsync(
-                cancellationToken);
+            _connection =
+                await factory.CreateConnectionAsync(
+                    cancellationToken);
 
             return _connection;
         }
@@ -44,12 +47,36 @@ public sealed class RabbitMqConnectionManager : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_connection is not null)
+        await _lock.WaitAsync();
+
+        try
+        {
+            await DisposeConnectionAsync();
+        }
+        finally
+        {
+            _lock.Release();
+            _lock.Dispose();
+        }
+    }
+
+    private async Task DisposeConnectionAsync()
+    {
+        if (_connection is null)
+            return;
+
+        try
         {
             await _connection.DisposeAsync();
+        }
+        catch
+        {
+            // Logging will be added in the
+            // observability stage.
+        }
+        finally
+        {
             _connection = null;
         }
-
-        _lock.Dispose();
     }
 }

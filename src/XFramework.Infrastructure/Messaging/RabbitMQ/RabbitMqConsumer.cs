@@ -44,9 +44,9 @@ public sealed class RabbitMqConsumer : BackgroundService
 
         await channel.BasicQosAsync(
             prefetchSize: 0,
-            prefetchCount: 20,
+            prefetchCount: _options.PrefetchCount,
             global: false,
-            cancellationToken: stoppingToken);
+            cancellationToken);
 
         var consumer =
             new AsyncEventingBasicConsumer(channel);

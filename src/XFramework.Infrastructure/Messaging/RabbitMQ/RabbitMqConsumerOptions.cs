@@ -10,4 +10,8 @@ public sealed class RabbitMqConsumerOptions
 
     public string ConsumerName { get; set; } =
         "xframework-consumer";
+    
+
+    public bool RequeueOnConsumerShutdown { get; set; }
+        = false;
 }

@@ -10,6 +10,8 @@ public sealed class RabbitMqRetryPublisher
     : IEventRetryPublisher
 {
     private readonly RabbitMqConnectionManager _connectionManager;
+    private readonly IOptions<RabbitMqOptions> _options;
+    private readonly IEventRoutingResolver _routingResolver;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -17,9 +19,13 @@ public sealed class RabbitMqRetryPublisher
     };
 
     public RabbitMqRetryPublisher(
-        RabbitMqConnectionManager connectionManager)
+        RabbitMqChannelManager channelManager,
+        IOptions<RabbitMqOptions> options,
+        IEventRoutingResolver routingResolver)
     {
-        _connectionManager = connectionManager;
+        _channelManager = channelManager;
+        _options = options.Value;
+        _routingResolver = routingResolver;
     }
 
     public async Task PublishRetryAsync(

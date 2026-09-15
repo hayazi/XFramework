@@ -3,22 +3,23 @@ using System.Text.Json;
 using RabbitMQ.Client;
 using XFramework.Application.Contracts.Events;
 using XFramework.Application.Events;
+using Microsoft.Extensions.Options;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public sealed class RabbitMqEventBus : IEventBus
 {
     private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly RabbitMqOptions _options;
+    private readonly IOptions<RabbitMqOptions> _options;
     private readonly IEventRoutingResolver _routingResolver;
 
     public RabbitMqEventBus(
-        RabbitMqConnectionManager connectionManager,
-        RabbitMqOptions options,
+        RabbitMqChannelManager channelManager,
+        IOptions<RabbitMqOptions> options,
         IEventRoutingResolver routingResolver)
     {
-        _connectionManager = connectionManager;
-        _options = options;
+        _channelManager = channelManager;
+        _options = options.Value;
         _routingResolver = routingResolver;
     }
 
