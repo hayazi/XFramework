@@ -10,7 +10,7 @@ public sealed class RabbitMqDeadLetterPublisher
     : IEventDeadLetterPublisher
 {
     private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly IOptions<RabbitMqOptions> _options;
+    private readonly RabbitMqOptions _options;
     private readonly IEventRoutingResolver _routingResolver;
 
     private static readonly JsonSerializerOptions JsonOptions = new()

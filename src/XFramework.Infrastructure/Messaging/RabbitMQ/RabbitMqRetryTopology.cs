@@ -4,7 +4,7 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public sealed class RabbitMqRetryTopology
 {
-    private readonly IOptions<RabbitMqOptions> _options;
+    private readonly RabbitMqOptions _options;
     private readonly RabbitMqRetryOptions _retryOptions;
     private readonly RabbitMqConnectionManager _connectionManager;
     private readonly IEventRoutingResolver _routingResolver;

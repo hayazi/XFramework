@@ -5,7 +5,7 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 public sealed class RabbitMqConnectionFactory
 {
     private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly IOptions<RabbitMqOptions> _options;
+    private readonly RabbitMqOptions _options;
     private readonly IEventRoutingResolver _routingResolver;
 
     public RabbitMqConnectionFactory(

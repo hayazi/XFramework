@@ -18,13 +18,19 @@ public sealed class RabbitMqChannelManager
         CancellationToken cancellationToken = default)
     {
         var connection =
-            await _connectionManager
-                .GetConnectionAsync(cancellationToken);
+            await _connectionManager.GetConnectionAsync(
+                cancellationToken);
+
+        var options = new CreateChannelOptions
+        {
+            PublisherConfirmationsEnabled = true,
+            PublisherConfirmationTrackingEnabled = true
+        };
 
         return await connection.CreateChannelAsync(
-            cancellationToken: cancellationToken);
+            options,
+            cancellationToken);
     }
-
     public async Task<IChannel> CreateConsumerChannelAsync(
         CancellationToken cancellationToken = default)
     {
