@@ -11,41 +11,98 @@ public sealed class RabbitMqMessageHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     public RabbitMqMessageHandler(
         IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
+    private async Task HandleFailureAsync(
+        IChannel channel,
+        ulong deliveryTag,
+        EventEnvelope? envelope,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        if (envelope is null)
+        {
+            await channel.BasicNackAsync(
+                deliveryTag,
+                multiple: false,
+                requeue: false,
+                cancellationToken);
 
+            return;
+        }
+
+        using var scope =
+            _scopeFactory.CreateScope();
+
+        var retryPolicy =
+            scope.ServiceProvider
+                .GetRequiredService<IEventRetryPolicy>();
+
+        var retryPublisher =
+            scope.ServiceProvider
+                .GetRequiredService<IEventRetryPublisher>();
+
+        var deadLetterPublisher =
+            scope.ServiceProvider
+                .GetRequiredService<IEventDeadLetterPublisher>();
+
+        var routingKey =
+            GetRoutingKey(envelope);
+
+        if (retryPolicy.ShouldRetry(
+                envelope.RetryCount,
+                exception))
+        {
+            var delay =
+                retryPolicy.GetDelay(
+                    envelope.RetryCount);
+
+            await retryPublisher.PublishRetryAsync(
+                envelope,
+                routingKey,
+                delay,
+                cancellationToken);
+
+            await channel.BasicAckAsync(
+                deliveryTag,
+                multiple: false,
+                cancellationToken);
+
+            return;
+        }
+
+        await deadLetterPublisher.PublishAsync(
+            envelope,
+            routingKey,
+            exception,
+            cancellationToken);
+
+        await channel.BasicAckAsync(
+            deliveryTag,
+            multiple: false,
+            cancellationToken);
+    }
     public async Task HandleAsync(
         IChannel channel,
         ulong deliveryTag,
         ReadOnlyMemory<byte> body,
         CancellationToken cancellationToken)
     {
+        EventEnvelope? envelope = null;
+
         try
         {
-            var json =
-                Encoding.UTF8.GetString(body.Span);
+            envelope =
+                Deserialize(body);
 
-            var envelope =
-                JsonSerializer.Deserialize<EventEnvelope>(
-                    json,
-                    JsonOptions);
+            var routingKey =
+                ExtractRoutingKey(envelope);
 
-            if (envelope is null)
-            {
-                throw new InvalidOperationException(
-                    "Invalid event envelope.");
-            }
-
-            await using var scope =
-                _scopeFactory.CreateAsyncScope();
+            using var scope =
+                _scopeFactory.CreateScope();
 
             var processor =
                 scope.ServiceProvider
@@ -60,15 +117,14 @@ public sealed class RabbitMqMessageHandler
                 multiple: false,
                 cancellationToken);
         }
-        catch
+        catch (Exception exception)
         {
-            await channel.BasicNackAsync(
+            await HandleFailureAsync(
+                channel,
                 deliveryTag,
-                multiple: false,
-                requeue: false,
+                envelope,
+                exception,
                 cancellationToken);
-
-            throw;
         }
     }
 }

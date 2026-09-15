@@ -2,7 +2,11 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public static class RabbitMqNames
 {
-    public const string MainExchange = "xframework.events";
+    public const string MainExchange =
+        "xframework.events";
+
+    public const string RetryExchange =
+        "xframework.events.retry";
 
     public const string DeadLetterExchange =
         "xframework.events.dlx";
@@ -17,11 +21,6 @@ public static class RabbitMqNames
         string module,
         string delay)
         => $"rgre.{module}.events.retry.{delay}";
-
-    public static string RetryRoutingKey(
-        string module,
-        string delay)
-        => $"retry.{module}.{delay}";
 
     public static string ModuleRoutingKey(
         string module)

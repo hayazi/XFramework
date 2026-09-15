@@ -23,6 +23,10 @@ public sealed class RabbitMqRetryTopology
             channel,
             cancellationToken);
 
+        await DeclareRetryExchangeAsync(
+            channel,
+            cancellationToken);
+
         await DeclareDeadLetterExchangeAsync(
             channel,
             cancellationToken);
@@ -146,12 +150,8 @@ public sealed class RabbitMqRetryTopology
                 {
                     ["x-message-ttl"] = ttl,
 
-                    // After TTL, send message to DLX.
                     ["x-dead-letter-exchange"] =
-                        _options.ExchangeName,
-
-                    // Original routing key is preserved
-                    // by RabbitMQ when dead-lettering.
+                        RabbitMqNames.MainExchange
                 };
 
             await channel.QueueDeclareAsync(
@@ -161,6 +161,23 @@ public sealed class RabbitMqRetryTopology
                 autoDelete: false,
                 arguments: arguments,
                 cancellationToken: cancellationToken);
+
+            await channel.QueueBindAsync(
+                queue: queue,
+                exchange: RabbitMqNames.RetryExchange,
+                routingKey: RabbitMqNames.ModuleRoutingKey(module),
+                cancellationToken: cancellationToken);
         }
+    }
+    private async Task DeclareRetryExchangeAsync(
+        IChannel channel,
+        CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(
+            exchange: RabbitMqNames.RetryExchange,
+            type: ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            cancellationToken: cancellationToken);
     }
 }

@@ -10,7 +10,6 @@ public sealed class RabbitMqRetryPublisher
     : IEventRetryPublisher
 {
     private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly RabbitMqOptions _options;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -18,11 +17,9 @@ public sealed class RabbitMqRetryPublisher
     };
 
     public RabbitMqRetryPublisher(
-        RabbitMqConnectionManager connectionManager,
-        RabbitMqOptions options)
+        RabbitMqConnectionManager connectionManager)
     {
         _connectionManager = connectionManager;
-        _options = options;
     }
 
     public async Task PublishRetryAsync(
@@ -33,6 +30,23 @@ public sealed class RabbitMqRetryPublisher
     {
         ArgumentNullException.ThrowIfNull(envelope);
 
+        var module = GetModule(routingKey);
+
+        var delayName =
+            RabbitMqRetryDelayNames.FromSeconds(
+                (int)delay.TotalSeconds);
+
+        var retryQueue =
+            RabbitMqNames.RetryQueue(
+                module,
+                delayName);
+
+        var retryEnvelope = envelope with
+        {
+            RetryCount = envelope.RetryCount + 1,
+            LastAttemptOnUtc = DateTime.UtcNow
+        };
+
         var connection =
             await _connectionManager.GetConnectionAsync(
                 cancellationToken);
@@ -41,44 +55,48 @@ public sealed class RabbitMqRetryPublisher
             await connection.CreateChannelAsync(
                 cancellationToken: cancellationToken);
 
-        var delayName =
-            RabbitMqRetryDelayNames.FromSeconds(
-                (int)delay.TotalSeconds);
-
-        var module =
-            GetModuleFromRoutingKey(routingKey);
-
-        var retryQueue =
-            RabbitMqNames.RetryQueue(
-                module,
-                delayName);
-
-        var body =
-            Encoding.UTF8.GetBytes(
-                JsonSerializer.Serialize(
-                    envelope,
-                    JsonOptions));
+        var body = Encoding.UTF8.GetBytes(
+            JsonSerializer.Serialize(
+                retryEnvelope,
+                JsonOptions));
 
         var properties = new BasicProperties
         {
             Persistent = true,
             ContentType = "application/json",
             ContentEncoding = "utf-8",
-            MessageId = envelope.EventId.ToString(),
-            Type = envelope.EventType
+            MessageId = retryEnvelope.EventId.ToString(),
+            Type = retryEnvelope.EventType
+        };
+
+        properties.Headers = new Dictionary<string, object?>
+        {
+            ["event-id"] =
+                retryEnvelope.EventId.ToString(),
+
+            ["event-type"] =
+                retryEnvelope.EventType,
+
+            ["event-version"] =
+                retryEnvelope.EventVersion,
+
+            ["retry-count"] =
+                retryEnvelope.RetryCount,
+
+            ["original-routing-key"] =
+                routingKey
         };
 
         await channel.BasicPublishAsync(
-            exchange: _options.ExchangeName,
-            routingKey: GetRetryRoutingKey(
-                retryQueue),
+            exchange: RabbitMqNames.RetryExchange,
+            routingKey: routingKey,
             mandatory: true,
             basicProperties: properties,
             body: body,
             cancellationToken: cancellationToken);
     }
 
-    private static string GetModuleFromRoutingKey(
+    private static string GetModule(
         string routingKey)
     {
         var module =
@@ -94,11 +112,5 @@ public sealed class RabbitMqRetryPublisher
         }
 
         return module;
-    }
-
-    private static string GetRetryRoutingKey(
-        string retryQueue)
-    {
-        return retryQueue;
     }
 }
