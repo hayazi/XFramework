@@ -4,11 +4,17 @@ public class OutboxMessage
 {
     public Guid Id { get; set; }
 
+    public Guid EventId  { get; set; }
+
     public string EventType { get; set; } = null!;
 
-    public int EventVersion { get; set; }
+    public string EventVersion { get; set; }
+
+    public string ModuleName  { get; set; }
 
     public string Payload { get; set; } = null!;
+
+    public string Headers { get; set; } = null!;
 
     public DateTime OccurredOnUtc { get; set; }
 
@@ -24,6 +30,8 @@ public class OutboxMessage
 
     public string? LastError { get; set; }
 
+    public string? Error { get; set; }
+
     public string? CorrelationId { get; set; }
 
     public string? CausationId { get; set; }
@@ -35,4 +43,8 @@ public class OutboxMessage
     public string? LockId { get; set; }
 
     public DateTime? LockedUntilUtc { get; set; }
+
+    public DateTime? CreatedOnUtc  { get; set; }
+    
+    public DateTime? ProcessedOnUtc   { get; set; }
 }

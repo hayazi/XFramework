@@ -11,7 +11,56 @@ public sealed class OutboxRepository : IOutboxRepository
     {
         _dbContext = dbContext;
     }
+    public async Task<IReadOnlyList<OutboxMessage>>        ClaimBatchAsync(
+            int batchSize,
+            string lockId,
+            DateTime nowUtc,
+            DateTime lockedUntilUtc)
+    {
+        var sql = $@"
+        ;WITH cte AS
+        (
+            SELECT TOP ({batchSize}) *
+            FROM OutboxMessages WITH
+            (
+                UPDLOCK,
+                READPAST,
+                ROWLOCK
+            )
+            WHERE
+                (
+                    Status = {(int)OutboxMessageStatus.Pending}
+                    OR
+                    (
+                        Status = {(int)OutboxMessageStatus.Processing}
+                        AND LockedUntilUtc < @Now
+                    )
+                )
+                AND
+                (
+                    NextAttemptOnUtc IS NULL
+                    OR NextAttemptOnUtc <= {now}
+                )
+            ORDER BY CreatedOnUtc
+        )
 
+        UPDATE cte
+        SET
+            Status = {(int)OutboxMessageStatus.Processing},
+            LockId = {lockId},
+            LockedUntilUtc = {LockedUntilUtc}
+
+        OUTPUT INSERTED.*;
+        ";
+
+        return await _dbContext.OutboxMessages
+            .FromSqlInterpolated(
+                sql
+                // ,
+                // parameters
+                )
+            .ToListAsync(cancellationToken);
+    }
     public async Task<IReadOnlyList<OutboxMessage>> ClaimPendingMessagesAsync(
             int batchSize,
             TimeSpan leaseDuration,
@@ -74,22 +123,7 @@ public sealed class OutboxRepository : IOutboxRepository
 
         return messages;
     }
-    // public async Task<IReadOnlyList<OutboxMessage>>
-    //     GetPendingMessagesAsync(
-    //         int batchSize,
-    //         CancellationToken cancellationToken = default)
-    // {
-    //     var now = DateTime.UtcNow;
-
-    //     return await _dbContext.OutboxMessages
-    //         .Where(x =>
-    //             x.Status == OutboxMessageStatus.Pending &&
-    //             (x.NextAttemptOnUtc == null ||
-    //              x.NextAttemptOnUtc <= now))
-    //         .OrderBy(x => x.CreatedOnUtc)
-    //         .Take(batchSize)
-    //         .ToListAsync(cancellationToken);
-    // }
+    
 
     public async Task MarkAsProcessingAsync(
         OutboxMessage message,
@@ -105,12 +139,26 @@ public sealed class OutboxRepository : IOutboxRepository
         OutboxMessage message,
         CancellationToken cancellationToken = default)
     {
-        message.Status = OutboxMessageStatus.Completed;
-        message.ProcessedOnUtc = DateTime.UtcNow;
-        message.LastError = null;
+        /************
+        UPDATE OutboxMessages
+        SET
+            Status = @Completed,
 
-        await _dbContext.SaveChangesAsync(
-            cancellationToken);
+            ProcessedOnUtc = @Now,
+
+            LockId = NULL,
+
+            LockedUntilUtc = NULL
+        WHERE
+            Id = @Id
+            AND LockId = @LockId
+        ***********/
+        // message.Status = OutboxMessageStatus.Completed;
+        // message.ProcessedOnUtc = DateTime.UtcNow;
+        // message.LastError = null;
+
+        // await _dbContext.SaveChangesAsync(
+        //     cancellationToken);
     }
 
     public async Task MarkAsFailedAsync(
@@ -119,12 +167,50 @@ public sealed class OutboxRepository : IOutboxRepository
         DateTime nextAttemptOnUtc,
         CancellationToken cancellationToken = default)
     {
-        message.Status = OutboxMessageStatus.Pending;
-        message.RetryCount++;
-        message.LastError = error;
-        message.NextAttemptOnUtc = nextAttemptOnUtc;
+        /***************
+        UPDATE OutboxMessages
+        SET
+            Status = @Pending,
 
-        await _dbContext.SaveChangesAsync(
-            cancellationToken);
+            RetryCount = RetryCount + 1,
+
+            NextAttemptOnUtc = @NextAttempt,
+
+            Error = @Error,
+
+            LockId = NULL,
+
+            LockedUntilUtc = NULL
+        WHERE
+            Id = @Id
+            AND LockId = @LockId
+        ***************/
+        // message.Status = OutboxMessageStatus.Pending;
+        // message.RetryCount++;
+        // message.LastError = error;
+        // message.NextAttemptOnUtc = nextAttemptOnUtc;
+
+        // await _dbContext.SaveChangesAsync(
+        //     cancellationToken);
+    }
+
+    public async Task MarkAsReleaseExpiredLeasesAsync(
+        OutboxMessage message,
+        string error,
+        DateTime nextAttemptOnUtc,
+        CancellationToken cancellationToken = default)
+    {
+/**************
+UPDATE OutboxMessages
+SET
+    Status = @Pending,
+
+    LockId = NULL,
+
+    LockedUntilUtc = NULL
+WHERE
+    Status = @Processing
+    AND LockedUntilUtc < @Now
+***************/
     }
 }
