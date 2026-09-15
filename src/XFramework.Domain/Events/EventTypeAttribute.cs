@@ -6,7 +6,9 @@ namespace XFramework.Domain.Events;
     Inherited = false)]
 public sealed class EventTypeAttribute : Attribute
 {
-    public EventTypeAttribute(string name, int version = 1)
+    public EventTypeAttribute(
+        string name,
+        int version)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException(

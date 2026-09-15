@@ -1,17 +1,23 @@
+using XFramework.Domain.Events;
+
 namespace XFramework.Application.Events;
 
 public interface IEventTypeRegistry
 {
-    void Register<TEvent>();
-
-    EventTypeDescriptor GetDescriptor(Type eventType);
-
-    EventTypeDescriptor GetDescriptor(
+    Type GetEventType(
         string eventType,
-        int version);
+        int eventVersion);
 
-    bool TryGetDescriptor(
+    bool TryGetEventType(
         string eventType,
-        int version,
-        out EventTypeDescriptor? descriptor);
+        int eventVersion,
+        out Type? clrType);
+
+    string GetEventTypeName(Type clrType);
+
+    int GetEventVersion(Type clrType);
+
+    bool IsRegistered(
+        string eventType,
+        int eventVersion);
 }

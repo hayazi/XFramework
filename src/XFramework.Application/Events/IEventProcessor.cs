@@ -1,10 +1,10 @@
-using XFramework.Domain.Events;
+using XFramework.Application.Contracts.Events;
 
 namespace XFramework.Application.Events;
 
 public interface IEventProcessor
 {
     Task ProcessAsync(
-        IDomainEvent domainEvent,
+        EventEnvelope envelope,
         CancellationToken cancellationToken = default);
 }

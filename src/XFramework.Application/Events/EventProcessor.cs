@@ -1,66 +1,74 @@
+using System.Text.Json;
+using XFramework.Application.Contracts.Events;
+
+namespace XFramework.Application.Events;
+
 public sealed class EventProcessor : IEventProcessor
 {
-    private readonly IIdempotencyService _idempotency;
-    private readonly IDomainEventDispatcher _dispatcher;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IEventTypeRegistry _eventTypeRegistry;
+    private readonly IServiceProvider _serviceProvider;
 
     public EventProcessor(
-        IIdempotencyService idempotency,
-        IDomainEventDispatcher dispatcher,
-        IUnitOfWork unitOfWork)
+        IEventTypeRegistry eventTypeRegistry,
+        IServiceProvider serviceProvider)
     {
-        _idempotency = idempotency;
-        _dispatcher = dispatcher;
-        _unitOfWork = unitOfWork;
+        _eventTypeRegistry = eventTypeRegistry;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task ProcessAsync(
-        IDomainEvent domainEvent,
+        EventEnvelope envelope,
         CancellationToken cancellationToken = default)
     {
-        var handlerName =
-            GetHandlerName(domainEvent);
+        ArgumentNullException.ThrowIfNull(envelope);
 
-        await _unitOfWork.BeginAsync(
-            cancellationToken);
+        var eventType = _eventTypeRegistry.GetEventType(
+            envelope.EventType,
+            envelope.EventVersion);
 
-        try
+        var domainEvent =
+            JsonSerializer.Deserialize(
+                envelope.Payload,
+                eventType);
+
+        if (domainEvent is null)
         {
-            var shouldProcess =
-                await _idempotency.TryBeginProcessingAsync(
-                    domainEvent.EventId,
-                    handlerName,
-                    domainEvent.CorrelationId?.ToString(),
-                    cancellationToken);
+            throw new InvalidOperationException(
+                $"Unable to deserialize event '{envelope.EventType}'.");
+        }
 
-            if (!shouldProcess)
+        var handlerType =
+            typeof(IDomainEventHandler<>)
+                .MakeGenericType(eventType);
+
+        var handler =
+            _serviceProvider.GetService(handlerType);
+
+        if (handler is null)
+        {
+            throw new InvalidOperationException(
+                $"No handler registered for event '{envelope.EventType}'.");
+        }
+
+        var method =
+            handlerType.GetMethod(nameof(
+                IDomainEventHandler<IDomainEvent>.HandleAsync));
+
+        if (method is null)
+        {
+            throw new InvalidOperationException(
+                $"Handler method was not found for '{envelope.EventType}'.");
+        }
+
+        var task = (Task?)method.Invoke(
+            handler,
+            new object?[]
             {
-                await _unitOfWork.RollbackAsync(
-                    cancellationToken);
-
-                return;
-            }
-
-            await _dispatcher.DispatchAsync(
                 domainEvent,
-                cancellationToken);
+                cancellationToken
+            });
 
-            await _unitOfWork.CommitAsync(
-                cancellationToken);
-        }
-        catch
-        {
-            await _unitOfWork.RollbackAsync(
-                cancellationToken);
-
-            throw;
-        }
-    }
-
-    private static string GetHandlerName(
-        IDomainEvent domainEvent)
-    {
-        return domainEvent.GetType().FullName
-            ?? domainEvent.GetType().Name;
+        if (task is not null)
+            await task;
     }
 }

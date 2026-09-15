@@ -28,7 +28,12 @@ public static class DependencyInjection
                                                             AuditSaveChangesInterceptor>());
                                                 });
         
+        services.AddSingleton<EventTypeRegistry>();
 
+        services.AddSingleton<IEventTypeRegistry>(
+            provider =>
+                provider.GetRequiredService<EventTypeRegistry>());
+                
         var assembly = typeof(DependencyInjection).Assembly;
         foreach (var type in assembly.GetTypes().Where(x => x is { IsClass: true, IsAbstract: false }))
         {
