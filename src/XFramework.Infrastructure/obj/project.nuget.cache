@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "sBCaj4K8/Cs=",
+  "success": true,
+  "projectFilePath": "F:\\XFramework\\src\\XFramework.Infrastructure\\XFramework.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\H_Ayazi\\.nuget\\packages\\castle.core\\5.2.1\\castle.core.5.2.1.nupkg.sha512",
+    "C:\\Users\\H_Ayazi\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.11\\microsoft.extensions.dependencyinjection.abstractions.10.0.11.nupkg.sha512",
+    "C:\\Users\\H_Ayazi\\.nuget\\packages\\rabbitmq.client\\7.2.2\\rabbitmq.client.7.2.2.nupkg.sha512",
+    "C:\\Users\\H_Ayazi\\.nuget\\packages\\system.diagnostics.eventlog\\6.0.0\\system.diagnostics.eventlog.6.0.0.nupkg.sha512",
+    "C:\\Users\\H_Ayazi\\.nuget\\packages\\system.threading.ratelimiting\\8.0.0\\system.threading.ratelimiting.8.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

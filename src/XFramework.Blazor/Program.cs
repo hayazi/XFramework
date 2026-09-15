@@ -2,7 +2,7 @@ using XFramework.Blazor.Components;
 using XFramework.Application;
 using XFramework.Application.DependencyInjection;
 using XFramework.EntityFrameworkCore.DependencyInjection;
-
+using XFramework.Infrastructure.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddIdentityCore<XFrameworkIdentityUser>(options =>
@@ -22,6 +22,8 @@ builder.Services
     .AddRoles<IdentityRole<Guid>>()
     .AddEntityFrameworkStores<XFrameworkIdentityDbContext>()
     .AddSignInManager();
+
+builder.Services.AddXFrameworkInfrastructure(builder.Configuration);
 
 builder.Services
     .AddAuthentication(IdentityConstants.ApplicationScheme)

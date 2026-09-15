@@ -1,42 +1,53 @@
 XFramework
 │
-├── Domain
+├── XFramework.Domain
 │   ├── Entities
+│   ├── ValueObjects
 │   ├── Aggregates
-│   ├── Business Rules
-│   ├── Domain Events
-│   └── Identity
+│   ├── Events
+│   ├── DomainServices
+│   └── Exceptions
 │
-├── Application.Contracts
-│   ├── DTO
-│   ├── CRUD
-│   ├── Paging
-│   ├── Errors
-│   ├── Authorization
-│   └── Localization
-│
-├── Application
+├── XFramework.Application.Contracts
+│   ├── DTOs
 │   ├── Services
-│   ├── CrudAppService
-│   ├── Exceptions
 │   ├── Authorization
-│   ├── CurrentUser
-│   └── Pipeline
+│   ├── Localization
+│   ├── Events
+│   └── Errors
 │
-├── EntityFrameworkCore
-│   ├── DbContext
-│   ├── Repository
+├── XFramework.Application
+│   ├── Services
+│   ├── Events
 │   ├── UnitOfWork
-│   ├── Transaction
-│   ├── Audit
+│   ├── Repositories
 │   ├── Authorization
-│   ├── Identity
-│   └── Security
+│   ├── Validation
+│   └── Behaviors
 │
-└── Blazor
-    ├── Authentication
-    ├── Authorization UI
+├── XFramework.EntityFrameworkCore
+│   ├── DbContexts
+│   ├── Configurations
+│   ├── Repositories
+│   ├── UnitOfWork
+│   ├── Outbox
+│   ├── Idempotency
+│   └── Migrations
+│
+├── XFramework.Infrastructure
+│   ├── Messaging
+│   │   └── RabbitMQ
+│   ├── Logging
+│   ├── Caching
+│   ├── Email
+│   ├── FileStorage
+│   ├── BackgroundJobs
+│   ├── Observability
+│   └── ExternalServices
+│
+└── XFramework.Blazor
+    ├── Components
+    ├── Pages
     ├── Localization
-    ├── Radzen
-    ├── RTL
-    └── Responsive
+    ├── Authentication
+    └── Program.cs
