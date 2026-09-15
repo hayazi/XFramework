@@ -2,24 +2,27 @@ namespace XFramework.EntityFrameworkCore.Outbox;
 
 public interface IOutboxRepository
 {
-    Task<IReadOnlyList<OutboxMessage>> ClaimPendingMessagesAsync(
-            int batchSize,
-            TimeSpan leaseDuration,
-            CancellationToken cancellationToken = default);
-
-    Task MarkAsProcessingAsync(
-        OutboxMessage message,
+    Task<IReadOnlyList<OutboxMessage>> ClaimBatchAsync(
+        int batchSize,
+        string lockId,
+        DateTime nowUtc,
+        DateTime lockedUntilUtc,
         CancellationToken cancellationToken = default);
 
-    Task MarkAsCompletedAsync(
-        OutboxMessage message,
+    Task MarkCompletedAsync(
+        Guid messageId,
         string lockId,
+        DateTime completedOnUtc,
         CancellationToken cancellationToken = default);
 
-    Task MarkAsFailedAsync(
-        OutboxMessage message,
+    Task MarkFailedAsync(
+        Guid messageId,
         string lockId,
-        string error,
         DateTime nextAttemptOnUtc,
+        string error,
+        CancellationToken cancellationToken = default);
+
+    Task ReleaseExpiredLeasesAsync(
+        DateTime nowUtc,
         CancellationToken cancellationToken = default);
 }

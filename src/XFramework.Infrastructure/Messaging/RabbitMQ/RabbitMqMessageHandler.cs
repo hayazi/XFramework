@@ -17,72 +17,35 @@ public sealed class RabbitMqMessageHandler
         _scopeFactory = scopeFactory;
     }
     private async Task HandleFailureAsync(
-        IChannel channel,
-        ulong deliveryTag,
-        EventEnvelope? envelope,
+        OutboxMessage message,
+        string lockId,
         Exception exception,
         CancellationToken cancellationToken)
     {
-        if (envelope is null)
-        {
-            await channel.BasicNackAsync(
-                deliveryTag,
-                multiple: false,
-                requeue: false,
-                cancellationToken);
+        var retryCount = message.RetryCount + 1;
 
-            return;
-        }
-
-        using var scope =
-            _scopeFactory.CreateScope();
-
-        var retryPolicy =
-            scope.ServiceProvider
-                .GetRequiredService<IEventRetryPolicy>();
-
-        var retryPublisher =
-            scope.ServiceProvider
-                .GetRequiredService<IEventRetryPublisher>();
-
-        var deadLetterPublisher =
-            scope.ServiceProvider
-                .GetRequiredService<IEventDeadLetterPublisher>();
-
-        var routingKey =
-            GetRoutingKey(envelope);
-
-        if (retryPolicy.ShouldRetry(
-                envelope.RetryCount,
+        if (!_retryPolicy.ShouldRetry(
+                retryCount,
                 exception))
         {
-            var delay =
-                retryPolicy.GetDelay(
-                    envelope.RetryCount);
-
-            await retryPublisher.PublishRetryAsync(
-                envelope,
-                routingKey,
-                delay,
-                cancellationToken);
-
-            await channel.BasicAckAsync(
-                deliveryTag,
-                multiple: false,
+            await _repository.MarkFailedAsync(
+                message.Id,
+                lockId,
+                DateTime.UtcNow,
+                exception.ToString(),
                 cancellationToken);
 
             return;
         }
 
-        await deadLetterPublisher.PublishAsync(
-            envelope,
-            routingKey,
-            exception,
-            cancellationToken);
+        var delay =
+            _retryPolicy.GetDelay(retryCount);
 
-        await channel.BasicAckAsync(
-            deliveryTag,
-            multiple: false,
+        await _repository.MarkFailedAsync(
+            message.Id,
+            lockId,
+            DateTime.UtcNow.Add(delay),
+            exception.ToString(),
             cancellationToken);
     }
     public async Task HandleAsync(

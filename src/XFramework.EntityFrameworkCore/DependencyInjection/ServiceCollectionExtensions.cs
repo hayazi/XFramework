@@ -43,7 +43,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<OutboxRetryPolicy>();
 
-        services.AddScoped<OutboxProcessor>();
+        services.AddScoped<IOutboxProcessor, OutboxProcessor>();
 
         services.AddHostedService<OutboxBackgroundService>();
         

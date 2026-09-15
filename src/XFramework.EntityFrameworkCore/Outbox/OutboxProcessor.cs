@@ -3,94 +3,73 @@ using XFramework.Application.Events;
 
 namespace XFramework.EntityFrameworkCore.Outbox;
 
-public sealed class OutboxProcessor
+public sealed class OutboxProcessor : IOutboxProcessor
 {
     private readonly IOutboxRepository _repository;
     private readonly IEventBus _eventBus;
-    private readonly OutboxRetryPolicy _retryPolicy;
-    private readonly ILogger<OutboxProcessor> _logger;
 
     public OutboxProcessor(
         IOutboxRepository repository,
-        IEventBus eventBus,
-        OutboxRetryPolicy retryPolicy,
-        ILogger<OutboxProcessor> logger)
+        IEventBus eventBus)
     {
         _repository = repository;
         _eventBus = eventBus;
-        _retryPolicy = retryPolicy;
-        _logger = logger;
     }
 
-    public async Task ProcessAsync(
-        CancellationToken cancellationToken)
+    public async Task ProcessBatchAsync(
+        int batchSize,
+        CancellationToken cancellationToken = default)
     {
-        var claims =
-            await _repository.ClaimPendingMessagesAsync(
-                batchSize: 50,
-                leaseDuration:
-                    TimeSpan.FromMinutes(5),
-                cancellationToken);
+        var now = DateTime.UtcNow;
 
-        foreach (var claim in claims)
-        {
-            try
-            {
-                await _eventBus.PublishAsync(
-                    claim.Message.EventType,
-                    claim.Message.Payload,
-                    cancellationToken);
-
-                await _repository.MarkAsCompletedAsync(
-                    claim.Message,
-                    claim.LockId,
-                    cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                await HandleFailureAsync(
-                    claim,
-                    ex,
-                    cancellationToken);
-            }
-        }
-    }
-
-    private async Task HandleFailureAsync(
-        OutboxClaim claim,
-        Exception exception,
-        CancellationToken cancellationToken)
-    {
-        var message = claim.Message;
-
-        if (!_retryPolicy.CanRetry(
-                message.RetryCount))
-        {
-            await _repository.MarkAsFailedAsync(
-                message,
-                claim.LockId,
-                exception.ToString(),
-                DateTime.UtcNow,
-                cancellationToken);
-
-            return;
-        }
-
-        var delay =
-            _retryPolicy.GetDelay(
-                message.RetryCount);
-
-        await _repository.MarkAsFailedAsync(
-            message,
-            claim.LockId,
-            exception.ToString(),
-            DateTime.UtcNow.Add(delay),
+        await _repository.ReleaseExpiredLeasesAsync(
+            now,
             cancellationToken);
 
-        _logger.LogWarning(
-            exception,
-            "Outbox message {MessageId} failed.",
-            message.Id);
+        var lockId = Guid.NewGuid().ToString("N");
+
+        var messages =
+            await _repository.ClaimBatchAsync(
+                batchSize,
+                lockId,
+                now,
+                now.AddMinutes(2),
+                cancellationToken);
+
+        foreach (var message in messages)
+        {
+            await ProcessMessageAsync(
+                message,
+                lockId,
+                cancellationToken);
+        }
+    }
+    private async Task ProcessMessageAsync(
+        OutboxMessage message,
+        string lockId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var envelope = BuildEnvelope(message);
+
+            await _eventBus.PublishAsync(
+                envelope,
+                cancellationToken);
+
+            await _repository.MarkCompletedAsync(
+                message.Id,
+                lockId,
+                DateTime.UtcNow,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await HandleFailureAsync(
+                message,
+                lockId,
+                ex,
+                cancellationToken);
+        }
     }
 }
-

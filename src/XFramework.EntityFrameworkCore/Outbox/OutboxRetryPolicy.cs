@@ -1,6 +1,7 @@
+using XFramework.Application.Outbox;
 namespace XFramework.EntityFrameworkCore.Outbox;
 
-public sealed class OutboxRetryPolicy
+public sealed class OutboxRetryPolicy :IOutboxRetryPolicy
 {
     public const int MaxRetryCount = 10;
 
