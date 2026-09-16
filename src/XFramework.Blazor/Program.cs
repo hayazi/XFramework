@@ -4,7 +4,21 @@ using XFramework.Application.DependencyInjection;
 using XFramework.EntityFrameworkCore.DependencyInjection;
 using XFramework.Infrastructure.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
-builder.Services
+
+var services = builder.Services;
+var configuration = builder.Configuration;
+
+// Application
+services.AddXFramework();
+
+// Persistence
+services.AddXFrameworkEntityFrameworkCore(configuration);
+
+// Infrastructure
+services.AddXFrameworkInfrastructure(configuration);
+services.AddXFrameworkRabbitMQ(configuration);
+
+services
     .AddIdentityCore<XFrameworkIdentityUser>(options =>
     {
         options.Password.RequiredLength = 8;
@@ -23,27 +37,27 @@ builder.Services
     .AddEntityFrameworkStores<XFrameworkIdentityDbContext>()
     .AddSignInManager();
 
-builder.Services.AddXFrameworkInfrastructure(builder.Configuration);
 
-builder.Services
+
+services
     .AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
-builder.Services.AddAuthorization();
+services.AddAuthorization();
 
-builder.Services
+services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
-builder.Services.AddXFrameworkApplication(
+services.AddXFrameworkApplication(
     typeof(XFrameworkApplicationAssembly).Assembly);
 
-builder.Services..AddXFrameworkApplication()
+services.AddXFrameworkApplication()
     .AddXFrameworkEntityFrameworkCore(options =>
     {
-        options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+        options.UseSqlServer(configuration.GetConnectionString("Default"));
     });
-builder.Services.AddLocalization(options =>
+services.AddLocalization(options =>
     {
         options.ResourcesPath = "Localization/Resources";
     });
@@ -58,7 +72,7 @@ var localizationOptions =
         .SetDefaultCulture("fa")
         .AddSupportedCultures(supportedCultures)
         .AddSupportedUICultures(supportedCultures);
-builder.Services.AddScoped<ILocalizationService, BlazorLocalizationService>();
+services.AddScoped<ILocalizationService, BlazorLocalizationService>();
 var app = builder.Build();
 
 app.UseRequestLocalization(localizationOptions);
