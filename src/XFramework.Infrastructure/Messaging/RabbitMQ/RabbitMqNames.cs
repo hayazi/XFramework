@@ -22,15 +22,17 @@ public static class RabbitMqNames
         string delay)
         => $"rgre.{module}.events.retry.{delay}";
 
-    public static string MainRoutingKey(string module)
+    public static string MainBindingKey(
+        string module)
         => $"{module}.#";
 
-    public static string RetryRoutingKey(
+    public static string RetryBindingKey(
         string module,
         string delay)
         => $"{module}.retry.{delay}";
 
-    public static string DeadLetterRoutingKey(
-        string module)
-        => $"{module}.#";
+    public static string RetryPublishKey(
+        string module,
+        string delay)
+        => $"{module}.retry.{delay}";
 }
