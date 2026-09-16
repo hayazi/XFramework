@@ -7,15 +7,18 @@ namespace XFramework.Application.Events;
 
 public sealed class EventProcessor : IEventProcessor
 {
-    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IEventTypeRegistry _eventTypeRegistry;
+    private readonly IIdempotencyService _idempotencyService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public EventProcessor(
-        IServiceScopeFactory scopeFactory,
-        IEventTypeRegistry eventTypeRegistry)
+        IEventTypeRegistry eventTypeRegistry,
+        IIdempotencyService idempotencyService,
+        IUnitOfWork unitOfWork)
     {
-        _scopeFactory = scopeFactory;
         _eventTypeRegistry = eventTypeRegistry;
+        _idempotencyService = idempotencyService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task ProcessAsync(
