@@ -1,4 +1,4 @@
-namespace XFramework.Application.Idempotency;
+namespace XFramework.Application.Events;
 
 public interface IIdempotencyService
 {
