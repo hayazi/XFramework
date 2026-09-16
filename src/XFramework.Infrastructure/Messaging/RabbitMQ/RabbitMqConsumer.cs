@@ -7,40 +7,35 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
 public sealed class RabbitMqConsumer : BackgroundService
 {
-    private readonly RabbitMqConnectionManager _connectionManager;
-    private readonly RabbitMqTopology _topology;
     private readonly RabbitMqMessageHandler _messageHandler;
     private readonly ILogger<RabbitMqConsumer> _logger;
-
+    private readonly RabbitMqChannelManager _channelManager;
+     private readonly RabbitMqConsumerOptions _options;
     public RabbitMqConsumer(
-        RabbitMqConnectionManager connectionManager,
-        RabbitMqTopology topology,
         RabbitMqMessageHandler messageHandler,
+        RabbitMqChannelManager channelManager;
+        RabbitMqConsumerOptions options;
         ILogger<RabbitMqConsumer> logger)
     {
-        _connectionManager = connectionManager;
-        _topology = topology;
+       
+
         _messageHandler = messageHandler;
+        _channelManager = channelManager;
         _logger = logger;
+        _options = options;
     }
 
     protected override async Task ExecuteAsync(
-        CancellationToken stoppingToken)
+        CancellationToken cancellationToken)
     {
         _logger.LogInformation(
             "RabbitMQ consumer starting.");
 
-        var connection =
-            await _connectionManager.GetConnectionAsync(
-                stoppingToken);
+
 
         await using var channel =
-            await connection.CreateChannelAsync(
-                cancellationToken: stoppingToken);
+            await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
-        await _topology.DeclareAsync(
-            channel,
-            stoppingToken);
 
         await channel.BasicQosAsync(
             prefetchSize: 0,
@@ -55,17 +50,25 @@ public sealed class RabbitMqConsumer : BackgroundService
         {
             await _messageHandler.HandleAsync(
                 channel,
-                args.DeliveryTag,
-                args.Body,
-                stoppingToken);
+                args,
+                cancellationToken);
         };
 
         await channel.BasicConsumeAsync(
-            queue: RabbitMqNames.Queue("accounting"),
-            autoAck: false,
-            consumer: consumer,
-            cancellationToken: stoppingToken);
+                queue,
+                autoAck: false,
+                consumer);
 
+        await channel.BasicQosAsync(
+                prefetchSize: 0,
+                prefetchCount: _options.PrefetchCount,
+                global: false,
+                cancellationToken);
+    
+        await channel.BasicAckAsync(
+                deliveryTag: args.DeliveryTag,
+                multiple: false,
+                cancellationToken);
         _logger.LogInformation(
             "RabbitMQ consumer started.");
 
@@ -73,7 +76,7 @@ public sealed class RabbitMqConsumer : BackgroundService
         {
             await Task.Delay(
                 Timeout.Infinite,
-                stoppingToken);
+                cancellationToken);
         }
         catch (OperationCanceledException)
         {

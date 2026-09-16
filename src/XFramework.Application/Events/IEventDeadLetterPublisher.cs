@@ -9,4 +9,10 @@ public interface IEventDeadLetterPublisher
         string routingKey,
         Exception exception,
         CancellationToken cancellationToken = default);
+
+    Task PublishRawAsync(
+        byte[] body,
+        string? routingKey,
+        Exception exception,
+        CancellationToken cancellationToken = default);
 }
