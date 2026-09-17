@@ -1,22 +1,9 @@
-using XFramework.Application.Contracts.Authorization;
+using XFramework.Application.Contracts.Abstractions;
 
 namespace XFramework.Application.Contracts.Identity;
 
-public interface IRoleAppService
-    : ICrudAppService<
-        RoleDto,
-        Guid,
-        PagedRequest,
-        RoleCreateDto,
-        RoleUpdateDto>
+public interface IRoleAppService : ICrudAppService<RoleDto, Guid, RoleCreateDto, RoleUpdateDto>
 {
-    Task<IReadOnlyList<RolePermissionDto>>
-        GetPermissionsAsync(
-            Guid roleId,
-            CancellationToken cancellationToken = default);
-
-    Task SetPermissionsAsync(
-        Guid roleId,
-        IReadOnlyCollection<Guid> permissionIds,
-        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<RolePermissionDto>> GetPermissionsAsync(Guid roleId, CancellationToken cancellationToken = default);
+    Task SetPermissionsAsync(Guid roleId, IReadOnlyCollection<Guid> permissionIds, CancellationToken cancellationToken = default);
 }

@@ -30,9 +30,9 @@ public sealed class PermissionDefinition
         Parent = parent;
     }
 
-    internal void AddChild(
-        PermissionDefinition permission)
+    public void AddChild(PermissionDefinition permission)
     {
+        ArgumentNullException.ThrowIfNull(permission);
         _children.Add(permission);
     }
 }

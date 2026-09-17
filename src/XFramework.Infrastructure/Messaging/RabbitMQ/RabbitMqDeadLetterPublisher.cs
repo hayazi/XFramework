@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
@@ -9,9 +10,8 @@ namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 public sealed class RabbitMqDeadLetterPublisher
     : IEventDeadLetterPublisher
 {
-    private readonly RabbitMqConnectionManager _connectionManager;
+    private readonly RabbitMqChannelManager _channelManager;
     private readonly RabbitMqOptions _options;
-    private readonly IEventRoutingResolver _routingResolver;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -20,12 +20,43 @@ public sealed class RabbitMqDeadLetterPublisher
 
     public RabbitMqDeadLetterPublisher(
         RabbitMqChannelManager channelManager,
-        IOptions<RabbitMqOptions> options,
-        IEventRoutingResolver routingResolver)
+        IOptions<RabbitMqOptions> options)
     {
         _channelManager = channelManager;
         _options = options.Value;
-        _routingResolver = routingResolver;
+    }
+
+    public async Task PublishRawAsync(
+        byte[] body,
+        string? routingKey,
+        Exception exception,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        ArgumentNullException.ThrowIfNull(exception);
+
+        await using var channel =
+            await _channelManager.CreatePublisherChannelAsync(cancellationToken);
+
+        var properties = new BasicProperties
+        {
+            Persistent = true,
+            ContentType = "application/octet-stream",
+            ContentEncoding = "utf-8",
+            Headers = new Dictionary<string, object?>
+            {
+                ["error-type"] = exception.GetType().FullName ?? "Unknown",
+                ["error-message"] = exception.Message
+            }
+        };
+
+        await channel.BasicPublishAsync(
+            exchange: RabbitMqNames.DeadLetterExchange,
+            routingKey: string.IsNullOrWhiteSpace(routingKey) ? "unknown" : routingKey,
+            mandatory: true,
+            basicProperties: properties,
+            body: body,
+            cancellationToken: cancellationToken);
     }
 
     public async Task PublishAsync(
@@ -37,13 +68,9 @@ public sealed class RabbitMqDeadLetterPublisher
         ArgumentNullException.ThrowIfNull(envelope);
         ArgumentNullException.ThrowIfNull(exception);
 
-        var connection =
-            await _connectionManager.GetConnectionAsync(
-                cancellationToken);
-
         await using var channel =
-            await connection.CreateChannelAsync(
-                cancellationToken: cancellationToken);
+            await _channelManager.CreatePublisherChannelAsync(
+                cancellationToken);
 
         var deadLetterEnvelope = envelope with
         {

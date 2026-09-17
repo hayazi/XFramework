@@ -11,6 +11,7 @@
     <ProjectReference Include="..\XFramework.Application.Contracts\XFramework.Application.Contracts.csproj" />
     <ProjectReference Include="..\XFramework.Application\XFramework.Application.csproj" />
     <ProjectReference Include="..\XFramework.EntityFrameworkCore\XFramework.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\XFramework.Infrastructure\XFramework.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

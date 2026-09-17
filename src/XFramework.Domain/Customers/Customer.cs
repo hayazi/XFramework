@@ -1,34 +1,24 @@
-using XFramework.Core.Domain;
+using XFramework.Domain.Entities;
 
 namespace XFramework.Domain.Customers;
 
-public class Customer : Entity<Guid>
+public sealed class Customer : Entity<Guid>
 {
     public string Code { get; private set; } = string.Empty;
-
     public string Name { get; private set; } = string.Empty;
-
     public string? Phone { get; private set; }
 
-    protected Customer()
-    {
-    }
+    private Customer() { }
 
-    public Customer(
-        string code,
-        string name,
-        string? phone = null)
+    public Customer(string code, string name, string? phone = null)
     {
         Id = Guid.NewGuid();
-
         Code = code;
         Name = name;
         Phone = phone;
     }
 
-    public void Update(
-        string name,
-        string? phone)
+    public void Update(string name, string? phone)
     {
         Name = name;
         Phone = phone;

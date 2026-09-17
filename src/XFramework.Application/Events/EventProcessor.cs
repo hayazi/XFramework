@@ -1,5 +1,5 @@
-using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using XFramework.Application.Abstractions;
 using XFramework.Application.Contracts.Events;
 using XFramework.Domain.Events;
 
@@ -7,18 +7,24 @@ namespace XFramework.Application.Events;
 
 public sealed class EventProcessor : IEventProcessor
 {
-    private readonly IEventTypeRegistry _eventTypeRegistry;
-    private readonly IIdempotencyService _idempotencyService;
+    private readonly IEventTypeRegistry _registry;
+    private readonly IEventSerializer _serializer;
+    private readonly IIdempotencyService _idempotency;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IServiceProvider _serviceProvider;
 
     public EventProcessor(
-        IEventTypeRegistry eventTypeRegistry,
-        IIdempotencyService idempotencyService,
-        IUnitOfWork unitOfWork)
+        IEventTypeRegistry registry,
+        IEventSerializer serializer,
+        IIdempotencyService idempotency,
+        IUnitOfWork unitOfWork,
+        IServiceProvider serviceProvider)
     {
-        _eventTypeRegistry = eventTypeRegistry;
-        _idempotencyService = idempotencyService;
+        _registry = registry;
+        _serializer = serializer;
+        _idempotency = idempotency;
         _unitOfWork = unitOfWork;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task ProcessAsync(
@@ -27,161 +33,91 @@ public sealed class EventProcessor : IEventProcessor
     {
         ArgumentNullException.ThrowIfNull(envelope);
 
-        await using var scope =
-            _scopeFactory.CreateAsyncScope();
-
-        var unitOfWork =
-            scope.ServiceProvider
-                .GetRequiredService<IUnitOfWork>();
-
-        var idempotencyService =
-            scope.ServiceProvider
-                .GetRequiredService<IIdempotencyService>();
-
-        var eventType =
-            ResolveEventType(envelope);
-
-        var domainEvent =
-            DeserializeEvent(
-                envelope,
-                eventType);
-
-        await using var transaction =
-            await unitOfWork.BeginTransactionAsync(
-                cancellationToken);
-
+        Type eventType;
         try
         {
-            await InvokeHandlerAsync(
-                scope.ServiceProvider,
-                idempotencyService,
-                envelope,
-                domainEvent,
-                eventType,
-                cancellationToken);
-
-            await unitOfWork.CommitTransactionAsync(
-                cancellationToken);
-        }
-       //catch
-       catch (InvalidOperationException ex)
-        {
-            await unitOfWork.RollbackTransactionAsync(
-                cancellationToken);
-
-            throw;
-        }
-    }
-
-    private Type ResolveEventType(
-        EventEnvelope envelope)
-    {
-        if (!_eventTypeRegistry.TryGetEventType(
+            eventType = _registry.GetEventType(
                 envelope.EventType,
-                envelope.EventVersion,
-                out var eventType)
-            || eventType is null)
+                envelope.EventVersion);
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException)
         {
             throw new NonRetryableEventException(
-                $"Unknown or unsupported event: " +
-                $"{envelope.EventType}/{envelope.EventVersion}");
+                $"Event '{envelope.EventType}/{envelope.EventVersion}' " +
+                "is not registered.",
+                exception);
         }
 
-        return eventType;
-    }
+        var domainEvent = _serializer.Deserialize(
+            envelope.EventType,
+            envelope.EventVersion,
+            envelope.Payload);
 
-    private static object DeserializeEvent(
-        EventEnvelope envelope,
-        Type eventType)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize(
-                       envelope.Payload,
-                       eventType)
-                   ?? throw new NonRetryableEventException(
-                       "Event payload is null.");
-        }
-        catch (JsonException ex)
-        {
-            throw new NonRetryableEventException(
-                $"Invalid payload for event " +
-                $"{envelope.EventType}/{envelope.EventVersion}.",
-                ex);
-        }
-    }
+        var handlerServiceType = typeof(IEventHandler<>).MakeGenericType(eventType);
+        var handler = _serviceProvider.GetService(handlerServiceType)
+            ?? throw new EventHandlerNotRegisteredException(
+                $"No handler registered for " +
+                $"{envelope.EventType}/{envelope.EventVersion}.");
 
-    private static async Task InvokeHandlerAsync(
-        IServiceProvider serviceProvider,
-        IIdempotencyService idempotencyService,
-        EventEnvelope envelope,
-        object domainEvent,
-        Type eventType,
-        CancellationToken cancellationToken)
-    {
-        var handlerInterfaceType =
-            typeof(IEventHandler<>)
-                .MakeGenericType(eventType);
-
-        var handler =
-            serviceProvider
-                .GetRequiredService(handlerInterfaceType);
-
-        var handlerName =
-            handler.GetType().FullName
+        var handlerName = handler.GetType().FullName
             ?? handler.GetType().Name;
 
-        var shouldProcess =
-            await idempotencyService
-                .TryBeginProcessingAsync(
+        await using var transaction =
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var firstProcessing =
+                await _idempotency.TryBeginProcessingAsync(
                     envelope.EventId,
                     handlerName,
                     envelope.CorrelationId?.ToString(),
                     cancellationToken);
 
-        if (!shouldProcess)
-        {
-            return;
-        }
+            if (!firstProcessing)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return;
+            }
 
-        var method =
-            handlerInterfaceType.GetMethod(
-                nameof(
-                    IEventHandler<IDomainEvent>
-                        .HandleAsync));
+            var method = handlerServiceType.GetMethod(
+                nameof(IEventHandler<IDomainEvent>.HandleAsync),
+                BindingFlags.Instance | BindingFlags.Public);
 
-        if (method is null)
-        {
-            throw new InvalidOperationException(
-                $"HandleAsync was not found " +
-                $"for {handlerName}.");
-        }
+            if (method is null)
+            {
+                throw new InvalidOperationException(
+                    $"Event handler method was not found for " +
+                    $"'{eventType.FullName}'.");
+            }
 
-        var result =
-            method.Invoke(
+            var task = method.Invoke(
                 handler,
-                new[]
-                {
-                    domainEvent,
-                    cancellationToken
-                });
+                [domainEvent, cancellationToken]) as Task;
 
-        if (result is not Task task)
-        {
-            throw new InvalidOperationException(
-                $"Handler {handlerName} " +
-                $"did not return Task.");
+            if (task is null)
+            {
+                throw new InvalidOperationException(
+                    "Event handler did not return a Task.");
+            }
+
+            await task;
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
-
-        await task;
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }
 
 public sealed class EventHandlerNotRegisteredException
     : NonRetryableEventException
 {
-    public EventHandlerNotRegisteredException(
-        string message)
+    public EventHandlerNotRegisteredException(string message)
         : base(message)
     {
     }

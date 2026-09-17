@@ -1,22 +1,14 @@
-using XFramework.Core.Domain;
+using XFramework.Domain.Entities;
 
 namespace XFramework.Application.Abstractions;
 
-public interface IRepository<TEntity, TKey>
-    where TEntity : Entity<TKey>
+public interface IRepository<TEntity, in TKey> where TEntity : Entity<TKey>
 {
-    Task<TEntity?> GetAsync(TKey id);
-
-    Task<List<TEntity>> GetListAsync(
-        int skipCount,
-        int maxResultCount,
-        string? sorting);
-
-    Task<int> CountAsync();
-
-    Task InsertAsync(TEntity entity);
-
-    Task UpdateAsync(TEntity entity);
-
-    Task DeleteAsync(TEntity entity);
+    Task<TEntity?> GetAsync(TKey id, CancellationToken cancellationToken = default);
+    IQueryable<TEntity> GetQueryable();
+    Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+    Task<List<TEntity>> ToListAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
 }

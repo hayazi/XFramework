@@ -1,75 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using XFramework.Application.Contracts.Services;
-
+using XFramework.Application.Abstractions;
+using XFramework.Domain.Entities;
+using XFramework.EntityFrameworkCore.Persistence;
 namespace XFramework.EntityFrameworkCore.Repositories;
-
-public class EfCoreRepository<TEntity, TKey>
-    : IRepository<TEntity, TKey>
-    where TEntity : class
-{
-    protected XFrameworkDbContext DbContext { get; }
-
-    protected DbSet<TEntity> DbSet =>
-        DbContext.Set<TEntity>();
-
-    public EfCoreRepository(
-        XFrameworkDbContext dbContext)
-    {
-        DbContext = dbContext;
-    }
-
-    public virtual async Task<TEntity?> GetAsync(
-        TKey id,
-        CancellationToken cancellationToken = default)
-    {
-        return await DbSet.FindAsync(
-            new object?[] { id },
-            cancellationToken);
-    }
-
-    public virtual IQueryable<TEntity> GetQueryable()
-    {
-        return DbSet.AsQueryable();
-    }
-
-    public virtual Task<int> CountAsync(
-        IQueryable<TEntity> query,
-        CancellationToken cancellationToken = default)
-    {
-        return query.CountAsync(cancellationToken);
-    }
-
-    public virtual Task<List<TEntity>> ToListAsync(
-        IQueryable<TEntity> query,
-        CancellationToken cancellationToken = default)
-    {
-        return query.ToListAsync(cancellationToken);
-    }
-
-    public virtual async Task AddAsync(
-        TEntity entity,
-        CancellationToken cancellationToken = default)
-    {
-        await DbSet.AddAsync(
-            entity,
-            cancellationToken);
-    }
-
-    public virtual Task UpdateAsync(
-        TEntity entity,
-        CancellationToken cancellationToken = default)
-    {
-        DbSet.Update(entity);
-
-        return Task.CompletedTask;
-    }
-
-    public virtual Task DeleteAsync(
-        TEntity entity,
-        CancellationToken cancellationToken = default)
-    {
-        DbSet.Remove(entity);
-
-        return Task.CompletedTask;
-    }
+public class EfCoreRepository<TEntity,TKey>(XFrameworkDbContext dbContext):IRepository<TEntity,TKey> where TEntity:Entity<TKey>
+{ protected XFrameworkDbContext DbContext{get;}=dbContext; protected DbSet<TEntity> DbSet=>DbContext.Set<TEntity>();
+ public Task<TEntity?> GetAsync(TKey id,CancellationToken ct=default)=>DbSet.FindAsync([id],ct).AsTask();
+ public IQueryable<TEntity> GetQueryable()=>DbSet.AsQueryable();
+ public Task<int> CountAsync(IQueryable<TEntity> q,CancellationToken ct=default)=>q.CountAsync(ct);
+ public Task<List<TEntity>> ToListAsync(IQueryable<TEntity> q,CancellationToken ct=default)=>q.ToListAsync(ct);
+ public async Task AddAsync(TEntity e,CancellationToken ct=default)=>await DbSet.AddAsync(e,ct);
+ public Task UpdateAsync(TEntity e,CancellationToken ct=default){DbSet.Update(e);return Task.CompletedTask;}
+ public Task DeleteAsync(TEntity e,CancellationToken ct=default){DbSet.Remove(e);return Task.CompletedTask;}
 }

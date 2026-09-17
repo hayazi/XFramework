@@ -1,3 +1,5 @@
+using XFramework.Application.Validation;
+
 namespace XFramework.Application.Exceptions;
 
 public sealed class ValidationException : XFrameworkException
@@ -9,5 +11,16 @@ public sealed class ValidationException : XFrameworkException
         : base("One or more validation errors occurred.")
     {
         Errors = new Dictionary<string, string[]>(errors);
+    }
+
+    public ValidationException(
+        IReadOnlyCollection<ValidationError> errors)
+        : this(errors
+            .GroupBy(x => x.PropertyName, StringComparer.Ordinal)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(x => x.Message).ToArray(),
+                StringComparer.Ordinal))
+    {
     }
 }

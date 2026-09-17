@@ -1,31 +1,22 @@
-using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using XFramework.Application.Contracts.Events;
 using XFramework.Application.Events;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ;
 
-public sealed class RabbitMqRetryPublisher
-    : IEventRetryPublisher
+public sealed class RabbitMqRetryPublisher : IEventRetryPublisher
 {
-    private readonly RabbitMqConnectionManager _connectionManager;
+    private readonly RabbitMqChannelManager _channelManager;
     private readonly RabbitMqOptions _options;
-    private readonly IEventRoutingResolver _routingResolver;
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     public RabbitMqRetryPublisher(
         RabbitMqChannelManager channelManager,
-        IOptions<RabbitMqOptions> options,
-        IEventRoutingResolver routingResolver)
+        IOptions<RabbitMqOptions> options)
     {
         _channelManager = channelManager;
         _options = options.Value;
-        _routingResolver = routingResolver;
     }
 
     public async Task PublishRetryAsync(
@@ -37,15 +28,11 @@ public sealed class RabbitMqRetryPublisher
         ArgumentNullException.ThrowIfNull(envelope);
 
         var module = GetModule(routingKey);
-
-        var delayName =
-            RabbitMqRetryDelayNames.FromSeconds(
-                (int)delay.TotalSeconds);
-
-        var retryQueue =
-            RabbitMqNames.RetryQueue(
-                module,
-                delayName);
+        var delayName = RabbitMqRetryDelayNames.FromSeconds(
+            checked((int)delay.TotalSeconds));
+        var retryRoutingKey = RabbitMqNames.RetryBindingKey(
+            module,
+            delayName);
 
         var retryEnvelope = envelope with
         {
@@ -53,18 +40,11 @@ public sealed class RabbitMqRetryPublisher
             LastAttemptOnUtc = DateTime.UtcNow
         };
 
-        var connection =
-            await _connectionManager.GetConnectionAsync(
+        await using var channel =
+            await _channelManager.CreatePublisherChannelAsync(
                 cancellationToken);
 
-        await using var channel =
-            await connection.CreateChannelAsync(
-                cancellationToken: cancellationToken);
-
-        var body = Encoding.UTF8.GetBytes(
-            JsonSerializer.Serialize(
-                retryEnvelope,
-                JsonOptions));
+        var body = JsonSerializer.SerializeToUtf8Bytes(retryEnvelope);
 
         var properties = new BasicProperties
         {
@@ -72,43 +52,30 @@ public sealed class RabbitMqRetryPublisher
             ContentType = "application/json",
             ContentEncoding = "utf-8",
             MessageId = retryEnvelope.EventId.ToString(),
-            Type = retryEnvelope.EventType
-        };
-
-        properties.Headers = new Dictionary<string, object?>
-        {
-            ["event-id"] =
-                retryEnvelope.EventId.ToString(),
-
-            ["event-type"] =
-                retryEnvelope.EventType,
-
-            ["event-version"] =
-                retryEnvelope.EventVersion,
-
-            ["retry-count"] =
-                retryEnvelope.RetryCount,
-
-            ["original-routing-key"] =
-                routingKey
+            Type = retryEnvelope.EventType,
+            Headers = new Dictionary<string, object?>
+            {
+                ["event-id"] = retryEnvelope.EventId.ToString(),
+                ["event-type"] = retryEnvelope.EventType,
+                ["event-version"] = retryEnvelope.EventVersion,
+                ["retry-count"] = retryEnvelope.RetryCount,
+                ["original-routing-key"] = routingKey
+            }
         };
 
         await channel.BasicPublishAsync(
             exchange: RabbitMqNames.RetryExchange,
-            routingKey: routingKey,
+            routingKey: retryRoutingKey,
             mandatory: true,
             basicProperties: properties,
             body: body,
             cancellationToken: cancellationToken);
     }
 
-    private static string GetModule(
-        string routingKey)
+    private static string GetModule(string routingKey)
     {
-        var module =
-            routingKey.Split(
-                '.',
-                StringSplitOptions.RemoveEmptyEntries)
+        var module = routingKey
+            .Split('.', StringSplitOptions.RemoveEmptyEntries)
             .FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(module))

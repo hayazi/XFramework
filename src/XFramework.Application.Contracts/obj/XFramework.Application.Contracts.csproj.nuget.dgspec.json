@@ -36,8 +36,8 @@
             "framework": "net10.0",
             "targetAlias": "net10.0",
             "projectReferences": {
-              "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj": {
-                "projectPath": "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj"
+              "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj": {
+                "projectPath": "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj"
               }
             }
           }
@@ -74,7 +74,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -352,14 +352,14 @@
         }
       }
     },
-    "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj": {
+    "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj",
-        "projectName": "XFramework.Core",
-        "projectPath": "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj",
+        "projectUniqueName": "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj",
+        "projectName": "XFramework.Domain",
+        "projectPath": "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj",
         "packagesPath": "C:\\Users\\H_Ayazi\\.nuget\\packages\\",
-        "outputPath": "F:\\XFramework\\src\\XFramework.Core\\obj\\",
+        "outputPath": "F:\\XFramework\\src\\XFramework.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -418,7 +418,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

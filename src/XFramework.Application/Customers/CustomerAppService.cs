@@ -1,60 +1,9 @@
 using XFramework.Application.Abstractions;
+using XFramework.Application.Attributes;
 using XFramework.Application.Contracts.Customers;
 using XFramework.Application.Services;
 using XFramework.Domain.Customers;
-using XFramework.Application.Attributes;
 namespace XFramework.Application.Customers;
-
-[Authorize("CRM.Customer")]
-[UnitOfWork]
 [Validate]
-public class CustomerAppService
-    : CrudAppService<
-        Customer,
-        CustomerDto,
-        Guid,
-        CustomerCreateDto,
-        CustomerUpdateDto>,
-      ICustomerAppService
-{
-    public CustomerAppService(
-        IRepository<Customer, Guid> repository,
-        IUnitOfWork unitOfWork)
-        : base(repository, unitOfWork)
-    {
-    }
-
-    protected override CustomerDto MapToDto(
-        Customer entity)
-    {
-        return new CustomerDto
-        {
-            Id = entity.Id,
-            Code = entity.Code,
-            Name = entity.Name,
-            Phone = entity.Phone
-        };
-    }
-
-    protected override Task<Customer> MapToEntityAsync(
-        CustomerCreateDto input)
-    {
-        var customer = new Customer(
-            input.Code,
-            input.Name,
-            input.Phone);
-
-        return Task.FromResult(customer);
-    }
-
-    protected override Task MapToEntityAsync(
-        CustomerUpdateDto input,
-        Customer entity)
-    {
-        entity.Update(
-            input.Name,
-            input.Phone);
-
-        return Task.CompletedTask;
-    }
-}
+public sealed class CustomerAppService(IRepository<Customer,Guid> repository,IUnitOfWork unitOfWork):CrudAppService<Customer,CustomerDto,Guid,CustomerCreateDto,CustomerUpdateDto>(repository,unitOfWork),ICustomerAppService
+{ protected override CustomerDto MapToDto(Customer e)=>new(){Id=e.Id,Code=e.Code,Name=e.Name,Phone=e.Phone}; protected override Task<Customer> MapToEntityAsync(CustomerCreateDto i,CancellationToken ct)=>Task.FromResult(new Customer(i.Code,i.Name,i.Phone)); protected override Task MapToEntityAsync(CustomerUpdateDto i,Customer e,CancellationToken ct){e.Update(i.Name,i.Phone);return Task.CompletedTask;} }

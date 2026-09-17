@@ -1,5 +1,6 @@
 using Castle.DynamicProxy;
 using XFramework.Application.Attributes;
+using XFramework.Application.Authorization;
 using XFramework.Application.Contracts.Authorization;
 using XFramework.Application.Metadata;
 
@@ -44,7 +45,7 @@ public sealed class AuthorizationInterceptor : IInterceptor
 
             if (!granted)
             {
-                throw new AuthorizationException(
+                throw new Exceptions.ForbiddenException(
                     permission);
             }
         }
@@ -54,8 +55,14 @@ public sealed class AuthorizationInterceptor : IInterceptor
         GetRequiredPermissions(
             IInvocation invocation)
     {
+        ArgumentNullException.ThrowIfNull(invocation);
+
+        var target = invocation.InvocationTarget
+            ?? throw new InvalidOperationException(
+                "Unable to determine the invocation target.");
+
         var implementationType =
-            invocation.InvocationTarget.GetType();
+            invocation.TargetType ?? target.GetType();
 
         var method =
             invocation.Method;

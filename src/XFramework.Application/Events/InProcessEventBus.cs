@@ -1,26 +1,22 @@
-using Microsoft.Extensions.DependencyInjection;
+using XFramework.Application.Contracts.Events;
 
 namespace XFramework.Application.Events;
 
+/// <summary>
+/// Minimal in-process event bus useful for tests and local scenarios.
+/// RabbitMQ is the production transport implementation.
+/// </summary>
 public sealed class InProcessEventBus : IEventBus
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IEventProcessor _processor;
 
-    public InProcessEventBus(
-        IServiceProvider serviceProvider)
+    public InProcessEventBus(IEventProcessor processor)
     {
-        _serviceProvider = serviceProvider;
+        _processor = processor;
     }
 
-    public async Task PublishAsync(
-        string eventType,
-        string payload,
-        CancellationToken cancellationToken = default)
-    {
-        // Temporary implementation.
-        // The real message-broker implementation
-        // will be added later.
-
-        await Task.CompletedTask;
-    }
+    public Task PublishAsync(
+        EventEnvelope envelope,
+        CancellationToken cancellationToken = default) =>
+        _processor.ProcessAsync(envelope, cancellationToken);
 }

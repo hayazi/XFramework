@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using XFramework.Application.Events;
 
 namespace XFramework.Infrastructure.Messaging.RabbitMQ.DependencyInjection;
 
@@ -12,41 +13,40 @@ public static class RabbitMqServiceCollectionExtensions
         services
             .AddOptions<RabbitMqOptions>()
             .BindConfiguration(RabbitMqOptions.SectionName)
-            .Validate(
-                options => !string.IsNullOrWhiteSpace(options.HostName),
+            .Validate(x => !string.IsNullOrWhiteSpace(x.HostName),
                 "RabbitMQ HostName is required.")
-            .Validate(
-                options => options.Port > 0,
+            .Validate(x => x.Port > 0,
                 "RabbitMQ Port must be greater than zero.")
             .ValidateOnStart();
 
         services
             .AddOptions<RabbitMqRetryOptions>()
             .BindConfiguration(RabbitMqRetryOptions.SectionName)
-            .Validate(
-                options =>
-                    options.DelaysInSeconds is { Length: > 0 },
+            .Validate(x => x.DelaysInSeconds is { Length: > 0 },
                 "RabbitMQ retry delays are required.")
             .ValidateOnStart();
 
+        services
+            .AddOptions<RabbitMqConsumerOptions>()
+            .BindConfiguration(RabbitMqConsumerOptions.SectionName)
+            .Validate(x => x.PrefetchCount > 0,
+                "RabbitMQ consumer PrefetchCount must be greater than zero.")
+            .ValidateOnStart();
+
         services.AddSingleton<RabbitMqConnectionFactory>();
-
         services.AddSingleton<RabbitMqConnectionManager>();
-
         services.AddSingleton<RabbitMqChannelManager>();
-
         services.AddSingleton<RabbitMqTopology>();
 
         services.AddSingleton<IEventBus, RabbitMqEventBus>();
+        services.AddSingleton<IEventRetryPublisher, RabbitMqRetryPublisher>();
+        services.AddSingleton<IEventDeadLetterPublisher, RabbitMqDeadLetterPublisher>();
 
-        services.AddSingleton<IEventRetryPublisher,
-            RabbitMqRetryPublisher>();
-
-        services.AddSingleton<IEventDeadLetterPublisher,
-            RabbitMqDeadLetterPublisher>();
+        // A message handler depends on scoped application services.
+        // The hosted consumer resolves it from a scope for each delivery.
+        services.AddScoped<RabbitMqMessageHandler>();
 
         services.AddHostedService<RabbitMqTopologyHostedService>();
-
         services.AddHostedService<RabbitMqConsumerHostedService>();
 
         return services;

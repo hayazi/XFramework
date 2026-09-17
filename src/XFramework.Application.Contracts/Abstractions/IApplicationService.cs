@@ -1,5 +1,3 @@
 namespace XFramework.Application.Contracts.Abstractions;
 
-public interface IApplicationService
-{
-}
+public interface IApplicationService { }

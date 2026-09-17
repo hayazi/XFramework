@@ -1,48 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using XFramework.Application.Idempotency;
-
+using XFramework.Application.Events;
+using XFramework.EntityFrameworkCore.Persistence;
 namespace XFramework.EntityFrameworkCore.Idempotency;
-
-public sealed class IdempotencyService
-    : IIdempotencyService
+public sealed class IdempotencyService(XFrameworkDbContext db):IIdempotencyService
 {
-    private readonly XFrameworkDbContext _dbContext;
-
-    public IdempotencyService(
-        XFrameworkDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public async Task<bool> TryBeginProcessingAsync(
-        Guid eventId,
-        string handlerName,
-        string? correlationId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var entity = new ProcessedMessage
-        {
-            EventId = eventId,
-            HandlerName = handlerName,
-            ProcessedOnUtc = DateTime.UtcNow,
-            CorrelationId = correlationId
-        };
-
-        _dbContext.ProcessedMessages.Add(entity);
-
-        try
-        {
-            await _dbContext.SaveChangesAsync(
-                cancellationToken);
-
-            return true;
-        }
-        catch (DbUpdateException)
-        {
-            _dbContext.Entry(entity).State =
-                EntityState.Detached;
-
-            return false;
-        }
-    }
+ public async Task<bool> TryBeginProcessingAsync(Guid eventId,string handlerName,string? correlationId=null,CancellationToken ct=default)
+ {
+   var exists=await db.ProcessedMessages.AnyAsync(x=>x.EventId==eventId&&x.HandlerName==handlerName,ct); if(exists)return false;
+   db.ProcessedMessages.Add(new ProcessedMessage{EventId=eventId,HandlerName=handlerName,ProcessedOnUtc=DateTime.UtcNow,CorrelationId=correlationId}); return true;
+ }
 }

@@ -1,21 +1,41 @@
 using XFramework.Application.Outbox;
+
 namespace XFramework.EntityFrameworkCore.Outbox;
 
-public sealed class OutboxRetryPolicy :IOutboxRetryPolicy
+public sealed class OutboxRetryPolicy : IOutboxRetryPolicy
 {
-    public const int MaxRetryCount = 10;
+    private static readonly TimeSpan[] Delays =
+    [
+        TimeSpan.FromSeconds(5),
+        TimeSpan.FromSeconds(30),
+        TimeSpan.FromMinutes(2),
+        TimeSpan.FromMinutes(10),
+        TimeSpan.FromMinutes(30)
+    ];
 
-    public bool CanRetry(int retryCount)
+    public bool ShouldRetry(
+        int retryCount,
+        Exception exception)
     {
-        return retryCount < MaxRetryCount;
+        if (retryCount >= Delays.Length)
+        {
+            return false;
+        }
+
+        return exception is TimeoutException
+            or HttpRequestException
+            or TaskCanceledException;
     }
 
     public TimeSpan GetDelay(int retryCount)
     {
-        var seconds = Math.Min(
-            Math.Pow(2, retryCount),
-            300);
+        if (retryCount < 0)
+        {
+            return Delays[0];
+        }
 
-        return TimeSpan.FromSeconds(seconds);
+        return retryCount < Delays.Length
+            ? Delays[retryCount]
+            : Delays[^1];
     }
 }

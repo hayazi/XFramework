@@ -1,72 +1,65 @@
 using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
+using XFramework.Application.Contracts.Abstractions;
+using XFramework.Application.Interceptors;
+using XFramework.Application.Validation;
 
 namespace XFramework.Application.Discovery;
 
-internal static class ApplicationServiceRegistration
+public static class ApplicationServiceRegistration
 {
-    public static void Register(
-        IServiceCollection services,
-        IReadOnlyList<ApplicationServiceDescriptor> descriptors)
+    public static void Register(IServiceCollection services)
     {
+        var assembly = typeof(ApplicationServiceRegistration).Assembly;
+
+        services.AddSingleton<ProxyGenerator>();
+
+        var descriptors = ApplicationServiceDiscovery.Discover(assembly);
+
         foreach (var descriptor in descriptors)
         {
-            RegisterImplementation(
-                services,
-                descriptor);
+            services.AddScoped(descriptor.ImplementationType);
 
             foreach (var serviceType in descriptor.ServiceTypes)
             {
-                RegisterService(
-                    services,
-                    serviceType,
-                    descriptor);
-            }
-        }
-    }
-
-    private static void RegisterImplementation(
-        IServiceCollection services,
-        ApplicationServiceDescriptor descriptor)
-    {
-        services.AddScoped(
-            descriptor.ImplementationType);
-    }
-
-    private static void RegisterService(
-        IServiceCollection services,
-        Type serviceType,
-        ApplicationServiceDescriptor descriptor)
-    {
-        services.AddScoped(
-            serviceType,
-            provider =>
-            {
-                var implementation =
-                    provider.GetRequiredService(
-                        descriptor.ImplementationType);
-
-                var proxyGenerator =
-                    provider.GetRequiredService<ProxyGenerator>();
-
-                var interceptors =
-                    new IInterceptor[]
+                services.AddScoped(serviceType, sp =>
+                {
+                    var target = sp.GetRequiredService(descriptor.ImplementationType);
+                    var generator = sp.GetRequiredService<ProxyGenerator>();
+                    var interceptors = new IInterceptor[]
                     {
-                        provider.GetRequiredService<
-                            Interceptors.AuthorizationInterceptor>(),
-                            
-                        provider.GetRequiredService<
-                            Interceptors.ValidationInterceptor>(),
-
-                        provider.GetRequiredService<
-                            Interceptors.UnitOfWorkInterceptor>()
+                        sp.GetRequiredService<ApplicationServicePipelineInterceptor>()
                     };
 
-                return proxyGenerator
-                    .CreateInterfaceProxyWithTarget(
+                    return generator.CreateInterfaceProxyWithTarget(
                         serviceType,
-                        implementation,
+                        target,
                         interceptors);
-            });
+                });
+            }
+        }
+
+        RegisterValidators(services, assembly);
+    }
+
+    private static void RegisterValidators(
+        IServiceCollection services,
+        System.Reflection.Assembly assembly)
+    {
+        foreach (var type in assembly.GetTypes())
+        {
+            if (!type.IsClass || type.IsAbstract)
+                continue;
+
+            var validatorInterfaces = type.GetInterfaces()
+                .Where(x => x.IsGenericType
+                    && x.GetGenericTypeDefinition() == typeof(IValidator<>))
+                .ToArray();
+
+            foreach (var validatorInterface in validatorInterfaces)
+            {
+                services.AddScoped(validatorInterface, type);
+            }
+        }
     }
 }

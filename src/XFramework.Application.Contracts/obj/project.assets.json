@@ -2,28 +2,28 @@
   "version": 4,
   "targets": {
     "net10.0": {
-      "XFramework.Core/1.0.0": {
+      "XFramework.Domain/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "compile": {
-          "bin/placeholder/XFramework.Core.dll": {}
+          "bin/placeholder/XFramework.Domain.dll": {}
         },
         "runtime": {
-          "bin/placeholder/XFramework.Core.dll": {}
+          "bin/placeholder/XFramework.Domain.dll": {}
         }
       }
     }
   },
   "libraries": {
-    "XFramework.Core/1.0.0": {
+    "XFramework.Domain/1.0.0": {
       "type": "project",
-      "path": "../XFramework.Core/XFramework.Core.csproj",
-      "msbuildProject": "../XFramework.Core/XFramework.Core.csproj"
+      "path": "../XFramework.Domain/XFramework.Domain.csproj",
+      "msbuildProject": "../XFramework.Domain/XFramework.Domain.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "XFramework.Core >= 1.0.0"
+      "XFramework.Domain >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -62,8 +62,8 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj": {
-              "projectPath": "F:\\XFramework\\src\\XFramework.Core\\XFramework.Core.csproj"
+            "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj": {
+              "projectPath": "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj"
             }
           }
         }
@@ -100,7 +100,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

@@ -61,10 +61,10 @@ public sealed class RabbitMqEventBus : IEventBus
             cancellationToken: cancellationToken);
     }
 
-    private static Dictionary<string, object> CreateHeaders(
+    private static Dictionary<string, object?> CreateHeaders(
         EventEnvelope envelope)
     {
-        return new Dictionary<string, object>
+        return new Dictionary<string, object?>
         {
             ["event-id"] = envelope.EventId.ToString(),
             ["event-type"] = envelope.EventType,

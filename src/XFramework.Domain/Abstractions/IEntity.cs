@@ -1,4 +1,4 @@
-namespace XFramework.Core.Abstractions;
+namespace XFramework.Domain.Abstractions;
 
 public interface IEntity<TKey>
 {

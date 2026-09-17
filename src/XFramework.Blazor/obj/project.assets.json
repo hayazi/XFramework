@@ -64,7 +64,7 @@
           }
         }
       },
-      "Microsoft.AspNetCore.App.Internal.Assets/10.0.11": {
+      "Microsoft.AspNetCore.App.Internal.Assets/10.0.12": {
         "type": "package",
         "build": {
           "build/Microsoft.AspNetCore.App.Internal.Assets.props": {},
@@ -72,6 +72,22 @@
         },
         "buildMultiTargeting": {
           "buildMultiTargeting/Microsoft.AspNetCore.App.Internal.Assets.targets": {}
+        }
+      },
+      "Microsoft.AspNetCore.Identity.EntityFrameworkCore/10.0.11": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.11"
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll": {
+            "related": ".xml"
+          }
         }
       },
       "Microsoft.Bcl.AsyncInterfaces/8.0.0": {
@@ -855,6 +871,19 @@
           }
         }
       },
+      "RabbitMQ.Client/7.2.2": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "System.ClientModel/1.8.0": {
         "type": "package",
         "dependencies": {
@@ -1106,31 +1135,18 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
-          "XFramework.Core": "1.0.0"
+          "XFramework.Domain": "1.0.0"
         },
         "compile": {
           "bin/placeholder/XFramework.Application.Contracts.dll": {}
         },
         "runtime": {
           "bin/placeholder/XFramework.Application.Contracts.dll": {}
-        }
-      },
-      "XFramework.Core/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v10.0",
-        "compile": {
-          "bin/placeholder/XFramework.Core.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/XFramework.Core.dll": {}
         }
       },
       "XFramework.Domain/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
-        "dependencies": {
-          "XFramework.Core": "1.0.0"
-        },
         "compile": {
           "bin/placeholder/XFramework.Domain.dll": {}
         },
@@ -1142,6 +1158,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
         "dependencies": {
+          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "10.0.11",
           "Microsoft.EntityFrameworkCore": "10.0.11",
           "Microsoft.EntityFrameworkCore.SqlServer": "10.0.11",
           "XFramework.Application": "1.0.0",
@@ -1153,6 +1170,25 @@
         "runtime": {
           "bin/placeholder/XFramework.EntityFrameworkCore.dll": {}
         }
+      },
+      "XFramework.Infrastructure/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "RabbitMQ.Client": "7.2.2",
+          "XFramework.Application": "1.0.0",
+          "XFramework.Application.Contracts": "1.0.0",
+          "XFramework.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/XFramework.Infrastructure.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/XFramework.Infrastructure.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -1239,10 +1275,10 @@
         "logo.png"
       ]
     },
-    "Microsoft.AspNetCore.App.Internal.Assets/10.0.11": {
-      "sha512": "tYYYBZsuF2DSz1I3hcfB8qC4nNekIKufkYZOJ2R28fNK3PkS7fJao/mIX5H84NH94UACZQ4dhvt8GDlkrJFwLg==",
+    "Microsoft.AspNetCore.App.Internal.Assets/10.0.12": {
+      "sha512": "+sIBo9AMBZH46qHWHQdfzcGMt+RuBaPYrUMOAM9VjA7MQ9QtIez3lq1C3E05+Yroa94KKt3DSWaxmCI4H28a9Q==",
       "type": "package",
-      "path": "microsoft.aspnetcore.app.internal.assets/10.0.11",
+      "path": "microsoft.aspnetcore.app.internal.assets/10.0.12",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1258,8 +1294,24 @@
         "build/Microsoft.AspNetCore.App.Internal.Assets.targets",
         "buildMultiTargeting/Microsoft.AspNetCore.App.Internal.Assets.targets",
         "buildTransitive/Microsoft.AspNetCore.App.Internal.Assets.targets",
-        "microsoft.aspnetcore.app.internal.assets.10.0.11.nupkg.sha512",
+        "microsoft.aspnetcore.app.internal.assets.10.0.12.nupkg.sha512",
         "microsoft.aspnetcore.app.internal.assets.nuspec"
+      ]
+    },
+    "Microsoft.AspNetCore.Identity.EntityFrameworkCore/10.0.11": {
+      "sha512": "N3+Fs465t08FyrQ+uoQyYH6TehLjtuGr/v5IjlFZANBbsivq9M5xFCVD25Ktq+HpWCfWXIrRjoakgymzO2trlw==",
+      "type": "package",
+      "path": "microsoft.aspnetcore.identity.entityframeworkcore/10.0.11",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "lib/net10.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll",
+        "lib/net10.0/Microsoft.AspNetCore.Identity.EntityFrameworkCore.xml",
+        "microsoft.aspnetcore.identity.entityframeworkcore.10.0.11.nupkg.sha512",
+        "microsoft.aspnetcore.identity.entityframeworkcore.nuspec"
       ]
     },
     "Microsoft.Bcl.AsyncInterfaces/8.0.0": {
@@ -2878,6 +2930,23 @@
         "packageIcon.png"
       ]
     },
+    "RabbitMQ.Client/7.2.2": {
+      "sha512": "k4b6RnTXpLbsF96V93ooNYxgPMnoA2tEm24B6AXNJr1mG8wwNYdA1XJtgU66L5xqeGyveS7SJriRzlX3cbqQNA==",
+      "type": "package",
+      "path": "rabbitmq.client/7.2.2",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "icon.png",
+        "lib/net8.0/RabbitMQ.Client.dll",
+        "lib/net8.0/RabbitMQ.Client.xml",
+        "lib/netstandard2.0/RabbitMQ.Client.dll",
+        "lib/netstandard2.0/RabbitMQ.Client.xml",
+        "rabbitmq.client.7.2.2.nupkg.sha512",
+        "rabbitmq.client.nuspec"
+      ]
+    },
     "System.ClientModel/1.8.0": {
       "sha512": "AqRzhn0v29GGGLj/Z6gKq4lGNtvPHT4nHdG5PDJh9IfVjv/nYUVmX11hwwws1vDFeIAzrvmn0dPu8IjLtu6fAw==",
       "type": "package",
@@ -3243,11 +3312,6 @@
       "path": "../XFramework.Application.Contracts/XFramework.Application.Contracts.csproj",
       "msbuildProject": "../XFramework.Application.Contracts/XFramework.Application.Contracts.csproj"
     },
-    "XFramework.Core/1.0.0": {
-      "type": "project",
-      "path": "../XFramework.Core/XFramework.Core.csproj",
-      "msbuildProject": "../XFramework.Core/XFramework.Core.csproj"
-    },
     "XFramework.Domain/1.0.0": {
       "type": "project",
       "path": "../XFramework.Domain/XFramework.Domain.csproj",
@@ -3257,15 +3321,21 @@
       "type": "project",
       "path": "../XFramework.EntityFrameworkCore/XFramework.EntityFrameworkCore.csproj",
       "msbuildProject": "../XFramework.EntityFrameworkCore/XFramework.EntityFrameworkCore.csproj"
+    },
+    "XFramework.Infrastructure/1.0.0": {
+      "type": "project",
+      "path": "../XFramework.Infrastructure/XFramework.Infrastructure.csproj",
+      "msbuildProject": "../XFramework.Infrastructure/XFramework.Infrastructure.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Microsoft.AspNetCore.App.Internal.Assets >= 10.0.11",
+      "Microsoft.AspNetCore.App.Internal.Assets >= 10.0.12",
       "Microsoft.EntityFrameworkCore.Design >= 10.0.11",
       "XFramework.Application >= 1.0.0",
       "XFramework.Application.Contracts >= 1.0.0",
-      "XFramework.EntityFrameworkCore >= 1.0.0"
+      "XFramework.EntityFrameworkCore >= 1.0.0",
+      "XFramework.Infrastructure >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -3312,6 +3382,9 @@
             },
             "F:\\XFramework\\src\\XFramework.EntityFrameworkCore\\XFramework.EntityFrameworkCore.csproj": {
               "projectPath": "F:\\XFramework\\src\\XFramework.EntityFrameworkCore\\XFramework.EntityFrameworkCore.csproj"
+            },
+            "F:\\XFramework\\src\\XFramework.Infrastructure\\XFramework.Infrastructure.csproj": {
+              "projectPath": "F:\\XFramework\\src\\XFramework.Infrastructure\\XFramework.Infrastructure.csproj"
             }
           }
         }
@@ -3336,7 +3409,7 @@
           "Microsoft.AspNetCore.App.Internal.Assets": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[10.0.11, )",
+            "version": "[10.0.12, )",
             "autoReferenced": true
           },
           "Microsoft.EntityFrameworkCore.Design": {
@@ -3365,7 +3438,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.400/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

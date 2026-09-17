@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using XFramework.Application.Contracts.Services;
+using XFramework.Application.Abstractions;
 
 namespace XFramework.EntityFrameworkCore.Repositories;
 

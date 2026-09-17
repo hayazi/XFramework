@@ -7,30 +7,14 @@
   "targets": {
     ".NETCoreApp,Version=v10.0": {
       "XFramework.Domain/1.0.0": {
-        "dependencies": {
-          "XFramework.Core": "1.0.0"
-        },
         "runtime": {
           "XFramework.Domain.dll": {}
-        }
-      },
-      "XFramework.Core/1.0.0": {
-        "runtime": {
-          "XFramework.Core.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
         }
       }
     }
   },
   "libraries": {
     "XFramework.Domain/1.0.0": {
-      "type": "project",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "XFramework.Core/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

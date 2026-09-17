@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using XFramework.Application.Contracts.Authorization;
+using XFramework.EntityFrameworkCore.Identity;
+using XFramework.EntityFrameworkCore.Persistence;
 
 namespace XFramework.EntityFrameworkCore.Authorization;
 
 public sealed class PermissionChecker(
-    XFrameworkDbContext db,
+    XFrameworkIdentityDbContext db,
     ICurrentUser currentUser)
     : IPermissionChecker
 {
@@ -15,29 +17,30 @@ public sealed class PermissionChecker(
         if (currentUser.UserId is null)
             return false;
 
-        var userId = currentUser.UserId.Value;
+        if (!Guid.TryParse(currentUser.UserId, out var userId))
+            return false;
 
         var directPermission =
-            await db.UserPermissions
+            await db.ApplicationUserPermissions
                 .AsNoTracking()
                 .AnyAsync(
                     x =>
                         x.UserId == userId &&
                         x.Permission.Name == permission &&
-                        x.Permission.IsActive,
+                        x.Permission.IsEnabled,
                     cancellationToken);
 
         if (directPermission)
             return true;
 
-        return await db.UserRoles
+        return await db.ApplicationUserRoles
             .AsNoTracking()
             .Where(x => x.UserId == userId)
             .SelectMany(x => x.Role.Permissions)
             .AnyAsync(
                 x =>
                     x.Permission.Name == permission &&
-                    x.Permission.IsActive,
+                    x.Permission.IsEnabled,
                 cancellationToken);
     }
 
