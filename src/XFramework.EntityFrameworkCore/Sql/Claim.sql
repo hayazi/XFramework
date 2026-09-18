@@ -5,7 +5,8 @@
     (
         UPDLOCK,
         READPAST,
-        ROWLOCK
+        ROWLOCK,
+        READCOMMITTEDLOCK
     )
     WHERE
         (
@@ -13,21 +14,19 @@
             OR
             (
                 Status = @Processing
-                AND LockedUntilUtc < @Now
+                AND LockedUntilUtc <= @NowUtc
             )
         )
         AND
         (
             NextAttemptOnUtc IS NULL
-            OR NextAttemptOnUtc <= @Now
+            OR NextAttemptOnUtc <= @NowUtc
         )
-    ORDER BY CreatedOnUtc
+    ORDER BY CreatedOnUtc, Id
 )
-
 UPDATE cte
 SET
     Status = @Processing,
     LockId = @LockId,
     LockedUntilUtc = @LockedUntilUtc
-
 OUTPUT INSERTED.*;

@@ -60,8 +60,10 @@ public sealed class EventProcessor : IEventProcessor
                 $"No handler registered for " +
                 $"{envelope.EventType}/{envelope.EventVersion}.");
 
-        var handlerName = handler.GetType().FullName
-            ?? handler.GetType().Name;
+        // Use the contract type as the stable idempotency handler identity.
+        // Runtime implementation/proxy names must not affect duplicate detection.
+        var handlerName = handlerServiceType.FullName
+            ?? handlerServiceType.Name;
 
         await using var transaction =
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
