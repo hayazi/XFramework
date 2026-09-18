@@ -13,14 +13,10 @@ public sealed class OutboxRetryPolicy : IOutboxRetryPolicy
         TimeSpan.FromMinutes(30)
     ];
 
-    public bool ShouldRetry(
-        int retryCount,
-        Exception exception)
+    public bool ShouldRetry(int retryCount, Exception exception)
     {
-        if (retryCount >= Delays.Length)
-        {
+        if (retryCount < 0 || retryCount >= Delays.Length)
             return false;
-        }
 
         return exception is TimeoutException
             or HttpRequestException
@@ -30,9 +26,7 @@ public sealed class OutboxRetryPolicy : IOutboxRetryPolicy
     public TimeSpan GetDelay(int retryCount)
     {
         if (retryCount < 0)
-        {
             return Delays[0];
-        }
 
         return retryCount < Delays.Length
             ? Delays[retryCount]

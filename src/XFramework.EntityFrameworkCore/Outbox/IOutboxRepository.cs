@@ -15,10 +15,16 @@ public interface IOutboxRepository
         DateTime completedOnUtc,
         CancellationToken cancellationToken = default);
 
-    Task MarkFailedAsync(
+    Task MarkRetryAsync(
         Guid messageId,
         string lockId,
         DateTime nextAttemptOnUtc,
+        string error,
+        CancellationToken cancellationToken = default);
+
+    Task MarkFailedAsync(
+        Guid messageId,
+        string lockId,
         string error,
         CancellationToken cancellationToken = default);
 

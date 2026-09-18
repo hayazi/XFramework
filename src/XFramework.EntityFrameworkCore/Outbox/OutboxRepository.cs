@@ -70,66 +70,114 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
     }
 
     public async Task MarkCompletedAsync(
-        Guid id,
+        Guid messageId,
         string lockId,
-        DateTime completed,
+        DateTime completedOnUtc,
         CancellationToken cancellationToken = default)
     {
-        var message = await db.OutboxMessages
-            .SingleOrDefaultAsync(x => x.Id == id && x.LockId == lockId, cancellationToken);
+        const string sql = """
+            UPDATE OutboxMessages
+            SET
+                Status = @Completed,
+                ProcessedOnUtc = @CompletedOnUtc,
+                LockId = NULL,
+                LockedUntilUtc = NULL
+            WHERE Id = @Id AND LockId = @LockId;
+            """;
 
-        if (message is null)
-            return;
-
-        message.Status = OutboxMessageStatus.Completed;
-        message.ProcessedOnUtc = completed;
-        message.LockId = null;
-        message.LockedUntilUtc = null;
-
-        await db.SaveChangesAsync(cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            sql,
+            [
+                new SqlParameter("@Completed", (byte)OutboxMessageStatus.Completed),
+                new SqlParameter("@CompletedOnUtc", completedOnUtc),
+                new SqlParameter("@Id", messageId),
+                new SqlParameter("@LockId", lockId)
+            ],
+            cancellationToken);
     }
 
-    public async Task MarkFailedAsync(
-        Guid id,
+    public async Task MarkRetryAsync(
+        Guid messageId,
         string lockId,
-        DateTime next,
+        DateTime nextAttemptOnUtc,
         string error,
         CancellationToken cancellationToken = default)
     {
-        var message = await db.OutboxMessages
-            .SingleOrDefaultAsync(x => x.Id == id && x.LockId == lockId, cancellationToken);
+        const string sql = """
+            UPDATE OutboxMessages
+            SET
+                Status = @Pending,
+                RetryCount = RetryCount + 1,
+                NextAttemptOnUtc = @NextAttemptOnUtc,
+                LastError = @LastError,
+                LockId = NULL,
+                LockedUntilUtc = NULL
+            WHERE Id = @Id AND LockId = @LockId;
+            """;
 
-        if (message is null)
-            return;
+        await db.Database.ExecuteSqlRawAsync(
+            sql,
+            [
+                new SqlParameter("@Pending", (byte)OutboxMessageStatus.Pending),
+                new SqlParameter("@NextAttemptOnUtc", nextAttemptOnUtc),
+                new SqlParameter("@LastError", TruncateError(error)),
+                new SqlParameter("@Id", messageId),
+                new SqlParameter("@LockId", lockId)
+            ],
+            cancellationToken);
+    }
 
-        message.Status = OutboxMessageStatus.Pending;
-        message.RetryCount++;
-        message.NextAttemptOnUtc = next;
-        message.LastError = error;
-        message.LockId = null;
-        message.LockedUntilUtc = null;
+    public async Task MarkFailedAsync(
+        Guid messageId,
+        string lockId,
+        string error,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE OutboxMessages
+            SET
+                Status = @Failed,
+                RetryCount = RetryCount + 1,
+                LastError = @LastError,
+                LockId = NULL,
+                LockedUntilUtc = NULL
+            WHERE Id = @Id AND LockId = @LockId;
+            """;
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            sql,
+            [
+                new SqlParameter("@Failed", (byte)OutboxMessageStatus.Failed),
+                new SqlParameter("@LastError", TruncateError(error)),
+                new SqlParameter("@Id", messageId),
+                new SqlParameter("@LockId", lockId)
+            ],
+            cancellationToken);
     }
 
     public async Task ReleaseExpiredLeasesAsync(
-        DateTime now,
+        DateTime nowUtc,
         CancellationToken cancellationToken = default)
     {
-        var messages = await db.OutboxMessages
-            .Where(x =>
-                x.Status == OutboxMessageStatus.Processing &&
-                x.LockedUntilUtc <= now)
-            .ToListAsync(cancellationToken);
+        const string sql = """
+            UPDATE OutboxMessages
+            SET
+                Status = @Pending,
+                LockId = NULL,
+                LockedUntilUtc = NULL
+            WHERE Status = @Processing
+              AND LockedUntilUtc <= @NowUtc;
+            """;
 
-        foreach (var message in messages)
-        {
-            message.Status = OutboxMessageStatus.Pending;
-            message.LockId = null;
-            message.LockedUntilUtc = null;
-        }
-
-        if (messages.Count > 0)
-            await db.SaveChangesAsync(cancellationToken);
+        await db.Database.ExecuteSqlRawAsync(
+            sql,
+            [
+                new SqlParameter("@Pending", (byte)OutboxMessageStatus.Pending),
+                new SqlParameter("@NowUtc", nowUtc)
+            ],
+            cancellationToken);
     }
+
+    private static string TruncateError(string error) =>
+        error.Length <= 4000 ? error : error[..4000];
 }

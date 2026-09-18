@@ -28,13 +28,9 @@ public sealed class OutboxProcessor : IOutboxProcessor
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-
-        await _repository.ReleaseExpiredLeasesAsync(
-            now,
-            cancellationToken);
+        await _repository.ReleaseExpiredLeasesAsync(now, cancellationToken);
 
         var lockId = Guid.NewGuid().ToString("N");
-
         var messages = await _repository.ClaimBatchAsync(
             batchSize,
             lockId,
@@ -53,23 +49,15 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     EventVersion = message.EventVersion,
                     Payload = message.Payload,
                     OccurredOnUtc = message.OccurredOnUtc,
-                    CorrelationId = Guid.TryParse(
-                        message.CorrelationId,
-                        out var correlationId)
-                        ? correlationId
-                        : null,
-                    CausationId = Guid.TryParse(
-                        message.CausationId,
-                        out var causationId)
-                        ? causationId
-                        : null,
+                    CorrelationId = Guid.TryParse(message.CorrelationId, out var correlationId)
+                        ? correlationId : null,
+                    CausationId = Guid.TryParse(message.CausationId, out var causationId)
+                        ? causationId : null,
                     RetryCount = message.RetryCount,
                     LastError = message.LastError
                 };
 
-                await _eventBus.PublishAsync(
-                    envelope,
-                    cancellationToken);
+                await _eventBus.PublishAsync(envelope, cancellationToken);
 
                 await _repository.MarkCompletedAsync(
                     message.Id,
@@ -79,18 +67,16 @@ public sealed class OutboxProcessor : IOutboxProcessor
             }
             catch (Exception exception)
             {
-                if (_retryPolicy.ShouldRetry(
-                        message.RetryCount,
-                        exception))
-                {
-                    var delay = _retryPolicy.GetDelay(
-                        message.RetryCount);
+                var error = exception.ToString();
 
-                    await _repository.MarkFailedAsync(
+                if (_retryPolicy.ShouldRetry(message.RetryCount, exception))
+                {
+                    var delay = _retryPolicy.GetDelay(message.RetryCount);
+                    await _repository.MarkRetryAsync(
                         message.Id,
                         lockId,
                         DateTime.UtcNow.Add(delay),
-                        exception.ToString(),
+                        error,
                         cancellationToken);
                 }
                 else
@@ -98,8 +84,7 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     await _repository.MarkFailedAsync(
                         message.Id,
                         lockId,
-                        DateTime.UtcNow.AddMinutes(5),
-                        exception.ToString(),
+                        error,
                         cancellationToken);
                 }
             }
