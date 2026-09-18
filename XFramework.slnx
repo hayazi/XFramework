@@ -7,4 +7,7 @@
     <Project Path="src/XFramework.Infrastructure/XFramework.Infrastructure.csproj" />
     <Project Path="src/XFramework.Blazor/XFramework.Blazor.csproj" />
   </Folder>
+  <Folder Name="tests">
+    <Project Path="tests/XFramework.Tests/XFramework.Tests.csproj" />
+  </Folder>
 </Solution>
