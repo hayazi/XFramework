@@ -9,7 +9,7 @@ public sealed class RabbitMqIntegrationFixture : IAsyncLifetime
     private IChannel? _channel;
 
     public string ExchangeName => "xframework.integration-tests";
-    public string QueueName => $"xframework.integration-tests.{Guid.NewGuid():N}";
+    public string QueueName { get; } = $"xframework.integration-tests.{Guid.NewGuid():N}";
 
     public async Task InitializeAsync()
     {
@@ -33,15 +33,24 @@ public sealed class RabbitMqIntegrationFixture : IAsyncLifetime
 
         await _channel.QueueDeclareAsync(
             QueueName,
-            durable: false,
+            durable: true,
             exclusive: false,
-            autoDelete: true);
+            autoDelete: false);
     }
 
     public async Task DisposeAsync()
     {
         if (_channel is not null)
         {
+            try
+            {
+                await _channel.QueueDeleteAsync(QueueName);
+            }
+            catch (RabbitMQ.Client.Exceptions.OperationInterruptedException)
+            {
+                // The test may already have removed the queue.
+            }
+
             await _channel.CloseAsync();
             await _channel.DisposeAsync();
         }
