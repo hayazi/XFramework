@@ -8,7 +8,7 @@ public sealed class RabbitMqIntegrationFixture : IAsyncLifetime
     private IConnection? _connection;
     private IChannel? _channel;
 
-    public string ExchangeName => "xframework.integration-tests";
+    public string ExchangeName { get; } = $"xframework.integration-tests.{Guid.NewGuid():N}";
     public string QueueName { get; } = $"xframework.integration-tests.{Guid.NewGuid():N}";
 
     public async Task InitializeAsync()
