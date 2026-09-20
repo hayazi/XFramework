@@ -21,6 +21,14 @@ public sealed class IntegrationTestStore
         }
     }
 
+    public int Count(Guid id)
+    {
+        lock (_sync)
+        {
+            return _messages.ContainsKey(id) ? 1 : 0;
+        }
+    }
+
     public string? Get(Guid id)
     {
         lock (_sync)
