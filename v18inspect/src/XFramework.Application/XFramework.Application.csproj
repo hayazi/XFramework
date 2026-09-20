@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<ItemGroup><ProjectReference Include="..\XFramework.Domain\XFramework.Domain.csproj"/><ProjectReference Include="..\XFramework.Application.Contracts\XFramework.Application.Contracts.csproj"/></ItemGroup>
+<ItemGroup><PackageReference Include="Castle.Core" Version="5.2.1"/><PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11"/><PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11"/><PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11"/><PackageReference Include="Microsoft.Extensions.Options" Version="10.0.11"/></ItemGroup>
+<PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+</Project>

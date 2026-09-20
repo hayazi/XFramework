@@ -1,0 +1,80 @@
+﻿@page "/customers"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Customers
+@using XFramework.Application.Contracts.Dtos
+@inject ICustomerAppService CustomerAppService
+
+<PageTitle>Customers</PageTitle>
+
+<h1>Customers</h1>
+
+<button class="btn btn-primary"
+        @onclick="CreateCustomer">
+    Create Test Customer
+</button>
+
+@if (_customers is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Phone</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var customer in _customers)
+            {
+                <tr>
+                    <td>@customer.Code</td>
+                    <td>@customer.Name</td>
+                    <td>@customer.Phone</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code
+{
+    private IReadOnlyList<CustomerDto>? _customers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await CustomerAppService.GetListAsync(
+            new PagedAndSortedRequestDto
+            {
+                SkipCount = 0,
+                MaxResultCount = 50
+            });
+
+        _customers = result.Items;
+    }
+
+    private async Task CreateCustomer()
+    {
+        await CustomerAppService.CreateAsync(
+            new CustomerCreateDto
+            {
+                Code = $"C-{DateTime.Now:HHmmss}",
+                Name = "Test Customer",
+                Phone = "09000000000"
+            });
+
+        var result = await CustomerAppService.GetListAsync(
+            new PagedAndSortedRequestDto
+            {
+                SkipCount = 0,
+                MaxResultCount = 50
+            });
+
+        _customers = result.Items;
+    }
+}
