@@ -83,15 +83,14 @@ public sealed class RabbitMqCrashWindowTests
             RetryCount = 0
         };
 
-        // Publish one message.
-        await eventBus.PublishAsync(envelope);
-
         // First delivery: process and COMMIT, but deliberately do not ACK.
-        // Closing the channel causes RabbitMQ to requeue the unacked message,
-        // which models a process/channel crash after the transaction commit
-        // but before the broker acknowledgement.
+        // Use an independent connection for the crash simulation. Closing the
+        // connection (rather than closing a channel from inside its callback)
+        // models a process/channel failure after the transaction commit but
+        // before the broker acknowledgement.
+        var rabbitFactory = connectionFactory.Create();
         await using var firstConnection =
-            await connectionManager.GetConnectionAsync();
+            await rabbitFactory.CreateConnectionAsync();
         await using var firstChannel =
             await firstConnection.CreateChannelAsync();
 
@@ -99,6 +98,11 @@ public sealed class RabbitMqCrashWindowTests
             _fixture.QueueName,
             _fixture.ExchangeName,
             routingKey);
+
+        // The queue must be bound before publishing. RabbitMQ publisher confirms
+        // are configured as mandatory, so publishing before the binding exists
+        // correctly results in NO_ROUTE.
+        await eventBus.PublishAsync(envelope);
 
         var firstDeliveryProcessed =
             new TaskCompletionSource<bool>(
@@ -117,10 +121,9 @@ public sealed class RabbitMqCrashWindowTests
                     envelope,
                     CancellationToken.None);
 
-                firstDeliveryProcessed.TrySetResult(true);
-
                 // No BasicAckAsync here: the message remains unacknowledged.
-                await firstChannel.CloseAsync();
+                // The test closes the connection after the callback completes.
+                firstDeliveryProcessed.TrySetResult(true);
             }
             catch (Exception exception)
             {
@@ -135,6 +138,11 @@ public sealed class RabbitMqCrashWindowTests
 
         await firstDeliveryProcessed.Task.WaitAsync(
             TimeSpan.FromSeconds(10));
+
+        // The business transaction has committed, but the broker has not been
+        // acknowledged. Closing the independent connection forces RabbitMQ to
+        // requeue the unacknowledged delivery.
+        await firstConnection.CloseAsync();
 
         Assert.True(store.Contains(testId));
         Assert.Equal(message, store.Get(testId));
@@ -153,8 +161,11 @@ public sealed class RabbitMqCrashWindowTests
             deadLetterPublisher,
             NullLogger<RabbitMqMessageHandler>.Instance);
 
+        // Use a fresh independent connection for the redelivery consumer.
+        // This also prevents the test's shared connection manager from masking
+        // the broker redelivery semantics being tested here.
         await using var secondConnection =
-            await connectionManager.GetConnectionAsync();
+            await rabbitFactory.CreateConnectionAsync();
         await using var secondChannel =
             await secondConnection.CreateChannelAsync();
 
