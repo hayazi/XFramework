@@ -65,6 +65,14 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     DateTime.UtcNow,
                     cancellationToken);
             }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                // Application shutdown/cancellation is not a publish failure.
+                // Leave the claimed message in Processing so lease recovery can
+                // safely make it available again after the worker stops.
+                throw;
+            }
             catch (Exception exception)
             {
                 var error = exception.ToString();

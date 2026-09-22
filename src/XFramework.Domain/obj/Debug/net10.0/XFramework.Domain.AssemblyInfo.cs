@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XFramework.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+16e3196019a7abab2ba848bbd750b3967e6439b7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+45f0aa5e7bfa0e9876f570f4d85920a355d4ea79")]
 [assembly: System.Reflection.AssemblyProductAttribute("XFramework.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XFramework.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
