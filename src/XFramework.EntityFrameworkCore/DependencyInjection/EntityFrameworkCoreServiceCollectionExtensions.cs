@@ -30,8 +30,7 @@ public static class EntityFrameworkCoreServiceCollectionExtensions
         services.AddDbContext<XFrameworkDbContext>((serviceProvider, options) =>
         {
             options.UseSqlServer(connectionString);
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<DomainEventToOutboxInterceptor>());
+            options.AddInterceptors(serviceProvider.GetRequiredService<DomainEventToOutboxInterceptor>());
         });
 
         services.AddDbContext<XFrameworkIdentityDbContext>(options =>

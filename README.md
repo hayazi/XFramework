@@ -2052,3 +2052,6 @@ XFramework
 ```
 
 The objective is to build a production-grade enterprise framework first and then use it as the foundation for the next-generation ERP/MIS platform.
+## Reliability Test v25
+
+Added atomic Outbox persistence and expired-lease crash recovery tests. See `OUTBOX_CRASH_RECOVERY_TEST_V25.md`.
