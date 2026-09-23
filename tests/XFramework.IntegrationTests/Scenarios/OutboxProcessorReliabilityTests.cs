@@ -61,6 +61,42 @@ public sealed class OutboxProcessorReliabilityTests
     }
 
     [Fact]
+    public async Task Processor_should_renew_the_lease_before_publishing()
+    {
+        var message = CreateMessage();
+        var repository = new FakeOutboxRepository(message);
+        var eventBus = new FakeEventBus();
+        var processor = CreateProcessor(repository, eventBus);
+
+        await processor.ProcessBatchAsync(10);
+
+        Assert.Equal(1, repository.RenewLeaseCallCount);
+        Assert.Single(eventBus.Published);
+        Assert.NotNull(repository.LastRenewedUntilUtc);
+        Assert.True(repository.LastRenewedUntilUtc > DateTime.UtcNow.AddSeconds(30));
+    }
+
+    [Fact]
+    public async Task Processor_should_not_publish_when_lease_was_lost()
+    {
+        var message = CreateMessage();
+        var repository = new FakeOutboxRepository(message)
+        {
+            RenewLeaseSucceeds = false
+        };
+        var eventBus = new FakeEventBus();
+        var processor = CreateProcessor(repository, eventBus);
+
+        await processor.ProcessBatchAsync(10);
+
+        Assert.Equal(1, repository.RenewLeaseCallCount);
+        Assert.Empty(eventBus.Published);
+        Assert.Empty(repository.Completed);
+        Assert.Empty(repository.Retried);
+        Assert.Empty(repository.Failed);
+    }
+
+    [Fact]
     public async Task Cancellation_during_publish_should_propagate_without_marking_retry_or_failure()
     {
         var repository = new FakeOutboxRepository(CreateMessage());
@@ -80,12 +116,12 @@ public sealed class OutboxProcessorReliabilityTests
     private static OutboxProcessor CreateProcessor(
         FakeOutboxRepository repository,
         FakeEventBus eventBus,
-        FakeRetryPolicy retryPolicy)
+        FakeRetryPolicy? retryPolicy = null)
     {
         return new OutboxProcessor(
             repository,
             eventBus,
-            retryPolicy,
+            retryPolicy ?? new FakeRetryPolicy(shouldRetry: false),
             Options.Create(new OutboxOptions
             {
                 LeaseMinutes = 2
@@ -168,6 +204,9 @@ public sealed class OutboxProcessorReliabilityTests
         public List<Guid> Completed { get; } = [];
         public List<RetryRecord> Retried { get; } = [];
         public List<FailedRecord> Failed { get; } = [];
+        public bool RenewLeaseSucceeds { get; set; } = true;
+        public int RenewLeaseCallCount { get; private set; }
+        public DateTime? LastRenewedUntilUtc { get; private set; }
 
         public Task ReleaseExpiredLeasesAsync(
             DateTime nowUtc,
@@ -186,9 +225,23 @@ public sealed class OutboxProcessorReliabilityTests
             return Task.FromResult<IReadOnlyList<OutboxMessage>>([Message]);
         }
 
+        public Task<bool> RenewLeaseAsync(
+            Guid messageId,
+            string lockId,
+            DateTime nowUtc,
+            DateTime lockedUntilUtc,
+            CancellationToken cancellationToken = default)
+        {
+            RenewLeaseCallCount++;
+            LastRenewedUntilUtc = lockedUntilUtc;
+            Message.LockedUntilUtc = lockedUntilUtc;
+            return Task.FromResult(RenewLeaseSucceeds);
+        }
+
         public Task MarkCompletedAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             DateTime completedOnUtc,
             CancellationToken cancellationToken = default)
         {
@@ -200,6 +253,7 @@ public sealed class OutboxProcessorReliabilityTests
         public Task MarkRetryAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             DateTime nextAttemptOnUtc,
             string error,
             CancellationToken cancellationToken = default)
@@ -215,6 +269,7 @@ public sealed class OutboxProcessorReliabilityTests
         public Task MarkFailedAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             string error,
             CancellationToken cancellationToken = default)
         {

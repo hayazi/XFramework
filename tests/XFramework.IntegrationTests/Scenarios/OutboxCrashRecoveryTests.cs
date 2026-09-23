@@ -95,9 +95,23 @@ public sealed class OutboxCrashRecoveryTests
             return Task.FromResult<IReadOnlyList<OutboxMessage>>([_message]);
         }
 
+        public Task<bool> RenewLeaseAsync(
+            Guid messageId,
+            string lockId,
+            DateTime nowUtc,
+            DateTime lockedUntilUtc,
+            CancellationToken cancellationToken = default)
+        {
+            Assert.Equal(_message.Id, messageId);
+            Assert.Equal(lockId, _message.LockId);
+            _message.LockedUntilUtc = lockedUntilUtc;
+            return Task.FromResult(true);
+        }
+
         public Task MarkCompletedAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             DateTime completedOnUtc,
             CancellationToken cancellationToken = default)
         {
@@ -115,6 +129,7 @@ public sealed class OutboxCrashRecoveryTests
         public Task MarkRetryAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             DateTime nextAttemptOnUtc,
             string error,
             CancellationToken cancellationToken = default)
@@ -123,6 +138,7 @@ public sealed class OutboxCrashRecoveryTests
         public Task MarkFailedAsync(
             Guid messageId,
             string lockId,
+            DateTime nowUtc,
             string error,
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();

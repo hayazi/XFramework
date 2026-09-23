@@ -69,9 +69,40 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<bool> RenewLeaseAsync(
+        Guid messageId,
+        string lockId,
+        DateTime nowUtc,
+        DateTime lockedUntilUtc,
+        CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            UPDATE OutboxMessages
+            SET LockedUntilUtc = @LockedUntilUtc
+            WHERE Id = @Id
+              AND LockId = @LockId
+              AND Status = @Processing
+              AND LockedUntilUtc > @NowUtc;
+            """;
+
+        var affectedRows = await db.Database.ExecuteSqlRawAsync(
+            sql,
+            [
+                new SqlParameter("@LockedUntilUtc", lockedUntilUtc),
+                new SqlParameter("@NowUtc", nowUtc),
+                new SqlParameter("@Id", messageId),
+                new SqlParameter("@LockId", lockId),
+                new SqlParameter("@Processing", (byte)OutboxMessageStatus.Processing)
+            ],
+            cancellationToken);
+
+        return affectedRows == 1;
+    }
+
     public async Task MarkCompletedAsync(
         Guid messageId,
         string lockId,
+        DateTime nowUtc,
         DateTime completedOnUtc,
         CancellationToken cancellationToken = default)
     {
@@ -82,7 +113,10 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 ProcessedOnUtc = @CompletedOnUtc,
                 LockId = NULL,
                 LockedUntilUtc = NULL
-            WHERE Id = @Id AND LockId = @LockId;
+            WHERE Id = @Id
+              AND LockId = @LockId
+              AND Status = @Processing
+              AND LockedUntilUtc > @NowUtc;
             """;
 
         await db.Database.ExecuteSqlRawAsync(
@@ -91,7 +125,9 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@Completed", (byte)OutboxMessageStatus.Completed),
                 new SqlParameter("@CompletedOnUtc", completedOnUtc),
                 new SqlParameter("@Id", messageId),
-                new SqlParameter("@LockId", lockId)
+                new SqlParameter("@LockId", lockId),
+                new SqlParameter("@Processing", (byte)OutboxMessageStatus.Processing),
+                new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
     }
@@ -99,6 +135,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
     public async Task MarkRetryAsync(
         Guid messageId,
         string lockId,
+        DateTime nowUtc,
         DateTime nextAttemptOnUtc,
         string error,
         CancellationToken cancellationToken = default)
@@ -112,7 +149,10 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 LastError = @LastError,
                 LockId = NULL,
                 LockedUntilUtc = NULL
-            WHERE Id = @Id AND LockId = @LockId;
+            WHERE Id = @Id
+              AND LockId = @LockId
+              AND Status = @Processing
+              AND LockedUntilUtc > @NowUtc;
             """;
 
         await db.Database.ExecuteSqlRawAsync(
@@ -122,7 +162,9 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@NextAttemptOnUtc", nextAttemptOnUtc),
                 new SqlParameter("@LastError", TruncateError(error)),
                 new SqlParameter("@Id", messageId),
-                new SqlParameter("@LockId", lockId)
+                new SqlParameter("@LockId", lockId),
+                new SqlParameter("@Processing", (byte)OutboxMessageStatus.Processing),
+                new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
     }
@@ -130,6 +172,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
     public async Task MarkFailedAsync(
         Guid messageId,
         string lockId,
+        DateTime nowUtc,
         string error,
         CancellationToken cancellationToken = default)
     {
@@ -141,7 +184,10 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 LastError = @LastError,
                 LockId = NULL,
                 LockedUntilUtc = NULL
-            WHERE Id = @Id AND LockId = @LockId;
+            WHERE Id = @Id
+              AND LockId = @LockId
+              AND Status = @Processing
+              AND LockedUntilUtc > @NowUtc;
             """;
 
         await db.Database.ExecuteSqlRawAsync(
@@ -150,7 +196,9 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@Failed", (byte)OutboxMessageStatus.Failed),
                 new SqlParameter("@LastError", TruncateError(error)),
                 new SqlParameter("@Id", messageId),
-                new SqlParameter("@LockId", lockId)
+                new SqlParameter("@LockId", lockId),
+                new SqlParameter("@Processing", (byte)OutboxMessageStatus.Processing),
+                new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
     }

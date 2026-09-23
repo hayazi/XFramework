@@ -42,6 +42,17 @@ public sealed class OutboxProcessor : IOutboxProcessor
         {
             try
             {
+                var renewNow = DateTime.UtcNow;
+                var leaseRenewed = await _repository.RenewLeaseAsync(
+                    message.Id,
+                    lockId,
+                    renewNow,
+                    renewNow.AddMinutes(_options.LeaseMinutes),
+                    cancellationToken);
+
+                if (!leaseRenewed)
+                    continue;
+
                 var envelope = new EventEnvelope
                 {
                     EventId = message.EventId,
@@ -59,10 +70,12 @@ public sealed class OutboxProcessor : IOutboxProcessor
 
                 await _eventBus.PublishAsync(envelope, cancellationToken);
 
+                var completionNow = DateTime.UtcNow;
                 await _repository.MarkCompletedAsync(
                     message.Id,
                     lockId,
-                    DateTime.UtcNow,
+                    completionNow,
+                    completionNow,
                     cancellationToken);
             }
             catch (OperationCanceledException)
@@ -80,10 +93,12 @@ public sealed class OutboxProcessor : IOutboxProcessor
                 if (_retryPolicy.ShouldRetry(message.RetryCount, exception))
                 {
                     var delay = _retryPolicy.GetDelay(message.RetryCount);
+                    var retryNow = DateTime.UtcNow;
                     await _repository.MarkRetryAsync(
                         message.Id,
                         lockId,
-                        DateTime.UtcNow.Add(delay),
+                        retryNow,
+                        retryNow.Add(delay),
                         error,
                         cancellationToken);
                 }
@@ -92,6 +107,7 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     await _repository.MarkFailedAsync(
                         message.Id,
                         lockId,
+                        DateTime.UtcNow,
                         error,
                         cancellationToken);
                 }
