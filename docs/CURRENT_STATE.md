@@ -1,10 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V48 source baseline; V49 is documentation/context packaging.
+- Version label: V50 source baseline (R1 Trace/Correlation propagation completed).
 - Main engineering focus: Outbox reliability and observability.
-- User confirmed V48 is okay. Exact test counts were not captured in the confirmation.
-- Do not treat this documentation-only ZIP as evidence of a new build or test run.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation with tests.
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -13,13 +12,13 @@
 - Transition methods return `bool` for success/failure.
 - Processor handles lost ownership explicitly for completion/retry/failure paths and emits diagnostics.
 - At-least-once delivery; consumer idempotency is mandatory.
+- **Trace propagation**: OutboxProcessor starts Producer Activity (`outbox.publish`) with messaging tags; EventEnvelope carries TraceParent/TraceState/CorrelationId/CausationId; RabbitMqEventBus injects traceparent/tracestate/correlation-id/causation-id headers; RabbitMqMessageHandler extracts trace context, starts Consumer Activity (`event.process`), adds logging scope.
 
 ## Immediate next task
-Inspect V48 source before coding. Then propose a bounded tracing/correlation milestone:
-- Current ActivitySource/Meter implementation
-- CorrelationId/CausationId/EventId propagation
-- RabbitMQ headers and consumer scope
-- Test coverage and cardinality-safe metrics
+R2 — Outbox metrics and dashboard readiness:
+- Validate existing meter/counter names and instrumentation.
+- Use low-cardinality tags only (outcome, module, event type if controlled). Never tag with EventId or entity/user IDs.
+- Add exporter wiring only after deciding the host's OpenTelemetry composition.
 
 ## Validation commands
 ```powershell

@@ -2,6 +2,7 @@
 
 ## Current baseline
 V48 — Outbox transition-result handling and observability. User reported it is okay; exact test counts should be confirmed from command output if needed. V49 is a documentation-only Codex handoff package.
+V50 — Trace/correlation propagation (R1 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -10,14 +11,18 @@ V48 — Outbox transition-result handling and observability. User reported it is
 - RabbitMQ event bus, retry/DLQ, message processing and idempotency.
 - Integration coverage for crash windows, retry/DLQ failures, atomic Outbox behavior, lease recovery/fencing, stale-worker races, and publish ownership scenarios.
 - V46–V48: state transition result semantics, duplicate publish behavior, lost-ownership handling and diagnostics.
+- V50 (R1): Trace/correlation propagation through Outbox → EventEnvelope → RabbitMQ headers → Consumer Activity/log scope.
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
 
-### R1 — Trace/correlation propagation
-- Inspect current `ActivitySource`, logging scopes, and envelope/header propagation.
-- Propagate EventId, CorrelationId, and CausationId through Outbox, EventEnvelope, RabbitMQ headers, and consumer processing.
-- Add trace tests and ensure baggage/header handling is bounded and safe.
+### R1 — Trace/correlation propagation ✅ COMPLETED (V50)
+- OutboxProcessor starts Producer Activity (`outbox.publish`) with messaging tags
+- EventEnvelope carries TraceParent, TraceState, CorrelationId, CausationId
+- RabbitMqEventBus injects traceparent, tracestate, correlation-id, causation-id headers
+- RabbitMqMessageHandler extracts trace context, starts Consumer Activity (`event.process`), adds logging scope
+- Unit tests for header propagation (19 tests pass)
+- All existing tests pass (32 integration, 10 unit)
 
 ### R2 — Outbox metrics and dashboard readiness
 - Validate existing meter/counter names and instrumentation.

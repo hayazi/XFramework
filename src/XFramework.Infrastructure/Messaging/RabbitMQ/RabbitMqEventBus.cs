@@ -64,12 +64,34 @@ public sealed class RabbitMqEventBus : IEventBus
     private static Dictionary<string, object?> CreateHeaders(
         EventEnvelope envelope)
     {
-        return new Dictionary<string, object?>
+        var headers = new Dictionary<string, object?>
         {
             ["event-id"] = envelope.EventId.ToString(),
             ["event-type"] = envelope.EventType,
             ["event-version"] = envelope.EventVersion,
             ["retry-count"] = envelope.RetryCount
         };
+
+        if (envelope.CorrelationId.HasValue)
+        {
+            headers["correlation-id"] = envelope.CorrelationId.Value.ToString();
+        }
+
+        if (envelope.CausationId.HasValue)
+        {
+            headers["causation-id"] = envelope.CausationId.Value.ToString();
+        }
+
+        if (!string.IsNullOrWhiteSpace(envelope.TraceParent))
+        {
+            headers["traceparent"] = envelope.TraceParent;
+        }
+
+        if (!string.IsNullOrWhiteSpace(envelope.TraceState))
+        {
+            headers["tracestate"] = envelope.TraceState;
+        }
+
+        return headers;
     }
 }

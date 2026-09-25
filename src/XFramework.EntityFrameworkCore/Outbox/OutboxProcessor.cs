@@ -66,6 +66,23 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     continue;
                 }
 
+                using var activity = OutboxDiagnostics.ActivitySource.StartActivity(
+                    "outbox.publish",
+                    ActivityKind.Producer);
+
+                activity?.SetTag("messaging.system", "rabbitmq");
+                activity?.SetTag("messaging.destination", message.EventType);
+                activity?.SetTag("messaging.message_id", message.EventId.ToString());
+                if (!string.IsNullOrWhiteSpace(message.CorrelationId))
+                {
+                    activity?.SetTag("messaging.correlation_id", message.CorrelationId);
+                }
+                if (!string.IsNullOrWhiteSpace(message.CausationId))
+                {
+                    activity?.SetTag("messaging.causation_id", message.CausationId);
+                }
+                activity?.SetTag("messaging.message_retry_count", message.RetryCount);
+
                 var envelope = new EventEnvelope
                 {
                     EventId = message.EventId,
@@ -78,7 +95,9 @@ public sealed class OutboxProcessor : IOutboxProcessor
                     CausationId = Guid.TryParse(message.CausationId, out var causationId)
                         ? causationId : null,
                     RetryCount = message.RetryCount,
-                    LastError = message.LastError
+                    LastError = message.LastError,
+                    TraceParent = activity?.TraceId.ToString(),
+                    TraceState = activity?.TraceStateString
                 };
 
                 await _eventBus.PublishAsync(envelope, cancellationToken);
@@ -100,10 +119,6 @@ public sealed class OutboxProcessor : IOutboxProcessor
                         message.Id,
                         message.EventId,
                         lockId);
-                    // The event has already been published, but this worker no
-                    // longer owns the outbox row. Do not retry the publish here;
-                    // the next worker may publish the same EventId again.
-                    // Downstream consumers must remain idempotent.
                     continue;
                 }
 
@@ -112,9 +127,6 @@ public sealed class OutboxProcessor : IOutboxProcessor
             catch (OperationCanceledException)
                 when (cancellationToken.IsCancellationRequested)
             {
-                // Application shutdown/cancellation is not a publish failure.
-                // Leave the claimed message in Processing so lease recovery can
-                // safely make it available again after the worker stops.
                 throw;
             }
             catch (Exception exception)

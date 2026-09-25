@@ -60,6 +60,27 @@ Inventory Document
 ```
 Inventory quantities and costing should not depend on accounting voucher timing. Do not create an analytic Center per Good-Warehouse relation. Separate analytic dimensions from business parties.
 
+## Observability and tracing
+
+### Outbox processor (EntityFrameworkCore)
+- `OutboxDiagnostics.ActivitySource` (`XFramework.Outbox`) starts a Producer activity (`outbox.publish`) for each message.
+- Tags: `messaging.system=rabbitmq`, `messaging.destination=<EventType>`, `messaging.message_id=<EventId>`, `messaging.correlation_id`, `messaging.causation_id`, `messaging.message_retry_count`.
+- `TraceParent` and `TraceState` injected into `EventEnvelope` for propagation.
+
+### RabbitMQ publisher (Infrastructure)
+- `RabbitMqEventBus` adds headers: `event-id`, `event-type`, `event-version`, `retry-count`, `correlation-id`, `causation-id`, `traceparent`, `tracestate`.
+
+### Consumer (Infrastructure)
+- `MessagingDiagnostics.ActivitySource` (`XFramework.Messaging`) starts a Consumer activity (`event.process`) with parent context extracted from `traceparent`/`tracestate` headers.
+- Tags mirror producer tags plus `messaging.destination=<RoutingKey>`.
+- Logging scope includes `EventId`, `EventType`, `CorrelationId`, `CausationId`, `TraceId`, `SpanId`.
+
+### Correlation flow
+Domain event → OutboxMessage → EventEnvelope (TraceParent/TraceState/CorrelationId/CausationId) → RabbitMQ headers → Consumer Activity/log scope.
+
+### Metrics cardinality
+Only low-cardinality labels: `outcome` (published/completed/retried/failed), `module` (event type if controlled). Never `EventId`, aggregate IDs, or user identifiers.
+
 ## UI and domain conventions
 - Persian/Jalali display may be used at UI boundaries; persist/operate on canonical dates (typically UTC or Gregorian) in the domain unless a specific business calendar rule requires otherwise.
 - Keep localization and presentation concerns out of Domain.

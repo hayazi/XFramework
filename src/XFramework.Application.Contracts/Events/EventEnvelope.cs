@@ -12,4 +12,6 @@ public sealed record EventEnvelope
     public int RetryCount { get; init; }
     public string? LastError { get; init; }
     public DateTime? LastAttemptOnUtc { get; init; }
+    public string? TraceParent { get; init; }
+    public string? TraceState { get; init; }
 }
