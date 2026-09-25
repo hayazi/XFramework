@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V55 source baseline (R5 Phase 2 ERP domain extensions completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax).
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2).
+- Version label: V56 source baseline (R5 Phase 3 Application layer services completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full Application layer.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -25,6 +25,20 @@
   - **Dimensions Module**: CostCenter aggregate (hierarchical, budget, manager); Project aggregate (dates, budget, manager, customer); CustomDimension aggregate (flexible key-value attributes, hierarchy support); Enums (DimensionType, DimensionStatus); Domain events for all state transitions.
   - **Numbering Module**: NumberSequence aggregate (prefix/suffix, scope, auto-reset, format template, min/max); NumberingScope (Company, Branch, Warehouse, User, Global); NumberingStatus (Active, Inactive, Exhausted); Domain events for number generation, reset, exhaustion.
   - **Tax Module**: TaxCode aggregate (VAT, SalesTax, Withholding, Excise, CustomDuty); Calculation methods (Percentage, FixedAmount, Tiered, Custom); TaxApplication (OnNetAmount, OnGrossAmount, OnQuantity); TaxTier for tiered rates; IsRecoverable flag; Domain events for all state transitions.
+- **ERP Application Layer Services (R5 Phase 3)**:
+  - **Inventory**: IItemAppService, IWarehouseAppService, IKardexAppService with full CRUD + custom queries (GetByCode, GetByType, GetLowStock, Activate/Deactivate/Discontinue/Block/Unblock, GetCurrentStock)
+  - **Dimensions**: ICostCenterAppService, IProjectAppService, ICustomDimensionAppService with full CRUD + hierarchy queries, activation/deactivation/close
+  - **Numbering**: INumberSequenceAppService with CRUD + GetNextNumber, PeekNextNumber, Reset, scope-based lookup
+  - **Tax**: ITaxCodeAppService with CRUD + CalculateTax, GetDefault, GetByType
+  - All services use [Validate] attribute, auto-discovered via ApplicationServiceDiscovery, registered with interceptor pipeline (Logging, Authorization, Validation, UnitOfWork, Audit)
+  - Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for Application layer queries without EF Core dependency
+
+## Immediate next task
+R6 — EntityFrameworkCore Integration:
+- DbContext configurations for new modules
+- Repository implementations
+- Migrations
+- Outbox event handlers for domain events
 
 ## Validation commands
 ```powershell
