@@ -3307,6 +3307,7 @@
       "Microsoft.NET.Test.Sdk >= 18.3.0",
       "Moq >= 4.20.72",
       "XFramework.Application >= 1.0.0",
+      "XFramework.Domain >= 1.0.0",
       "XFramework.EntityFrameworkCore >= 1.0.0",
       "XFramework.Infrastructure >= 1.0.0",
       "xunit >= 2.9.3",
@@ -3351,6 +3352,9 @@
           "projectReferences": {
             "F:\\XFramework\\src\\XFramework.Application\\XFramework.Application.csproj": {
               "projectPath": "F:\\XFramework\\src\\XFramework.Application\\XFramework.Application.csproj"
+            },
+            "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj": {
+              "projectPath": "F:\\XFramework\\src\\XFramework.Domain\\XFramework.Domain.csproj"
             },
             "F:\\XFramework\\src\\XFramework.EntityFrameworkCore\\XFramework.EntityFrameworkCore.csproj": {
               "projectPath": "F:\\XFramework\\src\\XFramework.EntityFrameworkCore\\XFramework.EntityFrameworkCore.csproj"

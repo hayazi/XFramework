@@ -20,5 +20,6 @@
     <ProjectReference Include="../../src/XFramework.Application/XFramework.Application.csproj" />
     <ProjectReference Include="../../src/XFramework.Infrastructure/XFramework.Infrastructure.csproj" />
     <ProjectReference Include="../../src/XFramework.EntityFrameworkCore/XFramework.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="../../src/XFramework.Domain/XFramework.Domain.csproj" />
   </ItemGroup>
 </Project>

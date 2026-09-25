@@ -6,6 +6,7 @@ V50 — Trace/correlation propagation (R1 completed).
 V51 — Outbox metrics and dashboard readiness (R2 completed).
 V52 — Outbox operator experience (R3 completed).
 V53 — Framework security and audit review (R4 completed).
+V54 — ERP domain foundation (R5 Phase 1 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -18,6 +19,7 @@ V53 — Framework security and audit review (R4 completed).
 - V51 (R2): Outbox metrics with 9 counters, 1 histogram, 1 gauge; all low-cardinality; 35 unit tests pass.
 - V52 (R3): Outbox Admin API with 7 operations, 7 API endpoints, 14 unit tests; safe retry/force-complete with idempotency; all tests pass (32 integration, 49 unit).
 - V53 (R4): Security & Audit with auto-auditing interceptor, PII-masked security event logging, secret provider abstraction, security headers, trace correlation; 60 unit tests pass.
+- V54 (R5 Phase 1): ERP domain foundation with SharedKernel (6 value objects, 6 enums), Parties module (Party aggregate, role assignments, domain events), Accounting module (Account, JournalEntry, JournalLine, FiscalPeriod with full state workflows); 118 new unit tests pass; all tests pass (32 integration, 178 unit).
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
@@ -57,9 +59,32 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 - Trace correlation: TraceId/SpanId in logging scopes, ErrorInfo.TraceId, Outbox trace propagation
 - 11 new unit tests for security/audit; all tests pass (32 integration, 60 unit)
 
-### R5 — ERP domain foundation
-- Establish modules and shared kernel for Accounting, Inventory, CRM, Parties, and analytic dimensions based on the documented legacy analysis.
-- Keep inventory Kardex and costing independent from accounting posting.
+### R5 Phase 1 — ERP domain foundation ✅ COMPLETED (V54)
+- **SharedKernel** (src/XFramework.Domain/SharedKernel):
+  - 6 Value Objects: Money (arithmetic, comparison), Quantity (unit-aware arithmetic), Percentage (0-100, Of operators), DateRange (contains, overlaps), Address (FullAddress, IsEmpty), ContactInfo (HasPhone/Email/Address)
+  - 6 Enums: Currency (IRR, USD, EUR, GBP, AED), UnitOfMeasure (12 units), PartyType (6 types), DocumentStatus (6 statuses), PostingStatus (3 statuses), FiscalPeriodStatus (3 statuses)
+  - All value objects use `readonly record struct` for value semantics with auto-generated equality
+- **Parties Module** (src/XFramework.Domain/Parties):
+  - Party aggregate: code, name, taxId, nationalId, contact, IsActive, roles
+  - PartyRoleAssignment entity: role, validFrom, validTo, IsActive computed
+  - PartyRole enum: Customer, Supplier, Employee, Prospect, Carrier, Bank
+  - Domain events: PartyCreated, PartyUpdated, PartyRoleAssigned, PartyRoleRemoved, PartyActivated, PartyDeactivated
+  - Factory method: Party.Create; methods: UpdateDetails, AssignRole, RemoveRole, HasRole, Activate, Deactivate
+  - 27 unit tests
+- **Accounting Module** (src/XFramework.Domain/Accounting):
+  - Account aggregate: code, name, type (Asset/Liability/Equity/Revenue/Expense), nature (Debit/Credit derived from type), currency, hierarchy (parent/children), IsDetail, IsActive
+  - JournalEntry aggregate: reference, date, description, partyId, lines, status (Draft/Submitted/Approved/Posted/Reversed/Cancelled), postingStatus, double-entry balance validation
+  - JournalLine value object: accountId, side, amount, description, dimensionValueId
+  - FiscalPeriod aggregate: year, periodNumber, name, dateRange, status (Open/Closed/Locked)
+  - Domain events for all state transitions (Created, Submitted, Approved, Rejected, Posted, Reversed, Cancelled, PeriodClosed/Reopened/Locked/Unlocked)
+  - 91 unit tests
+- All 178 unit tests + 32 integration tests pass
+
+### R5 Phase 2 — ERP domain extensions
+- Inventory module (Item, Warehouse, KardexEntry, CostingEngine)
+- Dimensions (CostCenter, Project, custom dimensions)
+- Document numbering sequences
+- Tax/VAT handling
 
 ## Definition of done for each milestone
 1. Scope and acceptance criteria documented.

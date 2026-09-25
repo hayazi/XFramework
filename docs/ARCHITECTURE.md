@@ -200,3 +200,58 @@ Middleware adds:
 - `TraceId` and `SpanId` in logging scopes (LoggingApplicationServiceInterceptor).
 - `ErrorInfo.TraceId` for error responses.
 - Outbox trace propagation (R1): `traceparent`/`tracestate` headers through RabbitMQ.
+
+## ERP Domain Foundation (R5 Phase 1)
+
+### SharedKernel (XFramework.Domain.SharedKernel)
+Provides reusable value objects and enums for all domain modules:
+
+**Value Objects** (all `readonly record struct` for value semantics):
+- `Money(decimal Amount, Currency Currency)` — monetary amounts with currency, arithmetic operators (+, -, *, /), comparison operators, currency-safe operations
+- `Quantity(decimal Value, UnitOfMeasure Unit)` — measured quantities with unit, unit-aware arithmetic, division by decimal or same-unit quantity
+- `Percentage(decimal Value)` — 0-100 range, Of operators for Money and Quantity, arithmetic operators
+- `DateRange(DateTime Start, DateTime End)` — inclusive date range, Contains, Overlaps, DurationDays
+- `Address(string Street, City, State, PostalCode, Country)` — formatted address, FullAddress, IsEmpty, default Country="Iran"
+- `ContactInfo(string Name, Phone, Email, Address?)` — contact details with HasPhone/HasEmail/HasAddress
+
+**Enums:**
+- `Currency`: IRR, USD, EUR, GBP, AED
+- `UnitOfMeasure`: Piece, Kilogram, Gram, Liter, Milliliter, Meter, Centimeter, SquareMeter, CubicMeter, Pack, Box, Roll
+- `PartyType`: Customer, Supplier, Employee, Prospect, Carrier, Bank
+- `DocumentStatus`: Draft, Submitted, Approved, Rejected, Cancelled, Posted
+- `PostingStatus`: Unposted, Posted, Reversed
+- `FiscalPeriodStatus`: Open, Closed, Locked
+
+### Parties Module (XFramework.Domain.Parties)
+Manages business parties (customers, suppliers, employees, etc.):
+
+- **Party** (AggregateRoot<Guid>): Code, Name, TaxId, NationalId, Contact (ContactInfo), IsActive, Roles
+- **PartyRoleAssignment** (Entity<Guid>): PartyId, PartyRole, ValidFrom, ValidTo?, IsActive (computed from dates)
+- **PartyRole** enum: Customer, Supplier, Employee, Prospect, Carrier, Bank
+- **Factory**: `Party.Create(code, name, contact, taxId?, nationalId?)`
+- **Methods**: `UpdateDetails`, `AssignRole(role, validFrom?, validTo?)`, `RemoveRole(role)`, `HasRole(role)`, `Activate()`, `Deactivate()`
+- **Domain Events**: PartyCreated, PartyUpdated, PartyRoleAssigned, PartyRoleRemoved, PartyActivated, PartyDeactivated
+
+### Accounting Module (XFramework.Domain.Accounting)
+Double-entry accounting with full audit trail:
+
+- **Account** (AggregateRoot<Guid>): Code, Name, Description, AccountType (Asset/Liability/Equity/Revenue/Expense), AccountNature (Debit/Credit derived from type), Currency, ParentAccountId/ParentAccount/Children, IsActive, IsDetail
+  - Nature is derived: Asset/Expense = Debit; Liability/Equity/Revenue = Credit
+  - `GetBalance(IEnumerable<JournalLine>)` computes balance from journal lines
+  - Hierarchy support with circular reference protection
+- **JournalEntry** (AggregateRoot<Guid>): Reference, Date, Description, PartyId, Lines, Status (DocumentStatus), PostingStatus, TotalDebit, TotalCredit, IsBalanced
+  - Lines: JournalLine (AccountId, Side, Amount, Description, DimensionValueId)
+  - Status workflow: Draft → Submitted → Approved → Posted (or Rejected/Cancelled)
+  - Double-entry validation: TotalDebit == TotalCredit required for Submit/Approve/Post
+  - Posted entries can be Reversed (PostingStatus = Reversed)
+- **FiscalPeriod** (AggregateRoot<Guid>): Year, PeriodNumber, Name, DateRange, Status (FiscalPeriodStatus)
+  - State transitions: Open → Closed → Reopened; Open → Locked → Unlocked
+  - `Contains(DateTime)` checks if date falls within period
+- **Domain Events**: AccountCreated/Updated/Activated/Deactivated, JournalEntryCreated/Submitted/Approved/Rejected/Posted/Reversed/Cancelled, FiscalPeriodCreated/Closed/Reopened/Locked/Unlocked
+
+### Design Principles
+- Domain layer has no infrastructure dependencies (no EF Core, no RabbitMQ)
+- Value objects use `readonly record struct` for performance and value semantics
+- All state transitions emit domain events for outbox publication
+- Business rules enforced in domain (not database triggers/stored procedures)
+- Inventory/costing kept separate from accounting (event-driven integration planned)
