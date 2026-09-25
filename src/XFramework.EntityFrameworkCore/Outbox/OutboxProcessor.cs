@@ -34,7 +34,11 @@ public sealed class OutboxProcessor : IOutboxProcessor
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
-        await _repository.ReleaseExpiredLeasesAsync(now, cancellationToken);
+        var released = await _repository.ReleaseExpiredLeasesAsync(now, cancellationToken);
+        if (released > 0)
+        {
+            OutboxDiagnostics.LeaseExpiredRecovered.Add(released);
+        }
 
         var lockId = Guid.NewGuid().ToString("N");
         var messages = await _repository.ClaimBatchAsync(
@@ -46,6 +50,7 @@ public sealed class OutboxProcessor : IOutboxProcessor
 
         foreach (var message in messages)
         {
+            var messageStart = Stopwatch.GetTimestamp();
             try
             {
                 var renewNow = DateTime.UtcNow;
@@ -184,6 +189,11 @@ public sealed class OutboxProcessor : IOutboxProcessor
                             lockId);
                     }
                 }
+            }
+            finally
+            {
+                var elapsed = Stopwatch.GetElapsedTime(messageStart);
+                OutboxDiagnostics.ProcessDuration.Record(elapsed.TotalSeconds);
             }
         }
     }

@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XFramework.Application.Abstractions;
+using XFramework.Application.Contracts.Outbox;
 using XFramework.Application.Events;
 using XFramework.Application.Outbox;
 using XFramework.Domain.Authorization;
+using XFramework.EntityFrameworkCore.Auditing;
 using XFramework.EntityFrameworkCore.Authorization;
 using XFramework.EntityFrameworkCore.Identity;
 using XFramework.EntityFrameworkCore.Idempotency;
@@ -43,10 +45,12 @@ public static class EntityFrameworkCoreServiceCollectionExtensions
         services.AddScoped<IRoleRepository, EfCoreRoleRepository>();
         services.AddScoped<IPermissionRepository, EfCorePermissionRepository>();
         services.AddScoped<IIdempotencyService, IdempotencyService>();
+        services.AddScoped<IAuditStore, EfCoreAuditStore>();
 
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
         services.AddSingleton<IOutboxRetryPolicy, OutboxRetryPolicy>();
+        services.AddScoped<IOutboxAdminService, OutboxAdminService>();
 
 
         return services;

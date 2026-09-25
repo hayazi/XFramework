@@ -19,6 +19,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<IApplicationServiceInterceptor, AuthorizationApplicationServiceInterceptor>();
         services.AddScoped<IApplicationServiceInterceptor, ValidationApplicationServiceInterceptor>();
         services.AddScoped<IApplicationServiceInterceptor, UnitOfWorkApplicationServiceInterceptor>();
+        services.AddScoped<IApplicationServiceInterceptor, AuditApplicationServiceInterceptor>();
         services.AddScoped<ApplicationServicePipelineInterceptor>();
 
         services.AddSingleton<EventTypeRegistry>();

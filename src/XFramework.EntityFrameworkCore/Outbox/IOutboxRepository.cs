@@ -38,7 +38,30 @@ public interface IOutboxRepository
         string error,
         CancellationToken cancellationToken = default);
 
-    Task ReleaseExpiredLeasesAsync(
+    Task<int> ReleaseExpiredLeasesAsync(
         DateTime nowUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<OutboxMessage>> GetFailedAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<OutboxMessage>> GetProcessingAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default);
+
+    Task<OutboxMessage?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
+    Task<int> GetCountByStatusAsync(
+        OutboxMessageStatus status,
         CancellationToken cancellationToken = default);
 }

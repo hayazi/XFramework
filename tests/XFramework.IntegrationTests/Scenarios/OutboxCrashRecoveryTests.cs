@@ -143,21 +143,69 @@ public sealed class OutboxCrashRecoveryTests
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
-        public Task ReleaseExpiredLeasesAsync(
+        public Task<int> ReleaseExpiredLeasesAsync(
             DateTime nowUtc,
             CancellationToken cancellationToken = default)
         {
             ReleaseExpiredLeaseCallCount++;
 
+            int released = 0;
             if (_message.Status == OutboxMessageStatus.Processing &&
                 _message.LockedUntilUtc <= nowUtc)
             {
                 _message.Status = OutboxMessageStatus.Pending;
                 _message.LockId = null;
                 _message.LockedUntilUtc = null;
+                released = 1;
             }
 
-            return Task.FromResult(true);
+            return Task.FromResult(released);
+        }
+
+        public Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(
+            int skip,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            if (_message.Status == OutboxMessageStatus.Pending)
+                return Task.FromResult<IReadOnlyList<OutboxMessage>>([_message]);
+            return Task.FromResult<IReadOnlyList<OutboxMessage>>([]);
+        }
+
+        public Task<IReadOnlyList<OutboxMessage>> GetFailedAsync(
+            int skip,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            if (_message.Status == OutboxMessageStatus.Failed)
+                return Task.FromResult<IReadOnlyList<OutboxMessage>>([_message]);
+            return Task.FromResult<IReadOnlyList<OutboxMessage>>([]);
+        }
+
+        public Task<IReadOnlyList<OutboxMessage>> GetProcessingAsync(
+            int skip,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            if (_message.Status == OutboxMessageStatus.Processing)
+                return Task.FromResult<IReadOnlyList<OutboxMessage>>([_message]);
+            return Task.FromResult<IReadOnlyList<OutboxMessage>>([]);
+        }
+
+        public Task<OutboxMessage?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            if (_message.Id == id)
+                return Task.FromResult<OutboxMessage?>(_message);
+            return Task.FromResult<OutboxMessage?>(null);
+        }
+
+        public Task<int> GetCountByStatusAsync(
+            OutboxMessageStatus status,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_message.Status == status ? 1 : 0);
         }
     }
 }

@@ -1,4 +1,4 @@
-using XFramework.Application.Validation;
+using XFramework.Application.Contracts.Validation;
 
 namespace XFramework.Application.Exceptions;
 

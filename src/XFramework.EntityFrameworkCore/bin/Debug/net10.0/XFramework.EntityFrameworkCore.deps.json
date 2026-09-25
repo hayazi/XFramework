@@ -1123,6 +1123,7 @@
       },
       "XFramework.Application.Contracts/1.0.0": {
         "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.11",
           "XFramework.Domain": "1.0.0"
         },
         "runtime": {

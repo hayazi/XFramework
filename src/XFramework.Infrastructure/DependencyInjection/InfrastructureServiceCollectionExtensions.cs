@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using XFramework.Application.Contracts.Authorization;
+using XFramework.Application.Contracts.Security;
 using XFramework.Infrastructure.Security;
 using XFramework.Application.Outbox;
 using XFramework.Infrastructure.Outbox;
@@ -15,6 +16,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
+        services.AddSingleton<ISecretProvider, ConfigurationSecretProvider>();
 
         services
             .AddOptions<OutboxOptions>()

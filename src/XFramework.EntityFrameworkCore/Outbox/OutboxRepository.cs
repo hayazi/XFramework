@@ -209,7 +209,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
         return affectedRows == 1;
     }
 
-    public async Task ReleaseExpiredLeasesAsync(
+    public async Task<int> ReleaseExpiredLeasesAsync(
         DateTime nowUtc,
         CancellationToken cancellationToken = default)
     {
@@ -223,10 +223,11 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
               AND LockedUntilUtc <= @NowUtc;
             """;
 
-        await db.Database.ExecuteSqlRawAsync(
+        return await db.Database.ExecuteSqlRawAsync(
             sql,
             [
                 new SqlParameter("@Pending", (byte)OutboxMessageStatus.Pending),
+                new SqlParameter("@Processing", (byte)OutboxMessageStatus.Processing),
                 new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
@@ -234,4 +235,64 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
 
     private static string TruncateError(string error) =>
         error.Length <= 4000 ? error : error[..4000];
+
+    public async Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.OutboxMessages
+            .AsNoTracking()
+            .Where(m => m.Status == OutboxMessageStatus.Pending)
+            .OrderBy(m => m.CreatedOnUtc)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<OutboxMessage>> GetFailedAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.OutboxMessages
+            .AsNoTracking()
+            .Where(m => m.Status == OutboxMessageStatus.Failed)
+            .OrderByDescending(m => m.FailedOnUtc)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<OutboxMessage>> GetProcessingAsync(
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.OutboxMessages
+            .AsNoTracking()
+            .Where(m => m.Status == OutboxMessageStatus.Processing)
+            .OrderBy(m => m.LockedUntilUtc)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<OutboxMessage?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.OutboxMessages
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+    }
+
+    public async Task<int> GetCountByStatusAsync(
+        OutboxMessageStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        return await db.OutboxMessages
+            .AsNoTracking()
+            .CountAsync(m => m.Status == status, cancellationToken);
+    }
 }

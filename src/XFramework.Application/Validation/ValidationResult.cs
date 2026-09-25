@@ -1,3 +1,5 @@
+using XFramework.Application.Contracts.Validation;
+
 namespace XFramework.Application.Validation;
 
 public sealed class ValidationResult
@@ -25,8 +27,3 @@ public sealed class ValidationResult
         return new ValidationResult();
     }
 }
-
-public sealed record ValidationError(
-    string PropertyName,
-    string Message,
-    string? Code = null);

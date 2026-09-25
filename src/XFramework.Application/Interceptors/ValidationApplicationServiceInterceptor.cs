@@ -1,10 +1,15 @@
 using XFramework.Application.Exceptions;
 using XFramework.Application.Validation;
+using XFramework.Application.Contracts.Authorization;
+using XFramework.Application.Contracts.Security;
+using Microsoft.Extensions.Logging;
 
 namespace XFramework.Application.Interceptors;
 
 public sealed class ValidationApplicationServiceInterceptor(
-    IServiceProvider serviceProvider)
+    IServiceProvider serviceProvider,
+    ICurrentUser currentUser,
+    ILogger<ValidationApplicationServiceInterceptor> logger)
     : IApplicationServiceInterceptor
 {
     public async Task<object?> InterceptAsync(
@@ -26,15 +31,22 @@ public sealed class ValidationApplicationServiceInterceptor(
             if (validator is null)
                 continue;
 
-            var validateMethod = validatorType.GetMethod(nameof(IValidator<object>.ValidateAsync))!;
-            var validationTask = (Task<ValidationResult>)validateMethod.Invoke(
+            var method = validatorType.GetMethod(nameof(IValidator<object>.ValidateAsync))!;
+            var task = (Task<ValidationResult>)method.Invoke(
                 validator,
                 [argument, cancellationToken])!;
 
-            var result = await validationTask.ConfigureAwait(false);
+            var result = await task.ConfigureAwait(false);
 
             if (!result.IsValid)
             {
+                logger.LogValidationFailure(
+                    currentUser.IsAuthenticated ? currentUser.UserId : null,
+                    currentUser.IsAuthenticated ? currentUser.UserName : null,
+                    context.MethodName,
+                    result.Errors,
+                    null);
+
                 throw new ValidationException(result.Errors);
             }
         }

@@ -1,11 +1,16 @@
 using XFramework.Application.Attributes;
+using XFramework.Application.Authorization;
 using XFramework.Application.Contracts.Authorization;
+using XFramework.Application.Contracts.Security;
 using XFramework.Application.Metadata;
+using Microsoft.Extensions.Logging;
 
 namespace XFramework.Application.Interceptors;
 
 public sealed class AuthorizationApplicationServiceInterceptor(
-    IPermissionChecker permissionChecker)
+    IPermissionChecker permissionChecker,
+    ICurrentUser currentUser,
+    ILogger<AuthorizationApplicationServiceInterceptor> logger)
     : IApplicationServiceInterceptor
 {
     public async Task<object?> InterceptAsync(
@@ -17,8 +22,20 @@ public sealed class AuthorizationApplicationServiceInterceptor(
 
         foreach (var permission in permissions)
         {
-            await permissionChecker.CheckAsync(permission, cancellationToken)
-                .ConfigureAwait(false);
+            try
+            {
+                await permissionChecker.CheckAsync(permission, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (AuthorizationException)
+            {
+                logger.LogPermissionDenied(
+                    currentUser.IsAuthenticated ? currentUser.UserId : null,
+                    currentUser.IsAuthenticated ? currentUser.UserName : null,
+                    permission,
+                    null);
+                throw;
+            }
         }
 
         return await next().ConfigureAwait(false);
