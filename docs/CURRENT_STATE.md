@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V56 source baseline (R5 Phase 3 Application layer services completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full Application layer.
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3).
+- Version label: V57 source baseline (R6 EntityFrameworkCore integration completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -32,13 +32,14 @@
   - **Tax**: ITaxCodeAppService with CRUD + CalculateTax, GetDefault, GetByType
   - All services use [Validate] attribute, auto-discovered via ApplicationServiceDiscovery, registered with interceptor pipeline (Logging, Authorization, Validation, UnitOfWork, Audit)
   - Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for Application layer queries without EF Core dependency
+- **ERP EF Core Integration (R6)**:
+  - **Configurations**: All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage)
+  - **DbContext**: XFrameworkDbContext extended with DbSets for Items, Warehouses, KardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
+  - **Value Converters**: Dedicated ValueConverter classes (MoneyConverter, QuantityConverter, AddressConverter, PercentageConverter, MoneyNullableConverter) using JSON serialization for readonly record struct value objects
+  - **Repository**: EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods for Application layer queries
 
 ## Immediate next task
-R6 — EntityFrameworkCore Integration:
-- DbContext configurations for new modules
-- Repository implementations
-- Migrations
-- Outbox event handlers for domain events
+R7 — Blazor UI / API Endpoints for new modules
 
 ## Validation commands
 ```powershell

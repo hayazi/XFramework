@@ -9,6 +9,7 @@ V53 — Framework security and audit review (R4 completed).
 V54 — ERP domain foundation (R5 Phase 1 completed).
 V55 — ERP domain extensions (R5 Phase 2 completed).
 V56 — ERP Application layer services (R5 Phase 3 completed).
+V57 — ERP EntityFrameworkCore integration (R6 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -24,6 +25,7 @@ V56 — ERP Application layer services (R5 Phase 3 completed).
 - V54 (R5 Phase 1): ERP domain foundation with SharedKernel (6 value objects, 6 enums), Parties module (Party aggregate, role assignments, domain events), Accounting module (Account, JournalEntry, JournalLine, FiscalPeriod with full state workflows); 118 new unit tests pass; all tests pass (32 integration, 178 unit).
 - V55 (R5 Phase 2): ERP domain extensions with Inventory module (Item, Warehouse, KardexEntry, CostingEngine with 5 costing methods), Dimensions module (CostCenter, Project, CustomDimension with hierarchy), Numbering module (NumberSequence with scopes, auto-reset, templates), Tax module (TaxCode with VAT/Sales/Withholding/Excise, 4 calculation methods, tiered rates); all tests pass (32 integration, 178 unit).
 - V56 (R5 Phase 3): ERP Application layer services for all new modules — Inventory (Item, Warehouse, Kardex), Dimensions (CostCenter, Project, CustomDimension), Numbering (NumberSequence), Tax (TaxCode) — with full CRUD, custom queries, validation, auto-discovery via ApplicationServiceDiscovery, interceptor pipeline integration; Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for clean Application layer queries without EF Core dependency; all tests pass (32 integration, 178 unit).
+- V57 (R6): ERP EF Core integration — All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage); XFrameworkDbContext extended with DbSets for all new entities; ValueConverter classes using JSON serialization for readonly record struct value objects; EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods; all tests pass (32 integration, 178 unit).
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
@@ -103,6 +105,26 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
   - Registered with interceptor pipeline: Logging → Authorization → Validation → UnitOfWork → Audit
   - Repository interface (`IRepository`) extended with `FirstOrDefaultAsync`, `SingleOrDefaultAsync` for clean queries without EF Core dependency
   - `EfCoreRepository` and `EfCoreRoleRepository` implement new methods
+
+### R6 — ERP EntityFrameworkCore Integration ✅ COMPLETED (V57)
+- **Entity Configurations** (src/XFramework.EntityFrameworkCore/Configurations/):
+  - Inventory: ItemConfiguration, WarehouseConfiguration, KardexEntryConfiguration
+  - Dimensions: CostCenterConfiguration, ProjectConfiguration, CustomDimensionConfiguration
+  - Numbering: NumberSequenceConfiguration
+  - Tax: TaxCodeConfiguration
+  - All configurations include proper indexes, unique constraints, and foreign keys
+- **DbContext** (XFrameworkDbContext):
+  - Added DbSets: Items, Warehouses, KardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
+  - Uses ApplyConfigurationsFromAssembly for automatic configuration discovery
+- **Value Converters** (src/XFramework.EntityFrameworkCore/ValueConverters/):
+  - MoneyConverter, MoneyNullableConverter: JSON serialization for Money readonly record struct
+  - QuantityConverter: JSON serialization for Quantity readonly record struct
+  - AddressConverter: JSON serialization for Address readonly record struct
+  - PercentageConverter: JSON serialization for Percentage readonly record struct
+- **Repository**:
+  - EfCoreRepository implements FirstOrDefaultAsync, SingleOrDefaultAsync for clean Application layer queries
+  - EfCoreRoleRepository updated with new interface methods
+- All tests pass (32 integration, 178 unit)
 
 ## Definition of done for each milestone
 1. Scope and acceptance criteria documented.

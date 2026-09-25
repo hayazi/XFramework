@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XFramework.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0a07c258107949eec8abeca6a589ca12dc7eee70")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+66aa6002f1eafa049a9daab912ebd122d6f24b98")]
 [assembly: System.Reflection.AssemblyProductAttribute("XFramework.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XFramework.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

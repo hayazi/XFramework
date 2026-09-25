@@ -1,1 +1,6 @@
 /.vs
+*.dll
+*.exe
+*.pdb
+*.suo
+

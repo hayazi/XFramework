@@ -301,3 +301,43 @@ Tax/VAT handling with flexible calculation:
 - **TaxTier** (value object): ThresholdFrom, ThresholdTo, Rate — for progressive tax brackets
 - **Enums**: TaxType, TaxCalculationMethod, TaxApplication, TaxStatus
 - **Domain Events**: TaxCodeCreated/Updated/Activated/Deactivated
+
+## ERP EF Core Integration (R6)
+
+### Entity Configurations
+All new domain entities have `IEntityTypeConfiguration` implementations in `XFramework.EntityFrameworkCore.Configurations/`:
+- **Inventory**: ItemConfiguration, WarehouseConfiguration, KardexEntryConfiguration
+- **Dimensions**: CostCenterConfiguration, ProjectConfiguration, CustomDimensionConfiguration
+- **Numbering**: NumberSequenceConfiguration
+- **Tax**: TaxCodeConfiguration
+
+Configurations include proper indexing, unique constraints, foreign keys, and value object mapping via JSON serialization.
+
+### DbContext Extensions
+`XFrameworkDbContext` extended with DbSets for all new entities:
+```csharp
+public DbSet<Item> Items => Set<Item>();
+public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+public DbSet<KardexEntry> KardexEntries => Set<KardexEntry>();
+public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+public DbSet<Project> Projects => Set<Project>();
+public DbSet<CustomDimension> CustomDimensions => Set<CustomDimension>();
+public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
+public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+```
+
+Uses `modelBuilder.ApplyConfigurationsFromAssembly(typeof(XFrameworkDbContext).Assembly)` for automatic configuration discovery.
+
+### Value Converters
+Dedicated `ValueConverter` classes in `XFramework.EntityFrameworkCore.ValueConverters/` using JSON serialization for readonly record struct value objects:
+- `MoneyConverter`, `MoneyNullableConverter` — for Money
+- `QuantityConverter` — for Quantity
+- `AddressConverter` — for Address
+- `PercentageConverter` — for Percentage
+
+### Repository Extensions
+`IRepository` interface extended with:
+- `FirstOrDefaultAsync(IQueryable<TEntity>, CancellationToken)`
+- `SingleOrDefaultAsync(IQueryable<TEntity>, CancellationToken)`
+
+Implemented in `EfCoreRepository` and `EfCoreRoleRepository` for clean Application layer queries without EF Core dependency.
