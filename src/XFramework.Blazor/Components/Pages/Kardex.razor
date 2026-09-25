@@ -1,0 +1,323 @@
+@page "/kardex"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Inventory
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Inventory
+@inject IKardexAppService KardexAppService
+@inject IItemAppService ItemAppService
+@inject IWarehouseAppService WarehouseAppService
+
+<PageTitle>Kardex Entries</PageTitle>
+
+<h1>Kardex Entries</h1>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <button class="btn btn-success w-100" @onclick="() => OpenCreateModal(InventoryTransactionType.Receipt)">
+            Create Receipt
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-danger w-100" @onclick="() => OpenCreateModal(InventoryTransactionType.Issue)">
+            Create Issue
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-warning w-100" @onclick="() => OpenCreateModal(InventoryTransactionType.Adjustment)">
+            Create Adjustment
+        </button>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Item</label>
+        <select class="form-select" @bind="_filterItemId" @bind:event="onchange" @onchange="ApplyFilters">
+            <option value="">All Items</option>
+            @foreach (var item in _items)
+            {
+                <option value="@item.Id">@item.Code - @item.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Warehouse</label>
+        <select class="form-select" @bind="_filterWarehouseId" @bind:event="onchange" @onchange="ApplyFilters">
+            <option value="">All Warehouses</option>
+            @foreach (var wh in _warehouses)
+            {
+                <option value="@wh.Id">@wh.Code - @wh.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">From Date</label>
+        <input type="date" class="form-control" @bind="_filterFromDate" @bind:event="onchange" @onchange="ApplyFilters" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">To Date</label>
+        <input type="date" class="form-control" @bind="_filterToDate" @bind:event="onchange" @onchange="ApplyFilters" />
+    </div>
+</div>
+
+@if (_entries is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Item</th>
+                <th>Warehouse</th>
+                <th>Qty In</th>
+                <th>Qty Out</th>
+                <th>Running Balance</th>
+                <th>Unit Cost</th>
+                <th>Total Cost</th>
+                <th>Reference</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in _entries)
+            {
+                <tr>
+                    <td>@entry.TransactionDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        <span class="badge @GetTypeBadge(entry.TransactionType)">@entry.TransactionType</span>
+                    </td>
+                    <td>@entry.ItemCode</td>
+                    <td>@entry.WarehouseCode</td>
+                    <td>@(entry.QuantityIn > 0 ? entry.QuantityIn.ToString("N2") : "-")</td>
+                    <td>@(entry.QuantityOut > 0 ? entry.QuantityOut.ToString("N2") : "-")</td>
+                    <td>@entry.RunningBalance.ToString("N2")</td>
+                    <td>@entry.UnitCost.Amount @entry.UnitCost.Currency</td>
+                    <td>@entry.TotalCost.Amount @entry.TotalCost.Currency</td>
+                    <td>@entry.DocumentReference</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Create Modal -->
+@if (_showModal)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create @_selectedType</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Item</label>
+                        <select class="form-select" @bind="_kardexForm.ItemId" @bind:event="onchange">
+                            @foreach (var item in _items)
+                            {
+                                <option value="@item.Id">@item.Code - @item.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Warehouse</label>
+                        <select class="form-select" @bind="_kardexForm.WarehouseId" @bind:event="onchange">
+                            @foreach (var wh in _warehouses)
+                            {
+                                <option value="@wh.Id">@wh.Code - @wh.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Date</label>
+                        <input type="date" class="form-control" @bind="_kardexForm.TransactionDate" @bind:event="onchange" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Document Reference</label>
+                        <input type="text" class="form-control" @bind="_kardexForm.DocumentReference" @bind:event="oninput" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity In</label>
+                            <input type="number" step="0.01" class="form-control" @bind="_kardexForm.QuantityIn" @bind:event="oninput" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity Out</label>
+                            <input type="number" step="0.01" class="form-control" @bind="_kardexForm.QuantityOut" @bind:event="oninput" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unit Cost Amount</label>
+                        <input type="number" step="0.01" class="form-control" @bind="_kardexForm.UnitCostAmount" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Currency</label>
+                        <select class="form-select" @bind="_kardexForm.Currency" @bind:event="onchange">
+                            @foreach (var c in Enum.GetValues<Currency>())
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference Document Id</label>
+                        <input type="text" class="form-control" @bind="_kardexForm.ReferenceDocumentId" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference Document Line</label>
+                        <input type="number" class="form-control" @bind="_kardexForm.ReferenceDocumentLine" @bind:event="oninput" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveKardex">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<KardexEntryDto>? _entries;
+    private List<ItemDto> _items = new();
+    private List<WarehouseDto> _warehouses = new();
+    private bool _showModal;
+    private InventoryTransactionType _selectedType;
+    private KardexForm _kardexForm = new();
+
+    // Filters
+    private Guid? _filterItemId;
+    private Guid? _filterWarehouseId;
+    private DateTime? _filterFromDate;
+    private DateTime? _filterToDate;
+
+    private class KardexForm
+    {
+        public Guid ItemId { get; set; }
+        public Guid WarehouseId { get; set; }
+        public DateTime TransactionDate { get; set; } = DateTime.Today;
+        public string DocumentReference { get; set; } = string.Empty;
+        public decimal QuantityIn { get; set; }
+        public decimal QuantityOut { get; set; }
+        public decimal UnitCostAmount { get; set; }
+        public Currency Currency { get; set; } = Currency.IRR;
+        public string? ReferenceDocumentId { get; set; }
+        public int? ReferenceDocumentLine { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _kardexForm.TransactionDate = DateTime.Today;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var itemsResult = await ItemAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+        _items = itemsResult.Items.ToList();
+
+        var whResult = await WarehouseAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+        _warehouses = whResult.Items.ToList();
+
+        await ApplyFilters();
+    }
+
+    private async Task ApplyFilters()
+    {
+        if (_filterItemId.HasValue)
+        {
+            var result = await KardexAppService.GetByItemAsync(_filterItemId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            _entries = result.Items;
+        }
+        else if (_filterWarehouseId.HasValue)
+        {
+            var result = await KardexAppService.GetByWarehouseAsync(_filterWarehouseId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            _entries = result.Items;
+        }
+        else if (_filterFromDate.HasValue && _filterToDate.HasValue)
+        {
+            var result = await KardexAppService.GetByDateRangeAsync(_filterFromDate.Value, _filterToDate.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            _entries = result.Items;
+        }
+        else
+        {
+            var result = await KardexAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            _entries = result.Items;
+        }
+    }
+
+    private void OpenCreateModal(InventoryTransactionType type)
+    {
+        _selectedType = type;
+        _kardexForm = new KardexForm
+        {
+            TransactionDate = DateTime.Today,
+            QuantityIn = type == InventoryTransactionType.Receipt ? 1 : 0,
+            QuantityOut = type == InventoryTransactionType.Issue ? 1 : 0
+        };
+        _showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        _showModal = false;
+        _kardexForm = new KardexForm();
+    }
+
+    private async Task SaveKardex()
+    {
+        try
+        {
+            var input = new KardexEntryCreateDto
+            {
+                ItemId = _kardexForm.ItemId,
+                WarehouseId = _kardexForm.WarehouseId,
+                TransactionType = _selectedType,
+                TransactionDate = _kardexForm.TransactionDate,
+                DocumentReference = _kardexForm.DocumentReference,
+                QuantityIn = _kardexForm.QuantityIn,
+                QuantityOut = _kardexForm.QuantityOut,
+                UnitCost = new MoneyDto { Amount = _kardexForm.UnitCostAmount, Currency = _kardexForm.Currency },
+                ReferenceDocumentId = string.IsNullOrEmpty(_kardexForm.ReferenceDocumentId) ? null : Guid.Parse(_kardexForm.ReferenceDocumentId),
+                ReferenceDocumentLine = _kardexForm.ReferenceDocumentLine
+            };
+
+            switch (_selectedType)
+            {
+                case InventoryTransactionType.Receipt:
+                    await KardexAppService.CreateReceiptAsync(input);
+                    break;
+                case InventoryTransactionType.Issue:
+                    await KardexAppService.CreateIssueAsync(input);
+                    break;
+                case InventoryTransactionType.Adjustment:
+                    await KardexAppService.CreateAdjustmentAsync(input);
+                    break;
+            }
+
+            CloseModal();
+            await ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private string GetTypeBadge(InventoryTransactionType type) => type switch
+    {
+        InventoryTransactionType.Receipt => "bg-success",
+        InventoryTransactionType.Issue => "bg-danger",
+        InventoryTransactionType.Transfer => "bg-info",
+        InventoryTransactionType.Adjustment => "bg-warning",
+        InventoryTransactionType.Return => "bg-primary",
+        InventoryTransactionType.Production => "bg-secondary",
+        InventoryTransactionType.Consumption => "bg-dark",
+        _ => "bg-secondary"
+    };
+}

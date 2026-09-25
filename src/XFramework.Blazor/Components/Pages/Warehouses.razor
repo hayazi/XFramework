@@ -1,0 +1,269 @@
+@page "/warehouses"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Inventory
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Inventory
+@inject IWarehouseAppService WarehouseAppService
+
+<PageTitle>Warehouses</PageTitle>
+
+<h1>Warehouses</h1>
+
+<button class="btn btn-primary mb-3" @onclick="OpenCreateModal">
+    Create Warehouse
+</button>
+
+@if (_warehouses is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Allow Negative Stock</th>
+                <th>Manager</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wh in _warehouses)
+            {
+                <tr>
+                    <td>@wh.Code</td>
+                    <td>@wh.Name</td>
+                    <td>@wh.Type</td>
+                    <td>
+                        <span class="badge @GetStatusBadge(wh.IsActive ? ItemStatus.Active : ItemStatus.Inactive)">@(wh.IsActive ? "Active" : "Inactive")</span>
+                    </td>
+                    <td>@(wh.AllowNegativeStock ? "Yes" : "No")</td>
+                    <td>@wh.ManagerId?.ToString() ?? "-"</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditModal(wh)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(wh.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Create/Edit Modal -->
+@if (_showModal)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingWarehouse != null ? "Edit Warehouse" : "Create Warehouse")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-control" @bind="_warehouseForm.Code" @bind:event="oninput" disabled="@(_editingWarehouse != null)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" @bind="_warehouseForm.Name" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" @bind="_warehouseForm.Description" @bind:event="oninput"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" @bind="_warehouseForm.Type" @bind:event="onchange">
+                            @foreach (var t in Enum.GetValues<WarehouseType>())
+                            {
+                                <option value="@t">@t</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" @bind="_warehouseForm.Address" @bind:event="oninput" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Is Active</label>
+                            <input type="checkbox" class="form-check-input" @bind="_warehouseForm.IsActive" @bind:event="onchange" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Allow Negative Stock</label>
+                            <input type="checkbox" class="form-check-input" @bind="_warehouseForm.AllowNegativeStock" @bind:event="onchange" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Manager Id</label>
+                        <input type="text" class="form-control" @bind="_warehouseForm.ManagerIdString" @bind:event="oninput" placeholder="GUID" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveWarehouse">@(_editingWarehouse != null ? "Update" : "Create")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (_showDeleteConfirm)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this warehouse?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteWarehouse">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<WarehouseDto>? _warehouses;
+    private bool _showModal;
+    private bool _showDeleteConfirm;
+    private WarehouseDto? _editingWarehouse;
+    private Guid _deleteId;
+    private WarehouseForm _warehouseForm = new();
+
+    private class WarehouseForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public WarehouseType Type { get; set; } = WarehouseType.Main;
+        public string? Address { get; set; }
+        public bool IsActive { get; set; } = true;
+        public bool AllowNegativeStock { get; set; } = false;
+        public string? ManagerIdString { get; set; }
+        public Guid? ManagerId => Guid.TryParse(ManagerIdString, out var g) ? g : null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await WarehouseAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 50 });
+        _warehouses = result.Items;
+    }
+
+    private void OpenCreateModal()
+    {
+        _editingWarehouse = null;
+        _warehouseForm = new WarehouseForm();
+        _showModal = true;
+    }
+
+    private void OpenEditModal(WarehouseDto wh)
+    {
+        _editingWarehouse = wh;
+        _warehouseForm = new WarehouseForm
+        {
+            Code = wh.Code,
+            Name = wh.Name,
+            Description = wh.Description,
+            Type = wh.Type,
+            Address = wh.Address,
+            IsActive = wh.IsActive,
+            AllowNegativeStock = wh.AllowNegativeStock,
+            ManagerIdString = wh.ManagerId?.ToString()
+        };
+        _showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        _showModal = false;
+        _editingWarehouse = null;
+        _warehouseForm = new WarehouseForm();
+    }
+
+    private async Task SaveWarehouse()
+    {
+        try
+        {
+            if (_editingWarehouse != null)
+            {
+                var updateDto = new WarehouseUpdateDto
+                {
+                    Name = _warehouseForm.Name,
+                    Description = _warehouseForm.Description,
+                    Type = _warehouseForm.Type,
+                    Address = _warehouseForm.Address,
+                    IsActive = _warehouseForm.IsActive,
+                    AllowNegativeStock = _warehouseForm.AllowNegativeStock,
+                    ManagerId = _warehouseForm.ManagerId
+                };
+                await WarehouseAppService.UpdateAsync(_editingWarehouse.Id, updateDto);
+            }
+            else
+            {
+                var createDto = new WarehouseCreateDto
+                {
+                    Code = _warehouseForm.Code,
+                    Name = _warehouseForm.Name,
+                    Description = _warehouseForm.Description,
+                    Type = _warehouseForm.Type,
+                    Address = _warehouseForm.Address,
+                    IsActive = _warehouseForm.IsActive,
+                    AllowNegativeStock = _warehouseForm.AllowNegativeStock,
+                    ManagerId = _warehouseForm.ManagerId
+                };
+                await WarehouseAppService.CreateAsync(createDto);
+            }
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private void ConfirmDelete(Guid id)
+    {
+        _deleteId = id;
+        _showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+    }
+
+    private async Task DeleteWarehouse()
+    {
+        await WarehouseAppService.DeleteAsync(_deleteId);
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+        await LoadData();
+    }
+
+    private string GetStatusBadge(ItemStatus status) => status switch
+    {
+        ItemStatus.Active => "bg-success",
+        ItemStatus.Inactive => "bg-secondary",
+        _ => "bg-secondary"
+    };
+}
