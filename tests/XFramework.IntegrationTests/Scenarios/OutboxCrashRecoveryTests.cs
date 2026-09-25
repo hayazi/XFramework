@@ -108,7 +108,7 @@ public sealed class OutboxCrashRecoveryTests
             return Task.FromResult(true);
         }
 
-        public Task MarkCompletedAsync(
+        public Task<bool> MarkCompletedAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
@@ -123,10 +123,10 @@ public sealed class OutboxCrashRecoveryTests
             _message.ProcessedOnUtc = completedOnUtc;
             _message.LockId = null;
             _message.LockedUntilUtc = null;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
-        public Task MarkRetryAsync(
+        public Task<bool> MarkRetryAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
@@ -135,7 +135,7 @@ public sealed class OutboxCrashRecoveryTests
             CancellationToken cancellationToken = default)
             => throw new NotSupportedException();
 
-        public Task MarkFailedAsync(
+        public Task<bool> MarkFailedAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
@@ -157,7 +157,7 @@ public sealed class OutboxCrashRecoveryTests
                 _message.LockedUntilUtc = null;
             }
 
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
     }
 }

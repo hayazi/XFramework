@@ -99,7 +99,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
         return affectedRows == 1;
     }
 
-    public async Task MarkCompletedAsync(
+    public async Task<bool> MarkCompletedAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,
@@ -119,7 +119,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
               AND LockedUntilUtc > @NowUtc;
             """;
 
-        await db.Database.ExecuteSqlRawAsync(
+        var affectedRows = await db.Database.ExecuteSqlRawAsync(
             sql,
             [
                 new SqlParameter("@Completed", (byte)OutboxMessageStatus.Completed),
@@ -130,9 +130,11 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
+
+        return affectedRows == 1;
     }
 
-    public async Task MarkRetryAsync(
+    public async Task<bool> MarkRetryAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,
@@ -155,7 +157,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
               AND LockedUntilUtc > @NowUtc;
             """;
 
-        await db.Database.ExecuteSqlRawAsync(
+        var affectedRows = await db.Database.ExecuteSqlRawAsync(
             sql,
             [
                 new SqlParameter("@Pending", (byte)OutboxMessageStatus.Pending),
@@ -167,9 +169,11 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
+
+        return affectedRows == 1;
     }
 
-    public async Task MarkFailedAsync(
+    public async Task<bool> MarkFailedAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,
@@ -190,7 +194,7 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
               AND LockedUntilUtc > @NowUtc;
             """;
 
-        await db.Database.ExecuteSqlRawAsync(
+        var affectedRows = await db.Database.ExecuteSqlRawAsync(
             sql,
             [
                 new SqlParameter("@Failed", (byte)OutboxMessageStatus.Failed),
@@ -201,6 +205,8 @@ public sealed class OutboxRepository(XFrameworkDbContext db) : IOutboxRepository
                 new SqlParameter("@NowUtc", nowUtc)
             ],
             cancellationToken);
+
+        return affectedRows == 1;
     }
 
     public async Task ReleaseExpiredLeasesAsync(

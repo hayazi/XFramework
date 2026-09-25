@@ -97,6 +97,62 @@ public sealed class OutboxProcessorReliabilityTests
     }
 
     [Fact]
+    public async Task Lost_ownership_after_publish_should_not_retry_or_fail_the_already_published_event()
+    {
+        var repository = new FakeOutboxRepository(CreateMessage())
+        {
+            CompleteSucceeds = false
+        };
+        var eventBus = new FakeEventBus();
+        var retryPolicy = new FakeRetryPolicy(shouldRetry: true);
+        var processor = CreateProcessor(repository, eventBus, retryPolicy);
+
+        await processor.ProcessBatchAsync(10);
+
+        Assert.Single(eventBus.Published);
+        Assert.Empty(repository.Completed);
+        Assert.Empty(repository.Retried);
+        Assert.Empty(repository.Failed);
+    }
+
+
+    [Fact]
+    public async Task Lost_retry_ownership_should_not_be_reported_as_a_successful_retry()
+    {
+        var repository = new FakeOutboxRepository(CreateMessage())
+        {
+            RetrySucceeds = false
+        };
+        var eventBus = new FakeEventBus(new TimeoutException("RabbitMQ timeout."));
+        var retryPolicy = new FakeRetryPolicy(shouldRetry: true);
+        var processor = CreateProcessor(repository, eventBus, retryPolicy);
+
+        await processor.ProcessBatchAsync(10);
+
+        Assert.Empty(repository.Retried);
+        Assert.Empty(repository.Failed);
+        Assert.Equal(1, repository.RetryAttempts);
+    }
+
+    [Fact]
+    public async Task Lost_failure_ownership_should_not_be_reported_as_a_successful_failure()
+    {
+        var repository = new FakeOutboxRepository(CreateMessage())
+        {
+            FailSucceeds = false
+        };
+        var eventBus = new FakeEventBus(new InvalidOperationException("Invalid event contract."));
+        var retryPolicy = new FakeRetryPolicy(shouldRetry: false);
+        var processor = CreateProcessor(repository, eventBus, retryPolicy);
+
+        await processor.ProcessBatchAsync(10);
+
+        Assert.Empty(repository.Failed);
+        Assert.Empty(repository.Retried);
+        Assert.Equal(1, repository.FailureAttempts);
+    }
+
+    [Fact]
     public async Task Cancellation_during_publish_should_propagate_without_marking_retry_or_failure()
     {
         var repository = new FakeOutboxRepository(CreateMessage());
@@ -205,6 +261,11 @@ public sealed class OutboxProcessorReliabilityTests
         public List<RetryRecord> Retried { get; } = [];
         public List<FailedRecord> Failed { get; } = [];
         public bool RenewLeaseSucceeds { get; set; } = true;
+        public bool CompleteSucceeds { get; set; } = true;
+        public bool RetrySucceeds { get; set; } = true;
+        public bool FailSucceeds { get; set; } = true;
+        public int RetryAttempts { get; private set; }
+        public int FailureAttempts { get; private set; }
         public int RenewLeaseCallCount { get; private set; }
         public DateTime? LastRenewedUntilUtc { get; private set; }
 
@@ -238,19 +299,22 @@ public sealed class OutboxProcessorReliabilityTests
             return Task.FromResult(RenewLeaseSucceeds);
         }
 
-        public Task MarkCompletedAsync(
+        public Task<bool> MarkCompletedAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
             DateTime completedOnUtc,
             CancellationToken cancellationToken = default)
         {
+            if (!CompleteSucceeds)
+                return Task.FromResult(false);
+
             Completed.Add(messageId);
             Message.Status = OutboxMessageStatus.Completed;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
-        public Task MarkRetryAsync(
+        public Task<bool> MarkRetryAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
@@ -258,26 +322,34 @@ public sealed class OutboxProcessorReliabilityTests
             string error,
             CancellationToken cancellationToken = default)
         {
+            RetryAttempts++;
+            if (!RetrySucceeds)
+                return Task.FromResult(false);
+
             Retried.Add(new RetryRecord(messageId, nextAttemptOnUtc, error));
             Message.Status = OutboxMessageStatus.Pending;
             Message.RetryCount++;
             Message.NextAttemptOnUtc = nextAttemptOnUtc;
             Message.LastError = error;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
-        public Task MarkFailedAsync(
+        public Task<bool> MarkFailedAsync(
             Guid messageId,
             string lockId,
             DateTime nowUtc,
             string error,
             CancellationToken cancellationToken = default)
         {
+            FailureAttempts++;
+            if (!FailSucceeds)
+                return Task.FromResult(false);
+
             Failed.Add(new FailedRecord(messageId, error));
             Message.Status = OutboxMessageStatus.Failed;
             Message.RetryCount++;
             Message.LastError = error;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public sealed record RetryRecord(

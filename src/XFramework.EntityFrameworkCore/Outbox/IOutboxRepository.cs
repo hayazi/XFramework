@@ -16,14 +16,14 @@ public interface IOutboxRepository
         DateTime lockedUntilUtc,
         CancellationToken cancellationToken = default);
 
-    Task MarkCompletedAsync(
+    Task<bool> MarkCompletedAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,
         DateTime completedOnUtc,
         CancellationToken cancellationToken = default);
 
-    Task MarkRetryAsync(
+    Task<bool> MarkRetryAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,
@@ -31,7 +31,7 @@ public interface IOutboxRepository
         string error,
         CancellationToken cancellationToken = default);
 
-    Task MarkFailedAsync(
+    Task<bool> MarkFailedAsync(
         Guid messageId,
         string lockId,
         DateTime nowUtc,

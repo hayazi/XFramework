@@ -52,11 +52,13 @@ public sealed class OutboxLeaseFencingSqlServerTests
             await using var workerAContext = CreateContext(connectionString, registry);
             var workerARepository = new OutboxRepository(workerAContext);
 
-            await workerARepository.MarkCompletedAsync(
+            var completed = await workerARepository.MarkCompletedAsync(
                 messageId,
                 workerALock,
                 nowAfterExpiry,
                 nowAfterExpiry);
+
+            Assert.False(completed);
 
             await using var verification = CreateContext(connectionString, registry);
             var row = await verification.OutboxMessages
@@ -138,24 +140,27 @@ public sealed class OutboxLeaseFencingSqlServerTests
 
             // Worker A is stale. Its old fencing identity must not be able to
             // complete, retry, or fail Worker B's reclaimed message.
-            await workerARepository.MarkCompletedAsync(
+            var staleCompleted = await workerARepository.MarkCompletedAsync(
                 messageId,
                 workerALock,
                 reclaimTime.AddSeconds(1),
                 reclaimTime.AddSeconds(1));
+            Assert.False(staleCompleted);
 
-            await workerARepository.MarkRetryAsync(
+            var staleRetried = await workerARepository.MarkRetryAsync(
                 messageId,
                 workerALock,
                 reclaimTime.AddSeconds(2),
                 reclaimTime.AddMinutes(1),
                 "stale worker retry");
+            Assert.False(staleRetried);
 
-            await workerARepository.MarkFailedAsync(
+            var staleFailed = await workerARepository.MarkFailedAsync(
                 messageId,
                 workerALock,
                 reclaimTime.AddSeconds(3),
                 "stale worker failure");
+            Assert.False(staleFailed);
 
             await using var verification = CreateContext(connectionString, registry);
             var row = await verification.OutboxMessages
