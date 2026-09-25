@@ -7,6 +7,7 @@ V51 — Outbox metrics and dashboard readiness (R2 completed).
 V52 — Outbox operator experience (R3 completed).
 V53 — Framework security and audit review (R4 completed).
 V54 — ERP domain foundation (R5 Phase 1 completed).
+V55 — ERP domain extensions (R5 Phase 2 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -20,6 +21,7 @@ V54 — ERP domain foundation (R5 Phase 1 completed).
 - V52 (R3): Outbox Admin API with 7 operations, 7 API endpoints, 14 unit tests; safe retry/force-complete with idempotency; all tests pass (32 integration, 49 unit).
 - V53 (R4): Security & Audit with auto-auditing interceptor, PII-masked security event logging, secret provider abstraction, security headers, trace correlation; 60 unit tests pass.
 - V54 (R5 Phase 1): ERP domain foundation with SharedKernel (6 value objects, 6 enums), Parties module (Party aggregate, role assignments, domain events), Accounting module (Account, JournalEntry, JournalLine, FiscalPeriod with full state workflows); 118 new unit tests pass; all tests pass (32 integration, 178 unit).
+- V55 (R5 Phase 2): ERP domain extensions with Inventory module (Item, Warehouse, KardexEntry, CostingEngine with 5 costing methods), Dimensions module (CostCenter, Project, CustomDimension with hierarchy), Numbering module (NumberSequence with scopes, auto-reset, templates), Tax module (TaxCode with VAT/Sales/Withholding/Excise, 4 calculation methods, tiered rates); all tests pass (32 integration, 178 unit).
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
@@ -80,11 +82,30 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
   - 91 unit tests
 - All 178 unit tests + 32 integration tests pass
 
-### R5 Phase 2 — ERP domain extensions
-- Inventory module (Item, Warehouse, KardexEntry, CostingEngine)
-- Dimensions (CostCenter, Project, custom dimensions)
-- Document numbering sequences
-- Tax/VAT handling
+### R5 Phase 2 — ERP domain extensions ✅ COMPLETED (V55)
+- **Inventory Module** (src/XFramework.Domain/Inventory):
+  - Item aggregate: code, name, type (Product/Service/RawMaterial/Consumable/FixedAsset/Kit), base unit, costing method (Standard/Average/FIFO/LIFO/Specific), standard cost, stock/purchasable/sellable/producible flags, min/max/reorder levels, barcode
+  - Warehouse aggregate: code, name, type (Main/Transit/Quarantine/Scrap/Virtual), address, negative stock allowance, manager
+  - KardexEntry aggregate: receipt/issue/adjustment transactions, running balance, unit/total cost, costing method snapshot
+  - CostingEngine: Average (weighted), FIFO, LIFO, Standard, Specific costing calculations
+  - Enums: ItemType (6), ItemStatus (4), CostingMethod (5), InventoryTransactionType (7), WarehouseType (5)
+  - Domain events: ItemCreated/Updated/Activated/Deactivated/Discontinued/Blocked/Unblocked, WarehouseCreated/Updated/Activated/Deactivated, KardexEntryCreated
+- **Dimensions Module** (src/XFramework.Domain/Dimensions):
+  - CostCenter aggregate: hierarchical structure, budget (amount/currency), manager, status (Active/Inactive/Closed)
+  - Project aggregate: dates (start/end/actual), budget, manager, customer, status
+  - CustomDimension aggregate: flexible key-value attributes, hierarchy support, required flag, dimension key
+  - Enums: DimensionType (6), DimensionStatus (3)
+  - Domain events for all state transitions
+- **Numbering Module** (src/XFramework.Domain/Numbering):
+  - NumberSequence aggregate: prefix/suffix, scope (Company/Branch/Warehouse/User/Global), min digits, increment, max number, auto-reset, format template
+  - NumberingScope (5), NumberingStatus (3)
+  - Domain events: NumberGenerated, Reset, Exhausted, Activated/Deactivated
+- **Tax Module** (src/XFramework.Domain/Tax):
+  - TaxCode aggregate: tax types (VAT/Sales/Withholding/Excise/Custom/Other), calculation methods (Percentage/FixedAmount/Tiered/Custom), application (Net/Gross/Quantity)
+  - TaxTier for tiered rate schedules
+  - IsRecoverable flag, GL account linkage, effective date range
+  - TaxStatus (Active/Inactive/Expired)
+  - Domain events for all state transitions
 
 ## Definition of done for each milestone
 1. Scope and acceptance criteria documented.

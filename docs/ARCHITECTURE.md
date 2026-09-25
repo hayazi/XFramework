@@ -255,3 +255,49 @@ Double-entry accounting with full audit trail:
 - All state transitions emit domain events for outbox publication
 - Business rules enforced in domain (not database triggers/stored procedures)
 - Inventory/costing kept separate from accounting (event-driven integration planned)
+
+## ERP Domain Extensions (R5 Phase 2)
+
+### Inventory Module (XFramework.Domain.Inventory)
+Inventory management with costing engine:
+
+- **Item** (AggregateRoot<Guid>): Code, Name, Description, Type (Product/Service/RawMaterial/Consumable/FixedAsset/Kit), Status (Active/Inactive/Discontinued/Blocked), BaseUnit, CostingMethod (Standard/Average/Fifo/Lifo/Specific), StandardCost, IsStocked/IsPurchasable/IsSellable/IsProducible, Min/Max/Reorder levels, DefaultWarehouseId, Barcode
+  - Factory: `Item.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `Discontinue`, `Block`, `Unblock`
+- **Warehouse** (AggregateRoot<Guid>): Code, Name, Description, Type (Main/Transit/Quarantine/Scrap/Virtual), Address, IsActive, AllowNegativeStock, ManagerId
+  - Factory: `Warehouse.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`
+- **KardexEntry** (AggregateRoot<Guid>): ItemId, WarehouseId, TransactionType (Receipt/Issue/Transfer/Adjustment/Return/Production/Consumption), DocumentReference, TransactionDate, QuantityIn/QuantityOut, RunningBalance, UnitCost, TotalCost, CostingMethod, ReferenceDocumentId/Line
+  - Factories: `CreateReceipt`, `CreateIssue`, `CreateAdjustment` — all validate stock levels
+- **CostingEngine** (static): `CalculateAverageCost`, `CalculateFifoCost`, `CalculateLifoCost`, `CalculateStandardCost`, `CalculateSpecificCost`
+- **Enums**: ItemType, ItemStatus, CostingMethod, InventoryTransactionType, WarehouseType
+- **Domain Events**: ItemCreated/Updated/Activated/Deactivated/Discontinued/Blocked/Unblocked, WarehouseCreated/Updated/Activated/Deactivated, KardexEntryCreated
+
+### Dimensions Module (XFramework.Domain.Dimensions)
+Analytic dimensions for cost allocation and reporting:
+
+- **CostCenter** (AggregateRoot<Guid>): Code, Name, Description, Status (Active/Inactive/Closed), ParentCostCenterId/Children hierarchy, ManagerId, BudgetAmount/BudgetCurrency
+  - Factory: `CostCenter.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `Close`, `AddChild`
+- **Project** (AggregateRoot<Guid>): Code, Name, Description, Status, StartDate, EndDate, ActualEndDate, Budget, ManagerId, CustomerId
+  - Factory: `Project.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `Close`, `IsActiveOn(DateTime)`
+- **CustomDimension** (AggregateRoot<Guid>): Code, Name, Description, DimensionKey, Status, IsRequired, AllowHierarchy, ParentDimensionId/Children, Attributes (Dictionary<string,string>)
+  - Factory: `CustomDimension.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `SetAttribute`, `RemoveAttribute`
+- **Enums**: DimensionType (CostCenter, Project, Department, Region, ProductLine, Custom), DimensionStatus (Active, Inactive, Closed)
+- **Domain Events**: All state transitions for each dimension type
+
+### Numbering Module (XFramework.Domain.Numbering)
+Document numbering sequences with scoping:
+
+- **NumberSequence** (AggregateRoot<Guid>): Code, Name, Prefix, Suffix, CurrentNumber, MinimumDigits, IncrementBy, MaximumNumber, Scope (Company/Branch/Warehouse/User/Global), ScopeIdentifier, Status (Active/Inactive/Exhausted), ResetDate, AutoReset, FormatTemplate
+  - Factory: `NumberSequence.Create(...)`; Methods: `GetNextNumber`, `PeekNextNumber`, `Reset`, `UpdateDetails`, `Activate`, `Deactivate`, `SetScope`
+  - Auto-reset on annual boundary, template formatting with `{PREFIX}{NUMBER}{SUFFIX}{SCOPE}` placeholders
+- **Enums**: NumberingScope, NumberingStatus
+- **Domain Events**: NumberSequenceCreated/Updated/Activated/Deactivated/NumberGenerated/Reset/Exhausted
+
+### Tax Module (XFramework.Domain.Tax)
+Tax/VAT handling with flexible calculation:
+
+- **TaxCode** (AggregateRoot<Guid>): Code, Name, Description, TaxType (VAT/SalesTax/WithholdingTax/ExciseTax/CustomDuty/Other), CalculationMethod (Percentage/FixedAmount/Tiered/Custom), Application (OnNetAmount/OnGrossAmount/OnQuantity), Rate (Percentage), FixedAmount/PerUnit, Status (Active/Inactive/Expired), EffectiveFrom/To, IsDefault, IsRecoverable, AccountId, Tiers
+  - Factory: `TaxCode.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `CalculateTax(Money, Quantity?)`
+  - `CalculateTax` dispatches to appropriate method: Percentage, FixedAmount, Tiered (via TaxTier list)
+- **TaxTier** (value object): ThresholdFrom, ThresholdTo, Rate — for progressive tax brackets
+- **Enums**: TaxType, TaxCalculationMethod, TaxApplication, TaxStatus
+- **Domain Events**: TaxCodeCreated/Updated/Activated/Deactivated

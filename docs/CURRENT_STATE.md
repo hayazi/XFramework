@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V54 source baseline (R5 Phase 1 ERP domain foundation completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting).
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation.
+- Version label: V55 source baseline (R5 Phase 2 ERP domain extensions completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax).
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -20,13 +20,11 @@
   - **SharedKernel**: Value objects (Money, Quantity, Percentage, DateRange, Address, ContactInfo) using `readonly record struct`; Enums (Currency, UnitOfMeasure, PartyType, DocumentStatus, PostingStatus, FiscalPeriodStatus).
   - **Parties Module**: Party aggregate with code/name/taxId/nationalId/contact; PartyRoleAssignment with validity periods; PartyRole enum (Customer, Supplier, Employee, Prospect, Carrier, Bank); Domain events (PartyCreated, PartyUpdated, PartyRoleAssigned, PartyRoleRemoved, PartyActivated, PartyDeactivated).
   - **Accounting Module**: Account aggregate with code/name/type/nature/currency/hierarchy; JournalEntry aggregate with lines, double-entry validation, status workflow (Draft→Submitted→Approved→Posted/Reversed/Cancelled); JournalLine value object; FiscalPeriod with Open/Closed/Locked states; Domain events for all state transitions.
-
-## Immediate next task
-R5 Phase 2 — ERP domain extensions:
-- Inventory module (Item, Warehouse, KardexEntry, CostingEngine)
-- Dimensions (CostCenter, Project, custom dimensions)
-- Document numbering sequences
-- Tax/VAT handling
+- **ERP Domain Extensions (R5 Phase 2)**:
+  - **Inventory Module**: Item aggregate (code, name, type, base unit, costing method, standard cost, stock flags); Warehouse aggregate (code, name, type, address, negative stock allowance); KardexEntry aggregate (receipt/issue/adjustment, running balance, cost tracking); CostingEngine (Average, FIFO, LIFO, Standard, Specific costing); Enums (ItemType, ItemStatus, CostingMethod, InventoryTransactionType, WarehouseType); Domain events for all state transitions.
+  - **Dimensions Module**: CostCenter aggregate (hierarchical, budget, manager); Project aggregate (dates, budget, manager, customer); CustomDimension aggregate (flexible key-value attributes, hierarchy support); Enums (DimensionType, DimensionStatus); Domain events for all state transitions.
+  - **Numbering Module**: NumberSequence aggregate (prefix/suffix, scope, auto-reset, format template, min/max); NumberingScope (Company, Branch, Warehouse, User, Global); NumberingStatus (Active, Inactive, Exhausted); Domain events for number generation, reset, exhaustion.
+  - **Tax Module**: TaxCode aggregate (VAT, SalesTax, Withholding, Excise, CustomDuty); Calculation methods (Percentage, FixedAmount, Tiered, Custom); TaxApplication (OnNetAmount, OnGrossAmount, OnQuantity); TaxTier for tiered rates; IsRecoverable flag; Domain events for all state transitions.
 
 ## Validation commands
 ```powershell
