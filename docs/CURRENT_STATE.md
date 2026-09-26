@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V58 (R7 Blazor UI / API Endpoints completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence and Blazor UI + Minimal API endpoints.
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6). V58 adds Blazor UI and Minimal API endpoints (R7).
+- Version label: V59 (R8 Parties & Accounting Application/Persistence completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence, Application services, and Blazor UI + Minimal API endpoints.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6). V58 adds Blazor UI and Minimal API endpoints (R7). V59 adds Parties & Accounting Application & Persistence (R8).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -42,9 +42,21 @@
   - **Navigation**: Updated NavMenu with grouped links for Inventory, Dimensions, Numbering, Tax modules
   - **Minimal API Endpoints**: Program.cs extended with 4 route groups under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` providing full CRUD + custom actions for all new modules
   - All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts
+- **ERP Parties & Accounting Application & Persistence (R8)**:
+  - **Parties Application Services**: IPartyAppService with full CRUD + role assignment/removal, queries by code/name/role/active status, Activate/Deactivate
+  - **Accounting Application Services**: 
+    - IAccountAppService with full CRUD + hierarchy queries, Activate/Deactivate, SetParent/RemoveParent
+    - IJournalEntryAppService with full CRUD + workflow operations (Submit, Approve, Reject, Post, Reverse, Cancel) and queries by reference/party/date/status
+    - IFiscalPeriodAppService with full CRUD + lifecycle operations (Close, Reopen, Lock, Unlock, GetCurrentPeriod)
+  - **EF Core Persistence (R8)**: 
+    - Party & PartyRoleAssignment configurations with JSON serialization for ContactInfo value object
+    - Account, JournalEntry, FiscalPeriod configurations with JSON serialization for JournalLine list and DateRange value object
+    - All configurations include proper indexes, unique constraints, foreign keys
+    - XFrameworkDbContext extended with DbSets for Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods
+    - Migration `R8_Parties_Accounting` applied
 
 ## Immediate next task
-None - R7 complete. Ready for next phase planning.
+None - R8 complete. Ready for next phase planning (R9: Parties & Accounting Blazor UI/API).
 
 ## Validation commands
 ```powershell

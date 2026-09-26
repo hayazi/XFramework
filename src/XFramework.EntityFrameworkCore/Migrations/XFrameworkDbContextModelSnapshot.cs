@@ -22,6 +22,154 @@ namespace XFramework.EntityFrameworkCore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("XFramework.Domain.Accounting.Account", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Currency")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDetail")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Nature")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ParentAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("ParentAccountId");
+
+                    b.HasIndex("Type");
+
+                    b.ToTable("Accounts", (string)null);
+                });
+
+            modelBuilder.Entity("XFramework.Domain.Accounting.FiscalPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClosedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ClosedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DateRange")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("PeriodNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Year");
+
+                    b.HasIndex("Year", "PeriodNumber")
+                        .IsUnique();
+
+                    b.ToTable("FiscalPeriods", (string)null);
+                });
+
+            modelBuilder.Entity("XFramework.Domain.Accounting.JournalEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Lines")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PostedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PostedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PostingStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Date");
+
+                    b.HasIndex("PartyId");
+
+                    b.HasIndex("PostingStatus");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("JournalEntries", (string)null);
+                });
+
             modelBuilder.Entity("XFramework.Domain.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -506,6 +654,80 @@ namespace XFramework.EntityFrameworkCore.Migrations
                     b.ToTable("NumberSequences", (string)null);
                 });
 
+            modelBuilder.Entity("XFramework.Domain.Parties.Party", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Contact")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("NationalId");
+
+                    b.HasIndex("TaxId");
+
+                    b.ToTable("Parties", (string)null);
+                });
+
+            modelBuilder.Entity("XFramework.Domain.Parties.PartyRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ValidTo")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId");
+
+                    b.HasIndex("Role");
+
+                    b.HasIndex("ValidFrom", "ValidTo");
+
+                    b.ToTable("PartyRoleAssignments", (string)null);
+                });
+
             modelBuilder.Entity("XFramework.Domain.Tax.TaxCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -692,6 +914,16 @@ namespace XFramework.EntityFrameworkCore.Migrations
                     b.ToTable("OutboxMessages", (string)null);
                 });
 
+            modelBuilder.Entity("XFramework.Domain.Accounting.Account", b =>
+                {
+                    b.HasOne("XFramework.Domain.Accounting.Account", "ParentAccount")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentAccount");
+                });
+
             modelBuilder.Entity("XFramework.Domain.Dimensions.CostCenter", b =>
                 {
                     b.HasOne("XFramework.Domain.Dimensions.CostCenter", "ParentCostCenter")
@@ -712,6 +944,20 @@ namespace XFramework.EntityFrameworkCore.Migrations
                     b.Navigation("ParentDimension");
                 });
 
+            modelBuilder.Entity("XFramework.Domain.Parties.PartyRoleAssignment", b =>
+                {
+                    b.HasOne("XFramework.Domain.Parties.Party", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("XFramework.Domain.Accounting.Account", b =>
+                {
+                    b.Navigation("Children");
+                });
+
             modelBuilder.Entity("XFramework.Domain.Dimensions.CostCenter", b =>
                 {
                     b.Navigation("Children");
@@ -720,6 +966,11 @@ namespace XFramework.EntityFrameworkCore.Migrations
             modelBuilder.Entity("XFramework.Domain.Dimensions.CustomDimension", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("XFramework.Domain.Parties.Party", b =>
+                {
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

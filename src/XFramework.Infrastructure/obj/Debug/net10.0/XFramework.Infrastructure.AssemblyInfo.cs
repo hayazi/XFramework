@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XFramework.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4ced26c2bb34f6e253933c68b810a9d6875686dd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+68b24b5186d89c74b84ec6fbfd52d190e68abb54")]
 [assembly: System.Reflection.AssemblyProductAttribute("XFramework.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XFramework.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

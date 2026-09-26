@@ -11,6 +11,7 @@ V55 — ERP domain extensions (R5 Phase 2 completed).
 V56 — ERP Application layer services (R5 Phase 3 completed).
 V57 — ERP EntityFrameworkCore integration (R6 completed).
 V58 — ERP Blazor UI & API Endpoints (R7 completed).
+V59 — ERP Parties & Accounting Application & Persistence (R8 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -28,6 +29,7 @@ V58 — ERP Blazor UI & API Endpoints (R7 completed).
 - V56 (R5 Phase 3): ERP Application layer services for all new modules — Inventory (Item, Warehouse, Kardex), Dimensions (CostCenter, Project, CustomDimension), Numbering (NumberSequence), Tax (TaxCode) — with full CRUD, custom queries, validation, auto-discovery via ApplicationServiceDiscovery, interceptor pipeline integration; Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for clean Application layer queries without EF Core dependency; all tests pass (32 integration, 178 unit).
 - V57 (R6): ERP EF Core integration — All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage); XFrameworkDbContext extended with DbSets for all new entities; ValueConverter classes using JSON serialization for readonly record struct value objects; EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods; all tests pass (32 integration, 178 unit).
 - V58 (R7): ERP Blazor UI & API Endpoints — 8 interactive Blazor pages (Items, Warehouses, Kardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions (GetNextNumber, CalculateTax, Activate/Deactivate/Close, etc.); Navigation updated with grouped links for Inventory, Dimensions, Numbering, Tax modules; Minimal API endpoints in Program.cs under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` with full CRUD + custom actions; All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts; all tests pass (32 integration, 178 unit).
+- V59 (R8): ERP Parties & Accounting Application & Persistence — Parties (IPartyAppService with CRUD + role assignment/removal, queries by code/name/role/active, Activate/Deactivate), Accounting (IAccountAppService with hierarchy, Activate/Deactivate, SetParent/RemoveParent; IJournalEntryAppService with workflow operations Submit/Approve/Reject/Post/Reverse/Cancel; IFiscalPeriodAppService with Close/Reopen/Lock/Unlock/GetCurrentPeriod); EF Core configurations for Party, PartyRoleAssignment, Account, JournalEntry, FiscalPeriod with JSON serialization for ContactInfo, JournalLine list, DateRange; XFrameworkDbContext extended with DbSets for Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods; Migration `R8_Parties_Accounting` applied; all tests pass (32 integration, 178 unit).
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
@@ -143,9 +145,32 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 - **Minimal API Endpoints** (Program.cs):
   - `/api/inventory`: Items, Warehouses, Kardex with all custom actions
   - `/api/dimensions`: CostCenters, Projects, CustomDimensions with all custom actions
-  - `/api/numbering`: NumberSequences with GetNextNumber, Peek, Reset, scope-based lookup
+  - `/api/numbering`: NumberSequences with GetNextNumber, PeekNextNumber, Reset, scope-based lookup
   - `/api/tax`: TaxCodes with CalculateTax, GetDefault, GetByType, GetActive
 - All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts
+- All tests pass (32 integration, 178 unit)
+
+### R8 — ERP Parties & Accounting Application & Persistence ✅ COMPLETED (V59)
+- **Parties Application Services** (src/XFramework.Application.Contracts.Parties, src/XFramework.Application.Parties):
+  - `IPartyAppService` / `PartyAppService`: Full CRUD + GetByCode, GetByName, GetByRole, GetActive
+  - Role management: AssignRoleAsync, RemoveRoleAsync with validity periods
+  - Status management: ActivateAsync, DeactivateAsync
+  - DTOs: PartyDto, PartyRoleAssignmentDto, ContactInfoDto, PartyCreateDto, PartyUpdateDto
+- **Accounting Application Services** (src/XFramework.Application.Contracts.Accounting, src/XFramework.Application.Accounting):
+  - `IAccountAppService` / `AccountAppService`: Full CRUD + GetByCode, GetHierarchy, GetActive, GetChildren, Activate/Deactivate, SetParent/RemoveParent
+  - `IJournalEntryAppService` / `JournalEntryAppService`: Full CRUD + GetByReference, GetByParty, GetByDateRange, GetByStatus, GetPosted; Workflow: SubmitAsync, ApproveAsync, RejectAsync, PostAsync, ReverseAsync, CancelAsync
+  - `IFiscalPeriodAppService` / `FiscalPeriodAppService`: Full CRUD + GetByYearAndPeriod, GetByYear, GetByStatus, GetCurrentPeriod; Lifecycle: CloseAsync, ReopenAsync, LockAsync, UnlockAsync
+  - DTOs: AccountDto, AccountCreateDto, AccountUpdateDto; JournalEntryDto, JournalLineDto, JournalEntryCreateDto, JournalEntryUpdateDto, JournalEntrySubmitDto, JournalEntryApproveDto, JournalEntryRejectDto, JournalEntryPostDto, JournalEntryReverseDto; FiscalPeriodDto, DateRangeDto, FiscalPeriodCreateDto, FiscalPeriodUpdateDto, FiscalPeriodCloseDto
+- **EF Core Persistence** (src/XFramework.EntityFrameworkCore.Configurations.Parties, src/XFramework.EntityFrameworkCore.Configurations.Accounting):
+  - PartyConfiguration: ContactInfo value object via JSON serialization with ValueComparer
+  - PartyRoleAssignmentConfiguration: PartyId FK to Parties, cascade delete
+  - AccountConfiguration: Self-referencing hierarchy (ParentAccountId), proper indexes
+  - JournalEntryConfiguration: JournalLine list (IReadOnlyCollection) via JSON serialization with ValueComparer for value-type equality
+  - FiscalPeriodConfiguration: DateRange value object via JSON serialization with ValueComparer
+  - All configurations: proper indexes, unique constraints (Account.Code, Party.Code, JournalEntry.Reference, FiscalPeriod.Year+PeriodNumber), foreign keys
+- **DbContext Extensions** (XFrameworkDbContext):
+  - Added DbSets: Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods
+- **Migration**: `R8_Parties_Accounting` applied successfully
 - All tests pass (32 integration, 178 unit)
 
 ## Definition of done for each milestone

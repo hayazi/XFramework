@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using XFramework.Application.Events;
 using XFramework.Domain.Auditing;
+using XFramework.Domain.Accounting;
 using XFramework.Domain.Dimensions;
 using XFramework.Domain.Inventory;
 using XFramework.Domain.Numbering;
+using XFramework.Domain.Parties;
 using XFramework.Domain.Tax;
 using XFramework.EntityFrameworkCore.Idempotency;
 using XFramework.EntityFrameworkCore.Outbox;
@@ -17,6 +19,10 @@ public sealed class XFrameworkDbContext(
 {
     public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    // Parties
+    public DbSet<Party> Parties => Set<Party>();
+    public DbSet<PartyRoleAssignment> PartyRoleAssignments => Set<PartyRoleAssignment>();
 
     // Inventory
     public DbSet<Item> Items => Set<Item>();
@@ -33,6 +39,11 @@ public sealed class XFrameworkDbContext(
 
     // Tax
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+
+    // Accounting
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

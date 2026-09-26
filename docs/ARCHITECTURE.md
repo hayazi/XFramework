@@ -378,3 +378,95 @@ Route groups providing full CRUD + custom actions:
 | `/api/tax` | TaxCodes (CRUD, ByCode/Active/ByType, CalculateTax, GetDefault, Activate/Deactivate) |
 
 All endpoints use the Application layer services (IItemAppService, IWarehouseAppService, etc.) with proper DTO mapping.
+
+## ERP Parties & Accounting Application & Persistence (R8)
+
+### Parties Application Services (src/XFramework.Application.Contracts.Parties, src/XFramework.Application.Parties)
+
+**DTOs:**
+- `PartyDto` — Party with Code, Name, TaxId, NationalId, IsActive, Contact (ContactInfoDto), Roles (List<PartyRoleAssignmentDto>)
+- `ContactInfoDto` — Name, Phone, Email, Address (AddressDto), HasPhone/HasEmail/HasAddress helpers
+- `PartyRoleAssignmentDto` — PartyId, Role, ValidFrom, ValidTo, IsActive
+- `PartyCreateDto` / `PartyUpdateDto` — Create/Update input with ContactInfoDto
+
+**Service Interface (IPartyAppService):**
+- Full CRUD via ICrudAppService
+- `GetByCodeAsync` — Lookup by unique code
+- `GetByNameAsync` — Search by name
+- `GetByRoleAsync` — Find parties with active role
+- `GetActiveAsync` — List active parties
+- `AssignRoleAsync` — Add role with optional validity period
+- `RemoveRoleAsync` — Deactivate role assignment
+- `ActivateAsync` / `DeactivateAsync` — Status management
+
+**Implementation (PartyAppService):**
+- Inherits from `CrudAppService<Party, PartyDto, Guid, PartyCreateDto, PartyUpdateDto>`
+- Maps ContactInfoDto ↔ ContactInfo (domain) with AddressDto ↔ Address conversion
+- Uses `[Validate]` attribute for FluentValidation integration
+- Auto-discovered via `ApplicationServiceDiscovery` (*AppService naming convention)
+- Registered with full interceptor pipeline: Logging → Authorization → Validation → UnitOfWork → Audit
+
+### Accounting Application Services (src/XFramework.Application.Contracts.Accounting, src/XFramework.Application.Accounting)
+
+**Account Service (IAccountAppService / AccountAppService):**
+- Full CRUD with `AccountDto`, `AccountCreateDto`, `AccountUpdateDto`
+- Hierarchy queries: `GetHierarchyAsync` (root accounts with children), `GetChildrenAsync`
+- Status management: `ActivateAsync`, `DeactivateAsync` (validates no active children)
+- Parent management: `SetParentAsync` (circular reference protection), `RemoveParentAsync`
+- `GetByCodeAsync` — Unique code lookup
+- `GetActiveAsync` — Active accounts only
+
+**JournalEntry Service (IJournalEntryAppService / JournalEntryAppService):**
+- Full CRUD with `JournalEntryDto`, `JournalEntryCreateDto`, `JournalEntryUpdateDto`
+- Lines represented as `JournalLineDto` (AccountId, AccountCode, Side, Amount, Description, DimensionValueId)
+- Query operations: `GetByReferenceAsync`, `GetByPartyAsync`, `GetByDateRangeAsync`, `GetByStatusAsync`, `GetPostedAsync`
+- Workflow operations (each runs in UnitOfWork):
+  - `SubmitAsync` — Draft → Submitted (validates balanced, has lines)
+  - `ApproveAsync` — Submitted → Approved
+  - `RejectAsync` — Submitted → Rejected (with reason)
+  - `PostAsync` — Approved → Posted (validates balanced, sets PostedOnUtc/PostedBy)
+  - `ReverseAsync` — Posted → Reversed (with reason, sets PostingStatus=Reversed)
+  - `CancelAsync` — Draft/Submitted/Approved/Rejected → Cancelled (not Posted)
+- Currency handling: All lines must be same currency; totals computed in that currency
+
+**FiscalPeriod Service (IFiscalPeriodAppService / FiscalPeriodAppService):**
+- Full CRUD with `FiscalPeriodDto`, `FiscalPeriodCreateDto`, `FiscalPeriodUpdateDto`
+- `DateRangeDto` for Start/End dates
+- Queries: `GetByYearAndPeriodAsync`, `GetByYearAsync`, `GetByStatusAsync`, `GetCurrentPeriodAsync`
+- Lifecycle operations:
+  - `CloseAsync` — Open → Closed (sets ClosedOnUtc/ClosedBy)
+  - `ReopenAsync` — Closed → Open
+  - `LockAsync` — Open/Closed → Locked
+  - `UnlockAsync` — Locked → Open
+- Unique constraint on Year+PeriodNumber
+
+### EF Core Persistence (src/XFramework.EntityFrameworkCore.Configurations.Parties, src/XFramework.EntityFrameworkCore.Configurations.Accounting)
+
+**Entity Configurations:**
+
+| Configuration | Key Features |
+|---|---|
+| `PartyConfiguration` | ContactInfo JSON serialization with ValueComparer; indexes on Code (unique), TaxId, NationalId, IsActive |
+| `PartyRoleAssignmentConfiguration` | PartyId FK to Parties (cascade delete); indexes on PartyId, Role, ValidFrom/ValidTo |
+| `AccountConfiguration` | Self-referencing hierarchy (ParentAccountId); indexes on Code (unique), Type, IsActive, ParentAccountId |
+| `JournalEntryConfiguration` | JournalLine list (IReadOnlyCollection) JSON serialization with ValueComparer for value-type equality; indexes on Reference (unique), Date, Status, PostingStatus, PartyId |
+| `FiscalPeriodConfiguration` | DateRange JSON serialization with ValueComparer; unique index on Year+PeriodNumber; indexes on Year, Status |
+
+**Value Converters & Comparers:**
+- `ContactInfo` (Party) — JSON serialization, ValueComparer for structural equality
+- `JournalLine` list (JournalEntry) — JSON serialization, ValueComparer using `JournalLineEqualityComparer` (value-type aware)
+- `DateRange` (FiscalPeriod) — JSON serialization, ValueComparer for structural equality
+
+**DbContext Extensions (XFrameworkDbContext):**
+```csharp
+// Parties
+public DbSet<Party> Parties => Set<Party>();
+public DbSet<PartyRoleAssignment> PartyRoleAssignments => Set<PartyRoleAssignment>();
+
+// Accounting
+public DbSet<Account> Accounts => Set<Account>();
+public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
+```
+
+**Migration:** `R8_Parties_Accounting` — Creates tables Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods with all indexes, foreign keys, and constraints.
