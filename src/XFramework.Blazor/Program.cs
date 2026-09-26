@@ -65,6 +65,38 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
+// ============================================
+// PERMISSION-BASED AUTHORIZATION EXAMPLES
+// ============================================
+// 
+// 1. Policy-based authorization on endpoints:
+//    app.MapGet("/api/inventory/items", ...)
+//       .RequirePermission("Inventory.Items.View");  // Uses Permission.Items.View policy
+//
+// 2. Using [Authorize] attribute with policy:
+//    [Authorize(Policy = "Permission.Inventory.Items.Create")]
+//    public async Task<ItemDto> CreateAsync(ItemCreateDto input) { ... }
+//
+// 3. Multiple permissions (AND logic):
+//    .RequireAuthorization("Permission.Inventory.Items.View", "Permission.Inventory.Warehouses.View")
+//
+// 4. Custom policy with multiple requirements:
+//    options.AddPolicy("Inventory.FullAccess", policy =>
+//        policy.RequirePermission("Inventory.Items.View")
+//              .RequirePermission("Inventory.Items.Create")
+//              .RequirePermission("Inventory.Items.Edit")
+//              .RequirePermission("Inventory.Items.Delete"));
+//
+// 5. In Blazor components:
+//    @attribute [Authorize(Policy = "Permission.Inventory.Items.View")]
+//
+// 6. In Razor components - check permission:
+//    @inject IAuthorizationService AuthorizationService
+//    @if ((await AuthorizationService.AuthorizeAsync(User, "Permission.Inventory.Items.Create")).Succeeded)
+//    {
+//        <button>Create Item</button>
+//    }
+
         // Outbox Admin API
         var outboxGroup = app.MapGroup("/api/outbox").RequireAuthorization();
         outboxGroup.MapGet("/stats", async (IOutboxAdminService admin, CancellationToken ct) =>
@@ -86,18 +118,23 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
         var inventoryGroup = app.MapGroup("/api/inventory").RequireAuthorization();
         // Items
         inventoryGroup.MapGet("/items", async (IItemAppService svc, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
-            await svc.GetListAsync(new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct));
+            await svc.GetListAsync(new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct))
+            .RequirePermission("Inventory.Items.View");
         inventoryGroup.MapGet("/items/{id:guid}", async (IItemAppService svc, Guid id, CancellationToken ct) =>
-            await svc.GetAsync(id, ct) is { } dto ? Results.Ok(dto) : Results.NotFound());
+            await svc.GetAsync(id, ct) is { } dto ? Results.Ok(dto) : Results.NotFound())
+            .RequirePermission("Inventory.Items.View");
         inventoryGroup.MapPost("/items", async (IItemAppService svc, ItemCreateDto input, CancellationToken ct) =>
-            await svc.CreateAsync(input, ct));
+            await svc.CreateAsync(input, ct))
+            .RequirePermission("Inventory.Items.Create");
         inventoryGroup.MapPut("/items/{id:guid}", async (IItemAppService svc, Guid id, ItemUpdateDto input, CancellationToken ct) =>
-            await svc.UpdateAsync(id, input, ct));
+            await svc.UpdateAsync(id, input, ct))
+            .RequirePermission("Inventory.Items.Edit");
         inventoryGroup.MapDelete("/items/{id:guid}", async (IItemAppService svc, Guid id, CancellationToken ct) =>
         {
             await svc.DeleteAsync(id, ct);
             return Results.NoContent();
-        });
+        })
+        .RequirePermission("Inventory.Items.Delete");
         inventoryGroup.MapGet("/items/code/{code}", async (IItemAppService svc, string code, CancellationToken ct) =>
             await svc.GetByCodeAsync(code, ct) is { } dto ? Results.Ok(dto) : Results.NotFound());
         inventoryGroup.MapGet("/items/type/{type:int}", async (IItemAppService svc, ItemType type, CancellationToken ct) =>

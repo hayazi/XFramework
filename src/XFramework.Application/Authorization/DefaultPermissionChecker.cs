@@ -42,4 +42,18 @@ public sealed class DefaultPermissionChecker : IPermissionChecker
             throw new AuthorizationException(permission);
         }
     }
+
+    public async Task<IReadOnlyList<string>> GetPermissionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.IsAuthenticated ||
+            !Guid.TryParse(_currentUser.UserId, out var userId))
+        {
+            return Array.Empty<string>();
+        }
+
+        return await _permissionRepository.GetPermissionsAsync(
+            userId,
+            cancellationToken);
+    }
 }

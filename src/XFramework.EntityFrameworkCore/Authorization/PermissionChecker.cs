@@ -56,4 +56,34 @@ public sealed class PermissionChecker(
                 permission);
         }
     }
+
+    public async Task<IReadOnlyList<string>> GetPermissionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (currentUser.UserId is null)
+            return Array.Empty<string>();
+
+        if (!Guid.TryParse(currentUser.UserId, out var userId))
+            return Array.Empty<string>();
+
+        var directPermissions =
+            await db.ApplicationUserPermissions
+                .AsNoTracking()
+                .Where(x => x.UserId == userId && x.Permission.IsEnabled)
+                .Select(x => x.Permission.Name)
+                .ToListAsync(cancellationToken);
+
+        var rolePermissions =
+            await db.ApplicationUserRoles
+                .AsNoTracking()
+                .Where(x => x.UserId == userId)
+                .SelectMany(x => x.Role.Permissions)
+                .Where(x => x.Permission.IsEnabled)
+                .Select(x => x.Permission.Name)
+                .ToListAsync(cancellationToken);
+
+        return directPermissions
+            .Union(rolePermissions, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
 }

@@ -9,4 +9,7 @@ public interface IPermissionChecker
     Task CheckAsync(
         string permission,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<string>> GetPermissionsAsync(
+        CancellationToken cancellationToken = default);
 }
