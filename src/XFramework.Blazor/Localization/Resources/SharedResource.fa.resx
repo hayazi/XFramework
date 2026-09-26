@@ -12,4 +12,148 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Home" xml:space="preserve">
+    <value>خانه</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>مصنوعات</value>
+  </data>
+  <data name="Warehouses" xml:space="preserve">
+    <value>انبارها</value>
+  </data>
+  <data name="Cardex" xml:space="preserve">
+    <value>موجودی انبار</value>
+  </data>
+  <data name="CostCenters" xml:space="preserve">
+    <value>مراکز هزینه</value>
+  </data>
+  <data name="Projects" xml:space="preserve">
+    <value>پروژه‌ها</value>
+  </data>
+  <data name="CustomDimensions" xml:space="preserve">
+    <value>بعدهای سفارشی</value>
+  </data>
+  <data name="NumberSequences" xml:space="preserve">
+    <value>ترتیب اعداد</value>
+  </data>
+  <data name="TaxCodes" xml:space="preserve">
+    <value>کدهای مالیاتی</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>ایجاد</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>ویرایش</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>ذخیره</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>لغو</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>بستن</value>
+  </data>
+  <data name="Confirm" xml:space="preserve">
+    <value>تایید</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>بله</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>خیر</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>جستجو</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>فیلتر</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>کد</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>نام</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>توضیحات</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>وضعیت</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>نوع</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>فعال</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>غیرفعال</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>عملیات</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>در حال بارگذاری...</value>
+  </data>
+  <data name="NoData" xml:space="preserve">
+    <value>داده‌ای یافت نشد</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>موفقیت</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>خطا</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>با موفقیت ایجاد شد</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>با موفقیت به‌روزرسانی شد</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>با موفقیت حذف شد</value>
+  </data>
+  <data name="Receipt" xml:space="preserve">
+    <value>ورود</value>
+  </data>
+  <data name="Issue" xml:space="preserve">
+    <value>خروج</value>
+  </data>
+  <data name="Adjustment" xml:space="preserve">
+    <value>تنظیم</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>مقدار</value>
+  </data>
+  <data name="UnitCost" xml:space="preserve">
+    <value>قیمت واحد</value>
+  </data>
+  <data name="Currency" xml:space="preserve">
+    <value>ارز</value>
+  </data>
+  <data name="DocumentReference" xml:space="preserve">
+    <value>شماره سند</value>
+  </data>
+  <data name="TransactionDate" xml:space="preserve">
+    <value>تاریخ تراکنش</value>
+  </data>
+  <data name="RunningBalance" xml:space="preserve">
+    <value>موجودی جاری</value>
+  </data>
+  <data name="Item" xml:space="preserve">
+    <value>مصنوع</value>
+  </data>
+  <data name="Warehouse" xml:space="preserve">
+    <value>انبار</value>
+  </data>
+  <data name="FromDate" xml:space="preserve">
+    <value>از تاریخ</value>
+  </data>
+  <data name="ToDate" xml:space="preserve">
+    <value>تا تاریخ</value>
+  </data>
 </root>
