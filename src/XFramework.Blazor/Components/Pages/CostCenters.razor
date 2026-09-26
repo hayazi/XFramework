@@ -1,0 +1,331 @@
+@page "/cost-centers"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Dimensions
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Dimensions
+@using XFramework.Domain.SharedKernel
+@inject ICostCenterAppService CostCenterAppService
+
+<PageTitle>Cost Centers</PageTitle>
+
+<h1>Cost Centers</h1>
+
+<button class="btn btn-primary mb-3" @onclick="OpenCreateModal">
+    Create Cost Center
+</button>
+
+@if (_costCenters is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Parent</th>
+                <th>Manager</th>
+                <th>Budget</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cc in _costCenters)
+            {
+                <tr>
+                    <td>@cc.Code</td>
+                    <td>@cc.Name</td>
+                    <td>
+                        <span class="badge @GetStatusBadge(cc.Status)">@cc.Status</span>
+                    </td>
+                    <td>@cc.ParentCostCenterCode ?? "-"</td>
+                    <td>@cc.ManagerId?.ToString() ?? "-"</td>
+                    <td>@cc.BudgetAmount @cc.BudgetCurrency</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditModal(cc)">Edit</button>
+                        @if (cc.Status != DimensionStatus.Closed)
+                        {
+                            <button class="btn btn-sm btn-outline-warning" @onclick="() => ConfirmClose(cc.Id)">Close</button>
+                        }
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(cc.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Create/Edit Modal -->
+@if (_showModal)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingCostCenter != null ? "Edit Cost Center" : "Create Cost Center")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-control" @bind="_costCenterForm.Code" @bind:event="oninput" disabled="@(_editingCostCenter != null)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" @bind="_costCenterForm.Name" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" @bind="_costCenterForm.Description" @bind:event="oninput"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" @bind="_costCenterForm.Status" @bind:event="onchange">
+                            @foreach (var s in Enum.GetValues<DimensionStatus>())
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Parent Cost Center</label>
+                        <select class="form-select" @bind="_costCenterForm.ParentCostCenterIdString" @bind:event="onchange">
+                            <option value="">None</option>
+                            @foreach (var cc in _costCentersForParent)
+                            {
+                                <option value="@cc.Id">@cc.Code - @cc.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Manager Id</label>
+                        <input type="text" class="form-control" @bind="_costCenterForm.ManagerIdString" @bind:event="oninput" placeholder="GUID" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Budget Amount</label>
+                            <input type="number" step="0.01" class="form-control" @bind="_costCenterForm.BudgetAmount" @bind:event="oninput" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Budget Currency</label>
+                            <select class="form-select" @bind="_costCenterForm.BudgetCurrency" @bind:event="onchange">
+                                @foreach (var c in Enum.GetValues<Currency>())
+                                {
+                                    <option value="@c">@c</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveCostCenter">@(_editingCostCenter != null ? "Update" : "Create")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (_showDeleteConfirm)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this cost center?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteCostCenter">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Close Confirmation Modal -->
+@if (_showCloseConfirm)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Close</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to close this cost center?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelClose">Cancel</button>
+                    <button class="btn btn-warning" @onclick="CloseCostCenter">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<CostCenterDto>? _costCenters;
+    private List<CostCenterDto> _costCentersForParent = new();
+    private bool _showModal;
+    private bool _showDeleteConfirm;
+    private bool _showCloseConfirm;
+    private CostCenterDto? _editingCostCenter;
+    private Guid _deleteId;
+    private Guid _closeId;
+    private CostCenterForm _costCenterForm = new();
+
+    private class CostCenterForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public DimensionStatus Status { get; set; } = DimensionStatus.Active;
+        public string? ParentCostCenterIdString { get; set; }
+        public Guid? ParentCostCenterId => Guid.TryParse(ParentCostCenterIdString, out var g) ? g : null;
+        public string? ManagerIdString { get; set; }
+        public Guid? ManagerId => Guid.TryParse(ManagerIdString, out var g) ? g : null;
+        public decimal? BudgetAmount { get; set; }
+        public Currency? BudgetCurrency { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await CostCenterAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+        _costCenters = result.Items;
+        _costCentersForParent = result.Items.Where(c => c.Status == DimensionStatus.Active).ToList();
+    }
+
+    private void OpenCreateModal()
+    {
+        _editingCostCenter = null;
+        _costCenterForm = new CostCenterForm();
+        _showModal = true;
+    }
+
+    private void OpenEditModal(CostCenterDto cc)
+    {
+        _editingCostCenter = cc;
+        _costCenterForm = new CostCenterForm
+        {
+            Code = cc.Code,
+            Name = cc.Name,
+            Description = cc.Description,
+            Status = cc.Status,
+            ParentCostCenterIdString = cc.ParentCostCenterId?.ToString(),
+            ManagerIdString = cc.ManagerId?.ToString(),
+            BudgetAmount = cc.BudgetAmount,
+            BudgetCurrency = cc.BudgetCurrency
+        };
+        _showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        _showModal = false;
+        _editingCostCenter = null;
+        _costCenterForm = new CostCenterForm();
+    }
+
+    private async Task SaveCostCenter()
+    {
+        try
+        {
+            if (_editingCostCenter != null)
+            {
+                var updateDto = new CostCenterUpdateDto
+                {
+                    Name = _costCenterForm.Name,
+                    Description = _costCenterForm.Description,
+                    Status = _costCenterForm.Status,
+                    ParentCostCenterId = _costCenterForm.ParentCostCenterId,
+                    ManagerId = _costCenterForm.ManagerId,
+                    BudgetAmount = _costCenterForm.BudgetAmount,
+                    BudgetCurrency = _costCenterForm.BudgetCurrency
+                };
+                await CostCenterAppService.UpdateAsync(_editingCostCenter.Id, updateDto);
+            }
+            else
+            {
+                var createDto = new CostCenterCreateDto
+                {
+                    Code = _costCenterForm.Code,
+                    Name = _costCenterForm.Name,
+                    Description = _costCenterForm.Description,
+                    ParentCostCenterId = _costCenterForm.ParentCostCenterId,
+                    ManagerId = _costCenterForm.ManagerId,
+                    BudgetAmount = _costCenterForm.BudgetAmount,
+                    BudgetCurrency = _costCenterForm.BudgetCurrency
+                };
+                await CostCenterAppService.CreateAsync(createDto);
+            }
+            CloseModal();
+            await LoadData();
+        }
+        catch
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private void ConfirmDelete(Guid id)
+    {
+        _deleteId = id;
+        _showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+    }
+
+    private async Task DeleteCostCenter()
+    {
+        await CostCenterAppService.DeleteAsync(_deleteId);
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+        await LoadData();
+    }
+
+    private void ConfirmClose(Guid id)
+    {
+        _closeId = id;
+        _showCloseConfirm = true;
+    }
+
+    private void CancelClose()
+    {
+        _showCloseConfirm = false;
+        _closeId = Guid.Empty;
+    }
+
+    private async Task CloseCostCenter()
+    {
+        await CostCenterAppService.CloseAsync(_closeId);
+        _showCloseConfirm = false;
+        _closeId = Guid.Empty;
+        await LoadData();
+    }
+
+    private string GetStatusBadge(DimensionStatus status) => status switch
+    {
+        DimensionStatus.Active => "bg-success",
+        DimensionStatus.Inactive => "bg-secondary",
+        DimensionStatus.Closed => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

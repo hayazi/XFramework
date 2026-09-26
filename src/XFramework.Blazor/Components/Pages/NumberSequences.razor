@@ -1,0 +1,405 @@
+@page "/number-sequences"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Numbering
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Numbering
+@inject INumberSequenceAppService NumberSequenceAppService
+
+<PageTitle>Number Sequences</PageTitle>
+
+<h1>Number Sequences</h1>
+
+<button class="btn btn-primary mb-3" @onclick="OpenCreateModal">
+    Create Number Sequence
+</button>
+
+@if (_sequences is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Format</th>
+                <th>Current</th>
+                <th>Max</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var seq in _sequences)
+            {
+                <tr>
+                    <td>@seq.Code</td>
+                    <td>@seq.Name</td>
+                    <td>@GetFormatPreview(seq)</td>
+                    <td>@seq.CurrentNumber</td>
+                    <td>@(seq.MaximumNumber > 0 ? seq.MaximumNumber.ToString() : "Unlimited")</td>
+                    <td>
+                        @seq.Scope
+                        @if (!string.IsNullOrEmpty(seq.ScopeIdentifier))
+                        {
+                            <small class="text-muted"> (@seq.ScopeIdentifier)</small>
+                        }
+                    </td>
+                    <td>
+                        <span class="badge @GetStatusBadge(seq.Status)">@seq.Status</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-success" @onclick="() => GetNextNumber(seq.Id)">Next</button>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditModal(seq)">Edit</button>
+                        <button class="btn btn-sm btn-outline-warning" @onclick="() => ConfirmReset(seq.Id)">Reset</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(seq.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Create/Edit Modal -->
+@if (_showModal)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingSequence != null ? "Edit Number Sequence" : "Create Number Sequence")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.Code" @bind:event="oninput" disabled="@(_editingSequence != null)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.Name" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prefix</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.Prefix" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Suffix</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.Suffix" @bind:event="oninput" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Minimum Digits</label>
+                            <input type="number" class="form-control" @bind="_sequenceForm.MinimumDigits" @bind:event="oninput" min="1" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Increment By</label>
+                            <input type="number" class="form-control" @bind="_sequenceForm.IncrementBy" @bind:event="oninput" min="1" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Maximum Number (0 = unlimited)</label>
+                            <input type="number" class="form-control" @bind="_sequenceForm.MaximumNumber" @bind:event="oninput" min="0" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scope</label>
+                        <select class="form-select" @bind="_sequenceForm.Scope" @bind:event="onchange">
+                            @foreach (var s in Enum.GetValues<NumberingScope>())
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scope Identifier</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.ScopeIdentifier" @bind:event="oninput" placeholder="Optional (e.g., branch code, warehouse code)" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" @bind="_sequenceForm.Status" @bind:event="onchange">
+                            @foreach (var s in Enum.GetValues<NumberingStatus>())
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Auto Reset</label>
+                        <input type="checkbox" class="form-check-input" @bind="_sequenceForm.AutoReset" @bind:event="onchange" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reset Date</label>
+                        <input type="date" class="form-control" @bind="_sequenceForm.ResetDate" @bind:event="onchange" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Format Template</label>
+                        <input type="text" class="form-control" @bind="_sequenceForm.FormatTemplate" @bind:event="oninput" placeholder="{PREFIX}{NUMBER:D6}{SUFFIX}" />
+                        <div class="form-text">Placeholders: {PREFIX}, {NUMBER:D6}, {SUFFIX}, {SCOPE}, {YEAR}, {MONTH}, {DAY}</div>
+                    </div>
+                    <div class="alert alert-info">
+                        Preview: <strong>@GetFormatPreviewFromForm()</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveSequence">@(_editingSequence != null ? "Update" : "Create")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (_showDeleteConfirm)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this number sequence?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteSequence">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Reset Confirmation Modal -->
+@if (_showResetConfirm)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Reset</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reset this number sequence to 0?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelReset">Cancel</button>
+                    <button class="btn btn-warning" @onclick="ResetSequence">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<NumberSequenceDto>? _sequences;
+    private bool _showModal;
+    private bool _showDeleteConfirm;
+    private bool _showResetConfirm;
+    private NumberSequenceDto? _editingSequence;
+    private Guid _deleteId;
+    private Guid _resetId;
+    private NumberSequenceForm _sequenceForm = new();
+
+    private class NumberSequenceForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Prefix { get; set; } = string.Empty;
+        public string Suffix { get; set; } = string.Empty;
+        public int MinimumDigits { get; set; } = 6;
+        public int IncrementBy { get; set; } = 1;
+        public int? MaximumNumber { get; set; }
+        public NumberingScope Scope { get; set; } = NumberingScope.Global;
+        public string? ScopeIdentifier { get; set; }
+        public NumberingStatus Status { get; set; } = NumberingStatus.Active;
+        public bool AutoReset { get; set; } = false;
+        public DateTime? ResetDate { get; set; }
+        public string FormatTemplate { get; set; } = "{PREFIX}{NUMBER:D6}{SUFFIX}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await NumberSequenceAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+        _sequences = result.Items;
+    }
+
+    private void OpenCreateModal()
+    {
+        _editingSequence = null;
+        _sequenceForm = new NumberSequenceForm();
+        _showModal = true;
+    }
+
+    private void OpenEditModal(NumberSequenceDto seq)
+    {
+        _editingSequence = seq;
+        _sequenceForm = new NumberSequenceForm
+        {
+            Code = seq.Code,
+            Name = seq.Name,
+            Prefix = seq.Prefix,
+            Suffix = seq.Suffix,
+            MinimumDigits = seq.MinimumDigits,
+            IncrementBy = seq.IncrementBy,
+            MaximumNumber = seq.MaximumNumber,
+            Scope = seq.Scope,
+            ScopeIdentifier = seq.ScopeIdentifier,
+            Status = seq.Status,
+            AutoReset = seq.AutoReset,
+            ResetDate = seq.ResetDate,
+            FormatTemplate = seq.FormatTemplate
+        };
+        _showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        _showModal = false;
+        _editingSequence = null;
+        _sequenceForm = new NumberSequenceForm();
+    }
+
+    private async Task SaveSequence()
+    {
+        try
+        {
+            if (_editingSequence != null)
+            {
+                var updateDto = new NumberSequenceUpdateDto
+                {
+                    Name = _sequenceForm.Name,
+                    Prefix = _sequenceForm.Prefix,
+                    Suffix = _sequenceForm.Suffix,
+                    MinimumDigits = _sequenceForm.MinimumDigits,
+                    IncrementBy = _sequenceForm.IncrementBy,
+                    MaximumNumber = _sequenceForm.MaximumNumber,
+                    Status = _sequenceForm.Status,
+                    AutoReset = _sequenceForm.AutoReset,
+                    ResetDate = _sequenceForm.ResetDate,
+                    FormatTemplate = _sequenceForm.FormatTemplate
+                };
+                await NumberSequenceAppService.UpdateAsync(_editingSequence.Id, updateDto);
+            }
+            else
+            {
+                var createDto = new NumberSequenceCreateDto
+                {
+                    Code = _sequenceForm.Code,
+                    Name = _sequenceForm.Name,
+                    Prefix = _sequenceForm.Prefix,
+                    Suffix = _sequenceForm.Suffix,
+                    MinimumDigits = _sequenceForm.MinimumDigits,
+                    IncrementBy = _sequenceForm.IncrementBy,
+                    MaximumNumber = _sequenceForm.MaximumNumber,
+                    Scope = _sequenceForm.Scope,
+                    ScopeIdentifier = _sequenceForm.ScopeIdentifier,
+                    AutoReset = _sequenceForm.AutoReset,
+                    ResetDate = _sequenceForm.ResetDate,
+                    FormatTemplate = _sequenceForm.FormatTemplate
+                };
+                await NumberSequenceAppService.CreateAsync(createDto);
+            }
+            CloseModal();
+            await LoadData();
+        }
+        catch
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private void ConfirmDelete(Guid id)
+    {
+        _deleteId = id;
+        _showDeleteConfirm = true;
+    }
+
+    private void CancelDelete()
+    {
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+    }
+
+    private async Task DeleteSequence()
+    {
+        await NumberSequenceAppService.DeleteAsync(_deleteId);
+        _showDeleteConfirm = false;
+        _deleteId = Guid.Empty;
+        await LoadData();
+    }
+
+    private void ConfirmReset(Guid id)
+    {
+        _resetId = id;
+        _showResetConfirm = true;
+    }
+
+    private void CancelReset()
+    {
+        _showResetConfirm = false;
+        _resetId = Guid.Empty;
+    }
+
+    private async Task ResetSequence()
+    {
+        await NumberSequenceAppService.ResetAsync(_resetId);
+        _showResetConfirm = false;
+        _resetId = Guid.Empty;
+        await LoadData();
+    }
+
+    private async Task GetNextNumber(Guid id)
+    {
+        try
+        {
+            var next = await NumberSequenceAppService.GetNextNumberAsync(id);
+            // TODO: Show toast notification with the generated number
+        }
+        catch
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private string GetStatusBadge(NumberingStatus status) => status switch
+    {
+        NumberingStatus.Active => "bg-success",
+        NumberingStatus.Inactive => "bg-secondary",
+        NumberingStatus.Exhausted => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetFormatPreview(NumberSequenceDto seq)
+    {
+        return seq.FormatTemplate
+            .Replace("{PREFIX}", seq.Prefix)
+            .Replace("{NUMBER:D6}", seq.CurrentNumber.ToString($"D{seq.MinimumDigits}"))
+            .Replace("{SUFFIX}", seq.Suffix)
+            .Replace("{SCOPE}", seq.ScopeIdentifier ?? "")
+            .Replace("{YEAR}", DateTime.Now.Year.ToString())
+            .Replace("{MONTH}", DateTime.Now.Month.ToString("D2"))
+            .Replace("{DAY}", DateTime.Now.Day.ToString("D2"));
+    }
+
+    private string GetFormatPreviewFromForm()
+    {
+        return _sequenceForm.FormatTemplate
+            .Replace("{PREFIX}", _sequenceForm.Prefix)
+            .Replace("{NUMBER:D6}", "0".PadLeft(_sequenceForm.MinimumDigits, '0'))
+            .Replace("{SUFFIX}", _sequenceForm.Suffix)
+            .Replace("{SCOPE}", _sequenceForm.ScopeIdentifier ?? "")
+            .Replace("{YEAR}", DateTime.Now.Year.ToString())
+            .Replace("{MONTH}", DateTime.Now.Month.ToString("D2"))
+            .Replace("{DAY}", DateTime.Now.Day.ToString("D2"));
+    }
+}

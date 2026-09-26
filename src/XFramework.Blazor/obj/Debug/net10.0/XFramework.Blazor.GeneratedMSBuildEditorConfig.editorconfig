@@ -39,8 +39,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/CostCenters.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3N0Q2VudGVycy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [F:/XFramework/src/XFramework.Blazor/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/CustomDimensions.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXN0b21EaW1lbnNpb25zLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [F:/XFramework/src/XFramework.Blazor/Components/Pages/Customers.razor]
@@ -55,8 +63,32 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/Items.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xJdGVtcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/Kardex.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xLYXJkZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [F:/XFramework/src/XFramework.Blazor/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/NumberSequences.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOdW1iZXJTZXF1ZW5jZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/Projects.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9qZWN0cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/TaxCodes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUYXhDb2Rlcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[F:/XFramework/src/XFramework.Blazor/Components/Pages/Warehouses.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xXYXJlaG91c2VzLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [F:/XFramework/src/XFramework.Blazor/Components/Pages/Weather.razor]

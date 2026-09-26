@@ -4,6 +4,7 @@
 @using XFramework.Application.Contracts.Inventory
 @using XFramework.Application.Contracts.Dtos
 @using XFramework.Domain.Inventory
+@using XFramework.Domain.SharedKernel
 @inject IKardexAppService KardexAppService
 @inject IItemAppService ItemAppService
 @inject IWarehouseAppService WarehouseAppService
@@ -33,7 +34,7 @@
 <div class="row mb-3">
     <div class="col-md-3">
         <label class="form-label">Item</label>
-        <select class="form-select" @bind="_filterItemId" @bind:event="onchange" @onchange="ApplyFilters">
+        <select class="form-select" @bind="FilterItemId" @bind:event="onchange">
             <option value="">All Items</option>
             @foreach (var item in _items)
             {
@@ -43,7 +44,7 @@
     </div>
     <div class="col-md-3">
         <label class="form-label">Warehouse</label>
-        <select class="form-select" @bind="_filterWarehouseId" @bind:event="onchange" @onchange="ApplyFilters">
+        <select class="form-select" @bind="FilterWarehouseId" @bind:event="onchange">
             <option value="">All Warehouses</option>
             @foreach (var wh in _warehouses)
             {
@@ -53,11 +54,11 @@
     </div>
     <div class="col-md-3">
         <label class="form-label">From Date</label>
-        <input type="date" class="form-control" @bind="_filterFromDate" @bind:event="onchange" @onchange="ApplyFilters" />
+        <input type="date" class="form-control" @bind="FilterFromDate" @bind:event="onchange" />
     </div>
     <div class="col-md-3">
         <label class="form-label">To Date</label>
-        <input type="date" class="form-control" @bind="_filterToDate" @bind:event="onchange" @onchange="ApplyFilters" />
+        <input type="date" class="form-control" @bind="FilterToDate" @bind:event="onchange" />
     </div>
 </div>
 
@@ -92,9 +93,9 @@ else
                     </td>
                     <td>@entry.ItemCode</td>
                     <td>@entry.WarehouseCode</td>
-                    <td>@(entry.QuantityIn > 0 ? entry.QuantityIn.ToString("N2") : "-")</td>
-                    <td>@(entry.QuantityOut > 0 ? entry.QuantityOut.ToString("N2") : "-")</td>
-                    <td>@entry.RunningBalance.ToString("N2")</td>
+                    <td>@(entry.QuantityIn.Amount > 0 ? entry.QuantityIn.Amount.ToString("N2") : "-")</td>
+                    <td>@(entry.QuantityOut.Amount > 0 ? entry.QuantityOut.Amount.ToString("N2") : "-")</td>
+                    <td>@entry.RunningBalance.Amount.ToString("N2")</td>
                     <td>@entry.UnitCost.Amount @entry.UnitCost.Currency</td>
                     <td>@entry.TotalCost.Amount @entry.TotalCost.Currency</td>
                     <td>@entry.DocumentReference</td>
@@ -141,15 +142,9 @@ else
                         <label class="form-label">Document Reference</label>
                         <input type="text" class="form-control" @bind="_kardexForm.DocumentReference" @bind:event="oninput" />
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Quantity In</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_kardexForm.QuantityIn" @bind:event="oninput" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Quantity Out</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_kardexForm.QuantityOut" @bind:event="oninput" />
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" step="0.01" class="form-control" @bind="_kardexForm.Quantity" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Unit Cost Amount</label>
@@ -163,6 +158,19 @@ else
                                 <option value="@c">@c</option>
                             }
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Costing Method</label>
+                        <select class="form-select" @bind="_kardexForm.CostingMethod" @bind:event="onchange">
+                            @foreach (var c in Enum.GetValues<CostingMethod>())
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control" @bind="_kardexForm.Description" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reference Document Id</label>
@@ -196,16 +204,58 @@ else
     private DateTime? _filterFromDate;
     private DateTime? _filterToDate;
 
+    private Guid? FilterItemId
+    {
+        get => _filterItemId;
+        set
+        {
+            _filterItemId = value;
+            _ = ApplyFilters();
+        }
+    }
+
+    private Guid? FilterWarehouseId
+    {
+        get => _filterWarehouseId;
+        set
+        {
+            _filterWarehouseId = value;
+            _ = ApplyFilters();
+        }
+    }
+
+    private DateTime? FilterFromDate
+    {
+        get => _filterFromDate;
+        set
+        {
+            _filterFromDate = value;
+            _ = ApplyFilters();
+        }
+    }
+
+    private DateTime? FilterToDate
+    {
+        get => _filterToDate;
+        set
+        {
+            _filterToDate = value;
+            _ = ApplyFilters();
+        }
+    }
+
     private class KardexForm
     {
         public Guid ItemId { get; set; }
         public Guid WarehouseId { get; set; }
         public DateTime TransactionDate { get; set; } = DateTime.Today;
         public string DocumentReference { get; set; } = string.Empty;
-        public decimal QuantityIn { get; set; }
-        public decimal QuantityOut { get; set; }
+        public decimal Quantity { get; set; }
         public decimal UnitCostAmount { get; set; }
-        public Currency Currency { get; set; } = Currency.IRR;
+        public Currency Currency { get; set; } = Currency.IRR
+        ;
+        public CostingMethod CostingMethod { get; set; } = CostingMethod.Standard;
+        public string? Description { get; set; }
         public string? ReferenceDocumentId { get; set; }
         public int? ReferenceDocumentLine { get; set; }
     }
@@ -257,8 +307,8 @@ else
         _kardexForm = new KardexForm
         {
             TransactionDate = DateTime.Today,
-            QuantityIn = type == InventoryTransactionType.Receipt ? 1 : 0,
-            QuantityOut = type == InventoryTransactionType.Issue ? 1 : 0
+            Quantity = 1,
+            CostingMethod = CostingMethod.Standard
         };
         _showModal = true;
     }
@@ -280,9 +330,10 @@ else
                 TransactionType = _selectedType,
                 TransactionDate = _kardexForm.TransactionDate,
                 DocumentReference = _kardexForm.DocumentReference,
-                QuantityIn = _kardexForm.QuantityIn,
-                QuantityOut = _kardexForm.QuantityOut,
+                Quantity = new QuantityDto { Amount = _kardexForm.Quantity },
                 UnitCost = new MoneyDto { Amount = _kardexForm.UnitCostAmount, Currency = _kardexForm.Currency },
+                CostingMethod = _kardexForm.CostingMethod,
+                Description = _kardexForm.Description,
                 ReferenceDocumentId = string.IsNullOrEmpty(_kardexForm.ReferenceDocumentId) ? null : Guid.Parse(_kardexForm.ReferenceDocumentId),
                 ReferenceDocumentLine = _kardexForm.ReferenceDocumentLine
             };
@@ -303,7 +354,7 @@ else
             CloseModal();
             await ApplyFilters();
         }
-        catch (Exception ex)
+        catch
         {
             // TODO: Show error notification
         }

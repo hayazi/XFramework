@@ -4,6 +4,7 @@
 @using XFramework.Application.Contracts.Inventory
 @using XFramework.Application.Contracts.Dtos
 @using XFramework.Domain.Inventory
+@using XFramework.Domain.SharedKernel
 @inject IWarehouseAppService WarehouseAppService
 
 <PageTitle>Warehouses</PageTitle>
@@ -40,7 +41,7 @@ else
                     <td>@wh.Name</td>
                     <td>@wh.Type</td>
                     <td>
-                        <span class="badge @GetStatusBadge(wh.IsActive ? ItemStatus.Active : ItemStatus.Inactive)">@(wh.IsActive ? "Active" : "Inactive")</span>
+                        <span class="badge @GetStatusBadge(wh.IsActive)">@(wh.IsActive ? "Active" : "Inactive")</span>
                     </td>
                     <td>@(wh.AllowNegativeStock ? "Yes" : "No")</td>
                     <td>@wh.ManagerId?.ToString() ?? "-"</td>
@@ -88,13 +89,30 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Address</label>
-                        <input type="text" class="form-control" @bind="_warehouseForm.Address" @bind:event="oninput" />
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Street</label>
+                                <input type="text" class="form-control" @bind="_warehouseForm.AddressStreet" @bind:event="oninput" />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">City</label>
+                                <input type="text" class="form-control" @bind="_warehouseForm.AddressCity" @bind:event="oninput" />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">State/Province</label>
+                                <input type="text" class="form-control" @bind="_warehouseForm.AddressState" @bind:event="oninput" />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" @bind="_warehouseForm.AddressPostalCode" @bind:event="oninput" />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label">Country</label>
+                                <input type="text" class="form-control" @bind="_warehouseForm.AddressCountry" @bind:event="oninput" />
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Is Active</label>
-                            <input type="checkbox" class="form-check-input" @bind="_warehouseForm.IsActive" @bind:event="onchange" />
-                        </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Allow Negative Stock</label>
                             <input type="checkbox" class="form-check-input" @bind="_warehouseForm.AllowNegativeStock" @bind:event="onchange" />
@@ -149,8 +167,11 @@ else
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public WarehouseType Type { get; set; } = WarehouseType.Main;
-        public string? Address { get; set; }
-        public bool IsActive { get; set; } = true;
+        public string? AddressStreet { get; set; }
+        public string? AddressCity { get; set; }
+        public string? AddressState { get; set; }
+        public string? AddressPostalCode { get; set; }
+        public string? AddressCountry { get; set; }
         public bool AllowNegativeStock { get; set; } = false;
         public string? ManagerIdString { get; set; }
         public Guid? ManagerId => Guid.TryParse(ManagerIdString, out var g) ? g : null;
@@ -183,8 +204,11 @@ else
             Name = wh.Name,
             Description = wh.Description,
             Type = wh.Type,
-            Address = wh.Address,
-            IsActive = wh.IsActive,
+            AddressStreet = wh.Address?.Street,
+            AddressCity = wh.Address?.City,
+            AddressState = wh.Address?.State,
+            AddressPostalCode = wh.Address?.PostalCode,
+            AddressCountry = wh.Address?.Country,
             AllowNegativeStock = wh.AllowNegativeStock,
             ManagerIdString = wh.ManagerId?.ToString()
         };
@@ -202,6 +226,15 @@ else
     {
         try
         {
+            var address = new AddressDto
+            {
+                Street = _warehouseForm.AddressStreet,
+                City = _warehouseForm.AddressCity,
+                State = _warehouseForm.AddressState,
+                PostalCode = _warehouseForm.AddressPostalCode,
+                Country = _warehouseForm.AddressCountry
+            };
+
             if (_editingWarehouse != null)
             {
                 var updateDto = new WarehouseUpdateDto
@@ -209,8 +242,7 @@ else
                     Name = _warehouseForm.Name,
                     Description = _warehouseForm.Description,
                     Type = _warehouseForm.Type,
-                    Address = _warehouseForm.Address,
-                    IsActive = _warehouseForm.IsActive,
+                    Address = address,
                     AllowNegativeStock = _warehouseForm.AllowNegativeStock,
                     ManagerId = _warehouseForm.ManagerId
                 };
@@ -224,8 +256,7 @@ else
                     Name = _warehouseForm.Name,
                     Description = _warehouseForm.Description,
                     Type = _warehouseForm.Type,
-                    Address = _warehouseForm.Address,
-                    IsActive = _warehouseForm.IsActive,
+                    Address = address,
                     AllowNegativeStock = _warehouseForm.AllowNegativeStock,
                     ManagerId = _warehouseForm.ManagerId
                 };
@@ -234,7 +265,7 @@ else
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex)
+        catch
         {
             // TODO: Show error notification
         }
@@ -260,10 +291,5 @@ else
         await LoadData();
     }
 
-    private string GetStatusBadge(ItemStatus status) => status switch
-    {
-        ItemStatus.Active => "bg-success",
-        ItemStatus.Inactive => "bg-secondary",
-        _ => "bg-secondary"
-    };
+    private string GetStatusBadge(bool isActive) => isActive ? "bg-success" : "bg-secondary";
 }
