@@ -29,6 +29,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddLocalization(o => o.ResourcesPath = "Localization/Resources");
 builder.Services.AddScoped<ILocalizationService, BlazorLocalizationService>();
+
+// Radzen services
+builder.Services.AddScoped<Radzen.DialogService>();
+builder.Services.AddScoped<Radzen.NotificationService>();
+builder.Services.AddScoped<Radzen.TooltipService>();
+builder.Services.AddScoped<Radzen.ContextMenuService>();
+
 var cultures = new[] { "fa", "en" };
 var localization = new RequestLocalizationOptions().SetDefaultCulture("fa").AddSupportedCultures(cultures).AddSupportedUICultures(cultures);
 var app = builder.Build();

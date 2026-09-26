@@ -5,238 +5,64 @@
 @using XFramework.Application.Contracts.Dtos
 @using XFramework.Domain.Inventory
 @using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
 @inject IItemAppService ItemAppService
 @inject IWarehouseAppService WarehouseAppService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <PageTitle>Items</PageTitle>
 
-<h1>Items</h1>
-
-<button class="btn btn-primary mb-3" @onclick="OpenCreateModal">
-    Create Item
-</button>
-
-@if (_items is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Costing Method</th>
-                <th>Standard Cost</th>
-                <th>Stocked</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in _items)
-            {
-                <tr>
-                    <td>@item.Code</td>
-                    <td>@item.Name</td>
-                    <td>@item.Type</td>
-                    <td>
-                        <span class="badge @GetStatusBadge(item.Status)">@item.Status</span>
-                    </td>
-                    <td>@item.CostingMethod</td>
-                    <td>@item.StandardCost.Amount @item.StandardCost.Currency</td>
-                    <td>@(item.IsStocked ? "Yes" : "No")</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditModal(item)">Edit</button>
-                        <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(item.Id)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-<!-- Create/Edit Modal -->
-@if (_showModal)
-{
-    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(_editingItem != null ? "Edit Item" : "Create Item")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Code</label>
-                        <input type="text" class="form-control" @bind="_itemForm.Code" @bind:event="oninput" disabled="@(_editingItem != null)" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" class="form-control" @bind="_itemForm.Name" @bind:event="oninput" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" @bind="_itemForm.Description" @bind:event="oninput"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Type</label>
-                        <select class="form-select" @bind="_itemForm.Type" @bind:event="onchange">
-                            @foreach (var t in Enum.GetValues<ItemType>())
-                            {
-                                <option value="@t">@t</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" @bind="_itemForm.Status" @bind:event="onchange">
-                            @foreach (var s in Enum.GetValues<ItemStatus>())
-                            {
-                                <option value="@s">@s</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Base Unit</label>
-                        <select class="form-select" @bind="_itemForm.BaseUnit" @bind:event="onchange">
-                            @foreach (var u in Enum.GetValues<UnitOfMeasure>())
-                            {
-                                <option value="@u">@u</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Costing Method</label>
-                        <select class="form-select" @bind="_itemForm.CostingMethod" @bind:event="onchange">
-                            @foreach (var c in Enum.GetValues<CostingMethod>())
-                            {
-                                <option value="@c">@c</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Currency</label>
-                        <select class="form-select" @bind="_itemForm.Currency" @bind:event="onchange">
-                            @foreach (var c in Enum.GetValues<Currency>())
-                            {
-                                <option value="@c">@c</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Standard Cost Amount</label>
-                        <input type="number" step="0.01" class="form-control" @bind="_itemForm.StandardCostAmount" @bind:event="oninput" />
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Is Stocked</label>
-                            <input type="checkbox" class="form-check-input" @bind="_itemForm.IsStocked" @bind:event="onchange" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Is Purchasable</label>
-                            <input type="checkbox" class="form-check-input" @bind="_itemForm.IsPurchasable" @bind:event="onchange" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Is Sellable</label>
-                            <input type="checkbox" class="form-check-input" @bind="_itemForm.IsSellable" @bind:event="onchange" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Is Producible</label>
-                            <input type="checkbox" class="form-check-input" @bind="_itemForm.IsProducible" @bind:event="onchange" />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Minimum Stock</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_itemForm.MinimumStock" @bind:event="oninput" />
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Maximum Stock</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_itemForm.MaximumStock" @bind:event="oninput" />
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Reorder Point</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_itemForm.ReorderPoint" @bind:event="oninput" />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Default Warehouse</label>
-                        <select class="form-select" @bind="_itemForm.DefaultWarehouseId" @bind:event="onchange">
-                            <option value="">None</option>
-                            @foreach (var w in _warehouses)
-                            {
-                                <option value="@w.Id">@w.Code - @w.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Barcode</label>
-                        <input type="text" class="form-control" @bind="_itemForm.Barcode" @bind:event="oninput" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                    <button class="btn btn-primary" @onclick="SaveItem">@(_editingItem != null ? "Update" : "Create")</button>
-                </div>
-            </div>
-        </div>
+<RadzenCard>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Items</h3>
+        <RadzenButton Text="Create Item" Icon="add" Click="@(args => OpenCreateModal())" Style="width: auto;" />
     </div>
-}
 
-<!-- Delete Confirmation Modal -->
-@if (_showDeleteConfirm)
-{
-    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this item?</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteItem">Delete</button>
-                </div>
-            </div>
-        </div>
+    <RadzenDataGrid @ref="_grid" Data="@_items" TItem="ItemDto" PageSize="10" AllowPaging="true" AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Simple" ShowPagingSummary="true" Dense="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="ItemDto" Property="Code" Title="Code" Frozen="true" Width="120px" />
+            <RadzenDataGridColumn TItem="ItemDto" Property="Name" Title="Name" Width="200px" />
+            <RadzenDataGridColumn TItem="ItemDto" Property="Type" Title="Type" Width="130px">
+                <Template Context="item">
+                    <RadzenBadge Text="@item.Type.ToString()" Style="@GetTypeBadge(item.Type)" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ItemDto" Property="Status" Title="Status" Width="130px">
+                <Template Context="item">
+                    <RadzenBadge Text="@item.Status.ToString()" Style="@GetStatusBadge(item.Status)" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ItemDto" Property="CostingMethod" Title="Costing Method" Width="140px" />
+            <RadzenDataGridColumn TItem="ItemDto" Property="StandardCost" Title="Standard Cost" Width="140px">
+                <Template Context="item">
+                    @item.StandardCost.Amount @item.StandardCost.Currency
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ItemDto" Property="IsStocked" Title="Stocked" Width="80px">
+                <Template Context="item">
+                    <RadzenIcon Icon="@(item.IsStocked ? "check_circle" : "cancel")" Style="@(item.IsStocked ? "color: green;" : "color: red;")" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ItemDto" Title="Actions" Width="120px" Frozen="true" Sortable="false" Filterable="false">
+                <Template Context="item">
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Click="@(args => OpenEditModal(item))" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Size="ButtonSize.Small" Click="@(args => ConfirmDelete(item.Id))" Style="color: red;" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <div class="text-center mt-3" style="color: #6c757d;" @if (_items != null && _items.Count == 0) { <text>style="display:block;"</text> } else { <text>style="display:none;"</text> }>
+        <em>No items found. Click "Create Item" to add one.</em>
     </div>
-}
+</RadzenCard>
 
 @code {
+    private RadzenDataGrid<ItemDto>? _grid;
     private IReadOnlyList<ItemDto>? _items;
     private List<WarehouseDto> _warehouses = new();
-    private bool _showModal;
-    private bool _showDeleteConfirm;
-    private ItemDto? _editingItem;
-    private Guid _deleteId;
-    private ItemForm _itemForm = new();
-
-    private class ItemForm
-    {
-        public string Code { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public ItemType Type { get; set; } = ItemType.Product;
-        public ItemStatus Status { get; set; } = ItemStatus.Active;
-        public UnitOfMeasure BaseUnit { get; set; } = UnitOfMeasure.Piece;
-        public CostingMethod CostingMethod { get; set; } = CostingMethod.Standard;
-        public Currency Currency { get; set; } = Currency.IRR;
-        public decimal StandardCostAmount { get; set; }
-        public bool IsStocked { get; set; } = true;
-        public bool IsPurchasable { get; set; } = true;
-        public bool IsSellable { get; set; } = true;
-        public bool IsProducible { get; set; } = false;
-        public decimal? MinimumStock { get; set; }
-        public decimal? MaximumStock { get; set; }
-        public decimal? ReorderPoint { get; set; }
-        public Guid? DefaultWarehouseId { get; set; }
-        public string? Barcode { get; set; }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -245,138 +71,67 @@ else
 
     private async Task LoadData()
     {
-        var result = await ItemAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 50 });
+        var result = await ItemAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
         _items = result.Items;
-        
+
         var whResult = await WarehouseAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
         _warehouses = whResult.Items.ToList();
     }
 
-    private void OpenCreateModal()
+    private async Task OpenCreateModal()
     {
-        _editingItem = null;
-        _itemForm = new ItemForm();
-        _showModal = true;
-    }
-
-    private void OpenEditModal(ItemDto item)
-    {
-        _editingItem = item;
-        _itemForm = new ItemForm
+        var parameters = new Dictionary<string, object?>
         {
-            Code = item.Code,
-            Name = item.Name,
-            Description = item.Description,
-            Type = item.Type,
-            Status = item.Status,
-            BaseUnit = item.BaseUnit,
-            CostingMethod = item.CostingMethod,
-            Currency = item.StandardCost.Currency,
-            StandardCostAmount = item.StandardCost.Amount,
-            IsStocked = item.IsStocked,
-            IsPurchasable = item.IsPurchasable,
-            IsSellable = item.IsSellable,
-            IsProducible = item.IsProducible,
-            MinimumStock = item.MinimumStock,
-            MaximumStock = item.MaximumStock,
-            ReorderPoint = item.ReorderPoint,
-            DefaultWarehouseId = item.DefaultWarehouseId,
-            Barcode = item.Barcode
+            ["Warehouses"] = _warehouses,
+            ["IsEdit"] = false
         };
-        _showModal = true;
-    }
-
-    private void CloseModal()
-    {
-        _showModal = false;
-        _editingItem = null;
-        _itemForm = new ItemForm();
-    }
-
-    private async Task SaveItem()
-    {
-        try
-        {
-            if (_editingItem != null)
-            {
-                var updateDto = new ItemUpdateDto
-                {
-                    Name = _itemForm.Name,
-                    Description = _itemForm.Description,
-                    Status = _itemForm.Status,
-                    CostingMethod = _itemForm.CostingMethod,
-                    StandardCost = new MoneyDto { Amount = _itemForm.StandardCostAmount, Currency = _itemForm.Currency },
-                    IsStocked = _itemForm.IsStocked,
-                    IsPurchasable = _itemForm.IsPurchasable,
-                    IsSellable = _itemForm.IsSellable,
-                    IsProducible = _itemForm.IsProducible,
-                    MinimumStock = _itemForm.MinimumStock,
-                    MaximumStock = _itemForm.MaximumStock,
-                    ReorderPoint = _itemForm.ReorderPoint,
-                    DefaultWarehouseId = _itemForm.DefaultWarehouseId,
-                    Barcode = _itemForm.Barcode
-                };
-                await ItemAppService.UpdateAsync(_editingItem.Id, updateDto);
-            }
-            else
-            {
-                var createDto = new ItemCreateDto
-                {
-                    Code = _itemForm.Code,
-                    Name = _itemForm.Name,
-                    Description = _itemForm.Description,
-                    Type = _itemForm.Type,
-                    BaseUnit = _itemForm.BaseUnit,
-                    CostingMethod = _itemForm.CostingMethod,
-                    Currency = _itemForm.Currency,
-                    IsStocked = _itemForm.IsStocked,
-                    IsPurchasable = _itemForm.IsPurchasable,
-                    IsSellable = _itemForm.IsSellable,
-                    IsProducible = _itemForm.IsProducible,
-                    MinimumStock = _itemForm.MinimumStock,
-                    MaximumStock = _itemForm.MaximumStock,
-                    ReorderPoint = _itemForm.ReorderPoint,
-                    DefaultWarehouseId = _itemForm.DefaultWarehouseId,
-                    Barcode = _itemForm.Barcode,
-                    StandardCost = new MoneyDto { Amount = _itemForm.StandardCostAmount, Currency = _itemForm.Currency }
-                };
-                await ItemAppService.CreateAsync(createDto);
-            }
-            CloseModal();
-            await LoadData();
-        }
-        catch (Exception ex)
-        {
-            // TODO: Show error notification
-        }
-    }
-
-    private void ConfirmDelete(Guid id)
-    {
-        _deleteId = id;
-        _showDeleteConfirm = true;
-    }
-
-    private void CancelDelete()
-    {
-        _showDeleteConfirm = false;
-        _deleteId = Guid.Empty;
-    }
-
-    private async Task DeleteItem()
-    {
-        await ItemAppService.DeleteAsync(_deleteId);
-        _showDeleteConfirm = false;
-        _deleteId = Guid.Empty;
+        await DialogService.OpenAsync<ItemDialog>("Create Item", parameters, new DialogOptions { Width = "700px", Height = "800px", Resizable = true, Draggable = true });
         await LoadData();
+        await _grid?.Reload();
+    }
+
+    private async Task OpenEditModal(ItemDto item)
+    {
+        var parameters = new Dictionary<string, object?>
+        {
+            ["Item"] = item,
+            ["Warehouses"] = _warehouses,
+            ["IsEdit"] = true
+        };
+        await DialogService.OpenAsync<ItemDialog>("Edit Item", parameters, new DialogOptions { Width = "700px", Height = "800px", Resizable = true, Draggable = true });
+        await LoadData();
+        await _grid?.Reload();
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await DialogService.Confirm("Are you sure you want to delete this item?", "Confirm Delete", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (confirmed == true)
+        {
+            await ItemAppService.DeleteAsync(id);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Item deleted successfully");
+            await LoadData();
+            await _grid?.Reload();
+        }
     }
 
     private string GetStatusBadge(ItemStatus status) => status switch
     {
-        ItemStatus.Active => "bg-success",
-        ItemStatus.Inactive => "bg-secondary",
-        ItemStatus.Discontinued => "bg-danger",
-        ItemStatus.Blocked => "bg-warning",
-        _ => "bg-secondary"
+        ItemStatus.Active => "background-color: #28a745; color: white;",
+        ItemStatus.Inactive => "background-color: #6c757d; color: white;",
+        ItemStatus.Discontinued => "background-color: #dc3545; color: white;",
+        ItemStatus.Blocked => "background-color: #ffc107; color: black;",
+        _ => "background-color: #6c757d; color: white;"
+    };
+
+    private string GetTypeBadge(ItemType type) => type switch
+    {
+        ItemType.Product => "background-color: #007bff; color: white;",
+        ItemType.Service => "background-color: #17a2b8; color: white;",
+        ItemType.RawMaterial => "background-color: #6f42c1; color: white;",
+        ItemType.Consumable => "background-color: #fd7e14; color: white;",
+        ItemType.FixedAsset => "background-color: #20c997; color: white;",
+        ItemType.Kit => "background-color: #e83e8c; color: white;",
+        _ => "background-color: #6c757d; color: white;"
     };
 }

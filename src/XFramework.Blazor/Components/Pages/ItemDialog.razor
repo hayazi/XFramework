@@ -1,0 +1,232 @@
+@using XFramework.Application.Contracts.Inventory
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Inventory
+@using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
+@inject IItemAppService ItemAppService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+@if (_showDialog)
+{
+    <RadzenCard Style="width: 100%; height: 100%;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4>@Title</h4>
+            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="close" Size="ButtonSize.Small" Click="@CloseDialog" />
+        </div>
+
+        <RadzenTemplateForm TItem="ItemForm" Data="@_form" Submit="@OnSubmit" Style="height: calc(100% - 60px); overflow-y: auto;">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <RadzenLabel Text="Code" />
+                    <RadzenTextBox @bind-Value="@_form.Code" Disabled="@IsEdit" Style="width: 100%;" />
+                </div>
+                <div class="col-md-6">
+                    <RadzenLabel Text="Name" />
+                    <RadzenTextBox @bind-Value="@_form.Name" Style="width: 100%;" />
+                </div>
+                <div class="col-12">
+                    <RadzenLabel Text="Description" />
+                    <RadzenTextArea @bind-Value="@_form.Description" Rows="3" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Type" />
+                    <RadzenDropDown @bind-Value="@_form.Type" Data="@_itemTypes" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Status" />
+                    <RadzenDropDown @bind-Value="@_form.Status" Data="@_itemStatuses" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Base Unit" />
+                    <RadzenDropDown @bind-Value="@_form.BaseUnit" Data="@_unitsOfMeasure" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Costing Method" />
+                    <RadzenDropDown @bind-Value="@_form.CostingMethod" Data="@_costingMethods" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Currency" />
+                    <RadzenDropDown @bind-Value="@_form.Currency" Data="@_currencies" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Standard Cost" />
+                    <RadzenNumeric @bind-Value="@_form.StandardCostAmount" Format="n2" Style="width: 100%;" />
+                </div>
+                <div class="col-md-3">
+                    <RadzenCheckBox @bind-Value="@_form.IsStocked" Text="Is Stocked" />
+                </div>
+                <div class="col-md-3">
+                    <RadzenCheckBox @bind-Value="@_form.IsPurchasable" Text="Is Purchasable" />
+                </div>
+                <div class="col-md-3">
+                    <RadzenCheckBox @bind-Value="@_form.IsSellable" Text="Is Sellable" />
+                </div>
+                <div class="col-md-3">
+                    <RadzenCheckBox @bind-Value="@_form.IsProducible" Text="Is Producible" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Minimum Stock" />
+                    <RadzenNumeric @bind-Value="@_form.MinimumStock" Format="n2" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Maximum Stock" />
+                    <RadzenNumeric @bind-Value="@_form.MaximumStock" Format="n2" Style="width: 100%;" />
+                </div>
+                <div class="col-md-4">
+                    <RadzenLabel Text="Reorder Point" />
+                    <RadzenNumeric @bind-Value="@_form.ReorderPoint" Format="n2" Style="width: 100%;" />
+                </div>
+                <div class="col-md-6">
+                    <RadzenLabel Text="Default Warehouse" />
+                    <RadzenDropDown @bind-Value="@_form.DefaultWarehouseId" Data="@Warehouses" TextProperty="Name" ValueProperty="Id" Style="width: 100%;" Placeholder="Select warehouse" />
+                </div>
+                <div class="col-md-6">
+                    <RadzenLabel Text="Barcode" />
+                    <RadzenTextBox @bind-Value="@_form.Barcode" Style="width: 100%;" />
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text="Cancel" Click="@CloseDialog" />
+                <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="@SubmitButtonText" ButtonType="ButtonType.Submit" />
+            </div>
+        </RadzenTemplateForm>
+    </RadzenCard>
+}
+
+@code {
+    [Parameter] public ItemDto? Item { get; set; }
+    [Parameter] public List<WarehouseDto> Warehouses { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+
+    private bool _showDialog = true;
+    private string Title => IsEdit ? "Edit Item" : "Create Item";
+    private string SubmitButtonText => IsEdit ? "Update" : "Create";
+
+    private readonly List<ItemType> _itemTypes = Enum.GetValues<ItemType>().ToList();
+    private readonly List<ItemStatus> _itemStatuses = Enum.GetValues<ItemStatus>().ToList();
+    private readonly List<UnitOfMeasure> _unitsOfMeasure = Enum.GetValues<UnitOfMeasure>().ToList();
+    private readonly List<CostingMethod> _costingMethods = Enum.GetValues<CostingMethod>().ToList();
+    private readonly List<Currency> _currencies = Enum.GetValues<Currency>().ToList();
+
+    private class ItemForm
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public ItemType Type { get; set; } = ItemType.Product;
+        public ItemStatus Status { get; set; } = ItemStatus.Active;
+        public UnitOfMeasure BaseUnit { get; set; } = UnitOfMeasure.Piece;
+        public CostingMethod CostingMethod { get; set; } = CostingMethod.Standard;
+        public Currency Currency { get; set; } = Currency.IRR;
+        public decimal StandardCostAmount { get; set; }
+        public bool IsStocked { get; set; } = true;
+        public bool IsPurchasable { get; set; } = true;
+        public bool IsSellable { get; set; } = true;
+        public bool IsProducible { get; set; } = false;
+        public decimal? MinimumStock { get; set; }
+        public decimal? MaximumStock { get; set; }
+        public decimal? ReorderPoint { get; set; }
+        public Guid? DefaultWarehouseId { get; set; }
+        public string? Barcode { get; set; }
+    }
+
+    private ItemForm _form = new();
+
+    protected override void OnParametersSet()
+    {
+        if (IsEdit && Item != null)
+        {
+            _form = new ItemForm
+            {
+                Code = Item.Code,
+                Name = Item.Name,
+                Description = Item.Description,
+                Type = Item.Type,
+                Status = Item.Status,
+                BaseUnit = Item.BaseUnit,
+                CostingMethod = Item.CostingMethod,
+                Currency = Item.StandardCost.Currency,
+                StandardCostAmount = Item.StandardCost.Amount,
+                IsStocked = Item.IsStocked,
+                IsPurchasable = Item.IsPurchasable,
+                IsSellable = Item.IsSellable,
+                IsProducible = Item.IsProducible,
+                MinimumStock = Item.MinimumStock,
+                MaximumStock = Item.MaximumStock,
+                ReorderPoint = Item.ReorderPoint,
+                DefaultWarehouseId = Item.DefaultWarehouseId,
+                Barcode = Item.Barcode
+            };
+        }
+        else
+        {
+            _form = new ItemForm();
+        }
+    }
+
+    private async Task OnSubmit(ItemForm form)
+    {
+        try
+        {
+            if (IsEdit && Item != null)
+            {
+                var updateDto = new ItemUpdateDto
+                {
+                    Name = form.Name,
+                    Description = form.Description,
+                    Status = form.Status,
+                    CostingMethod = form.CostingMethod,
+                    StandardCost = new MoneyDto { Amount = form.StandardCostAmount, Currency = form.Currency },
+                    IsStocked = form.IsStocked,
+                    IsPurchasable = form.IsPurchasable,
+                    IsSellable = form.IsSellable,
+                    IsProducible = form.IsProducible,
+                    MinimumStock = form.MinimumStock,
+                    MaximumStock = form.MaximumStock,
+                    ReorderPoint = form.ReorderPoint,
+                    DefaultWarehouseId = form.DefaultWarehouseId,
+                    Barcode = form.Barcode
+                };
+                await ItemAppService.UpdateAsync(Item.Id, updateDto);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Item updated successfully");
+            }
+            else
+            {
+                var createDto = new ItemCreateDto
+                {
+                    Code = form.Code,
+                    Name = form.Name,
+                    Description = form.Description,
+                    Type = form.Type,
+                    BaseUnit = form.BaseUnit,
+                    CostingMethod = form.CostingMethod,
+                    Currency = form.Currency,
+                    IsStocked = form.IsStocked,
+                    IsPurchasable = form.IsPurchasable,
+                    IsSellable = form.IsSellable,
+                    IsProducible = form.IsProducible,
+                    MinimumStock = form.MinimumStock,
+                    MaximumStock = form.MaximumStock,
+                    ReorderPoint = form.ReorderPoint,
+                    DefaultWarehouseId = form.DefaultWarehouseId,
+                    Barcode = form.Barcode,
+                    StandardCost = new MoneyDto { Amount = form.StandardCostAmount, Currency = form.Currency }
+                };
+                await ItemAppService.CreateAsync(createDto);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Item created successfully");
+            }
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", ex.Message);
+        }
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close(false);
+    }
+}
