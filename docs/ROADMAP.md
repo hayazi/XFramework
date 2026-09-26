@@ -25,7 +25,7 @@ V59 — ERP Parties & Accounting Application & Persistence (R8 completed).
 - V52 (R3): Outbox Admin API with 7 operations, 7 API endpoints, 14 unit tests; safe retry/force-complete with idempotency; all tests pass (32 integration, 49 unit).
 - V53 (R4): Security & Audit with auto-auditing interceptor, PII-masked security event logging, secret provider abstraction, security headers, trace correlation; 60 unit tests pass.
 - V54 (R5 Phase 1): ERP domain foundation with SharedKernel (6 value objects, 6 enums), Parties module (Party aggregate, role assignments, domain events), Accounting module (Account, JournalEntry, JournalLine, FiscalPeriod with full state workflows); 118 new unit tests pass; all tests pass (32 integration, 178 unit).
-- V55 (R5 Phase 2): ERP domain extensions with Inventory module (Item, Warehouse, KardexEntry, CostingEngine with 5 costing methods), Dimensions module (CostCenter, Project, CustomDimension with hierarchy), Numbering module (NumberSequence with scopes, auto-reset, templates), Tax module (TaxCode with VAT/Sales/Withholding/Excise, 4 calculation methods, tiered rates); all tests pass (32 integration, 178 unit).
+- V55 (R5 Phase 2): ERP domain extensions with Inventory module (Item, Warehouse, CardexEntry, CostingEngine with 5 costing methods), Dimensions module (CostCenter, Project, CustomDimension with hierarchy), Numbering module (NumberSequence with scopes, auto-reset, templates), Tax module (TaxCode with VAT/Sales/Withholding/Excise, 4 calculation methods, tiered rates); all tests pass (32 integration, 178 unit).
 - V56 (R5 Phase 3): ERP Application layer services for all new modules — Inventory (Item, Warehouse, Kardex), Dimensions (CostCenter, Project, CustomDimension), Numbering (NumberSequence), Tax (TaxCode) — with full CRUD, custom queries, validation, auto-discovery via ApplicationServiceDiscovery, interceptor pipeline integration; Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for clean Application layer queries without EF Core dependency; all tests pass (32 integration, 178 unit).
 - V57 (R6): ERP EF Core integration — All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage); XFrameworkDbContext extended with DbSets for all new entities; ValueConverter classes using JSON serialization for readonly record struct value objects; EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods; all tests pass (32 integration, 178 unit).
 - V58 (R7): ERP Blazor UI & API Endpoints — 8 interactive Blazor pages (Items, Warehouses, Kardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions (GetNextNumber, CalculateTax, Activate/Deactivate/Close, etc.); Navigation updated with grouped links for Inventory, Dimensions, Numbering, Tax modules; Minimal API endpoints in Program.cs under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` with full CRUD + custom actions; All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts; all tests pass (32 integration, 178 unit).
@@ -94,7 +94,7 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 - **Inventory Services**:
   - `IItemAppService` / `ItemAppService`: Full CRUD + GetByCode, GetByType, GetLowStock, Activate/Deactivate/Discontinue/Block/Unblock
   - `IWarehouseAppService` / `WarehouseAppService`: Full CRUD + GetByCode, GetActive, Activate/Deactivate
-  - `IKardexAppService` / `KardexAppService`: Read-only + GetByItem/Warehouse/DateRange, CreateReceipt/Issue/Adjustment, GetCurrentStock
+  - `ICardexAppService` / `CardexAppService`: Read-only + GetByItem/Warehouse/DateRange, CreateReceipt/Issue/Adjustment, GetCurrentStock
 - **Dimensions Services**:
   - `ICostCenterAppService` / `CostCenterAppService`: Full CRUD + GetByCode, GetHierarchy, GetActive, Activate/Deactivate/Close
   - `IProjectAppService` / `ProjectAppService`: Full CRUD + GetByCode, GetActive, GetByManager/Customer, Activate/Deactivate/Close
@@ -112,13 +112,13 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 
 ### R6 — ERP EntityFrameworkCore Integration ✅ COMPLETED (V57)
 - **Entity Configurations** (src/XFramework.EntityFrameworkCore/Configurations/):
-  - Inventory: ItemConfiguration, WarehouseConfiguration, KardexEntryConfiguration
+  - Inventory: ItemConfiguration, WarehouseConfiguration, CardexEntryConfiguration
   - Dimensions: CostCenterConfiguration, ProjectConfiguration, CustomDimensionConfiguration
   - Numbering: NumberSequenceConfiguration
   - Tax: TaxCodeConfiguration
   - All configurations include proper indexes, unique constraints, and foreign keys
 - **DbContext** (XFrameworkDbContext):
-  - Added DbSets: Items, Warehouses, KardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
+  - Added DbSets: Items, Warehouses, CardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
   - Uses ApplyConfigurationsFromAssembly for automatic configuration discovery
 - **Value Converters** (src/XFramework.EntityFrameworkCore/ValueConverters/):
   - MoneyConverter, MoneyNullableConverter: JSON serialization for Money readonly record struct
@@ -134,16 +134,16 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 - **Blazor Pages** (src/XFramework.Blazor/Components/Pages/):
   - Items.razor: Full CRUD + Activate/Deactivate/Discontinue/Block/Unblock, low-stock filter
   - Warehouses.razor: Full CRUD + Activate/Deactivate, address via AddressDto
-  - Kardex.razor: Filterable list (item/warehouse/date range) + Create Receipt/Issue/Adjustment modals
+  - Cardex.razor: Filterable list (item/warehouse/date range) + Create Receipt/Issue/Adjustment modals
   - CostCenters.razor: Full CRUD + Hierarchy, Activate/Deactivate/Close, parent selection
   - Projects.razor: Full CRUD + Budget (MoneyDto), Manager/Customer, Activate/Deactivate/Close
   - CustomDimensions.razor: Full CRUD + Hierarchy, JSON Attributes editor, parent selection
   - NumberSequences.razor: Full CRUD + GetNextNumber, Reset, Format preview, scope/auto-reset
   - TaxCodes.razor: Full CRUD + CalculateTax modal, Tiered tax support, Percentage/FixedAmount/Tiered methods
 - **Navigation** (NavMenu.razor):
-  - Grouped links: Inventory (Items, Warehouses, Kardex), Dimensions (Cost Centers, Projects, Custom Dimensions), Numbering (Number Sequences), Tax (Tax Codes)
+  - Grouped links: Inventory (Items, Warehouses, Cardex), Dimensions (Cost Centers, Projects, Custom Dimensions), Numbering (Number Sequences), Tax (Tax Codes)
 - **Minimal API Endpoints** (Program.cs):
-  - `/api/inventory`: Items, Warehouses, Kardex with all custom actions
+  - `/api/inventory`: Items, Warehouses, Cardex with all custom actions
   - `/api/dimensions`: CostCenters, Projects, CustomDimensions with all custom actions
   - `/api/numbering`: NumberSequences with GetNextNumber, PeekNextNumber, Reset, scope-based lookup
   - `/api/tax`: TaxCodes with CalculateTax, GetDefault, GetByType, GetActive

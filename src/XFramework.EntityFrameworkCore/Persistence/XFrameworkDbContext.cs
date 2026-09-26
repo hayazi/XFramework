@@ -27,7 +27,7 @@ public sealed class XFrameworkDbContext(
     // Inventory
     public DbSet<Item> Items => Set<Item>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
-    public DbSet<KardexEntry> KardexEntries => Set<KardexEntry>();
+    public DbSet<CardexEntry> CardexEntries => Set<CardexEntry>();
 
     // Dimensions
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();

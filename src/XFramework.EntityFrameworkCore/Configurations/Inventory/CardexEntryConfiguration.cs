@@ -1,15 +1,20 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using XFramework.Domain.Inventory;
+using XFramework.Domain.SharedKernel;
 using XFramework.EntityFrameworkCore.ValueConverters;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace XFramework.EntityFrameworkCore.Configurations.Inventory;
 
-public class KardexEntryConfiguration : IEntityTypeConfiguration<KardexEntry>
+public class CardexEntryConfiguration : IEntityTypeConfiguration<CardexEntry>
 {
-    public void Configure(EntityTypeBuilder<KardexEntry> builder)
+    public void Configure(EntityTypeBuilder<CardexEntry> builder)
     {
-        builder.ToTable("KardexEntries");
+        builder.ToTable("CardexEntries");
 
         builder.HasKey(x => x.Id);
 
@@ -29,20 +34,32 @@ public class KardexEntryConfiguration : IEntityTypeConfiguration<KardexEntry>
         builder.Property(x => x.TransactionDate)
             .IsRequired();
 
+        var quantityConverter = new ValueConverter<Quantity, string>(
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Deserialize<Quantity>(v, (JsonSerializerOptions?)null)!);
+
+        var quantityComparer = new ValueComparer<Quantity>(
+            (c1, c2) => c1 != null && c2 != null && c1.Value == c2.Value && c1.Unit == c2.Unit,
+            c => HashCode.Combine(c.Value, c.Unit),
+            c => new Quantity(c.Value, c.Unit));
+
         builder.Property(x => x.QuantityIn)
-            .HasConversion(new QuantityConverter())
+            .HasConversion(quantityConverter)
             .HasColumnType("nvarchar(max)")
-            .IsRequired();
+            .IsRequired()
+            .Metadata.SetValueComparer(quantityComparer);
 
         builder.Property(x => x.QuantityOut)
-            .HasConversion(new QuantityConverter())
+            .HasConversion(quantityConverter)
             .HasColumnType("nvarchar(max)")
-            .IsRequired();
+            .IsRequired()
+            .Metadata.SetValueComparer(quantityComparer);
 
         builder.Property(x => x.RunningBalance)
-            .HasConversion(new QuantityConverter())
+            .HasConversion(quantityConverter)
             .HasColumnType("nvarchar(max)")
-            .IsRequired();
+            .IsRequired()
+            .Metadata.SetValueComparer(quantityComparer);
 
         builder.Property(x => x.UnitCost)
             .HasConversion(new MoneyConverter())
@@ -64,9 +81,11 @@ public class KardexEntryConfiguration : IEntityTypeConfiguration<KardexEntry>
 
         builder.Property(x => x.ReferenceDocumentLine);
 
-        builder.HasIndex(x => new { x.ItemId, x.WarehouseId, x.TransactionDate });
-        builder.HasIndex(x => x.TransactionType);
+        builder.HasIndex(x => x.ItemId);
+        builder.HasIndex(x => x.WarehouseId);
+        builder.HasIndex(x => x.TransactionDate);
         builder.HasIndex(x => x.DocumentReference);
+        builder.HasIndex(x => x.TransactionType);
         builder.HasIndex(x => x.ReferenceDocumentId);
     }
 }

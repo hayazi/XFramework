@@ -50,7 +50,7 @@ There must be one canonical implementation. The project decision is `XFramework.
 For RGRE.ERP, inventory documents should not synchronously create accounting vouchers as a hidden side effect. Target flow:
 ```text
 Inventory Document
-  -> Inventory Transaction / Kardex
+  -> Inventory Transaction / Cardex
   -> Costing Engine
   -> Domain/Integration Event
   -> Outbox
@@ -265,11 +265,11 @@ Inventory management with costing engine:
   - Factory: `Item.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`, `Discontinue`, `Block`, `Unblock`
 - **Warehouse** (AggregateRoot<Guid>): Code, Name, Description, Type (Main/Transit/Quarantine/Scrap/Virtual), Address, IsActive, AllowNegativeStock, ManagerId
   - Factory: `Warehouse.Create(...)`; Methods: `UpdateDetails`, `Activate`, `Deactivate`
-- **KardexEntry** (AggregateRoot<Guid>): ItemId, WarehouseId, TransactionType (Receipt/Issue/Transfer/Adjustment/Return/Production/Consumption), DocumentReference, TransactionDate, QuantityIn/QuantityOut, RunningBalance, UnitCost, TotalCost, CostingMethod, ReferenceDocumentId/Line
+- **CardexEntry** (AggregateRoot<Guid>): ItemId, WarehouseId, TransactionType (Receipt/Issue/Transfer/Adjustment/Return/Production/Consumption), DocumentReference, TransactionDate, QuantityIn/QuantityOut, RunningBalance, UnitCost, TotalCost, CostingMethod, ReferenceDocumentId/Line
   - Factories: `CreateReceipt`, `CreateIssue`, `CreateAdjustment` — all validate stock levels
 - **CostingEngine** (static): `CalculateAverageCost`, `CalculateFifoCost`, `CalculateLifoCost`, `CalculateStandardCost`, `CalculateSpecificCost`
 - **Enums**: ItemType, ItemStatus, CostingMethod, InventoryTransactionType, WarehouseType
-- **Domain Events**: ItemCreated/Updated/Activated/Deactivated/Discontinued/Blocked/Unblocked, WarehouseCreated/Updated/Activated/Deactivated, KardexEntryCreated
+- **Domain Events**: ItemCreated/Updated/Activated/Deactivated/Discontinued/Blocked/Unblocked, WarehouseCreated/Updated/Activated/Deactivated, CardexEntryCreated
 
 ### Dimensions Module (XFramework.Domain.Dimensions)
 Analytic dimensions for cost allocation and reporting:
@@ -306,7 +306,7 @@ Tax/VAT handling with flexible calculation:
 
 ### Entity Configurations
 All new domain entities have `IEntityTypeConfiguration` implementations in `XFramework.EntityFrameworkCore.Configurations/`:
-- **Inventory**: ItemConfiguration, WarehouseConfiguration, KardexEntryConfiguration
+- **Inventory**: ItemConfiguration, WarehouseConfiguration, CardexEntryConfiguration
 - **Dimensions**: CostCenterConfiguration, ProjectConfiguration, CustomDimensionConfiguration
 - **Numbering**: NumberSequenceConfiguration
 - **Tax**: TaxCodeConfiguration
@@ -318,7 +318,7 @@ Configurations include proper indexing, unique constraints, foreign keys, and va
 ```csharp
 public DbSet<Item> Items => Set<Item>();
 public DbSet<Warehouse> Warehouses => Set<Warehouse>();
-public DbSet<KardexEntry> KardexEntries => Set<KardexEntry>();
+public DbSet<CardexEntry> CardexEntries => Set<CardexEntry>();
 public DbSet<CostCenter> CostCenters => Set<CostCenter>();
 public DbSet<Project> Projects => Set<Project>();
 public DbSet<CustomDimension> CustomDimensions => Set<CustomDimension>();
@@ -349,7 +349,7 @@ All pages use `@rendermode InteractiveServer` with Bootstrap 5 styling and modal
 
 - **Items.razor**: Full CRUD for Items with custom actions (Activate, Deactivate, Discontinue, Block, Unblock), low-stock filter, item type/status filtering
 - **Warehouses.razor**: Full CRUD for Warehouses with Activate/Deactivate, Address via AddressDto, type/status filtering
-- **Kardex.razor**: Filterable list (Item, Warehouse, Date Range) with Create Receipt/Issue/Adjustment modals, running balance display
+- **Cardex.razor**: Filterable list (Item, Warehouse, Date Range) with Create Receipt/Issue/Adjustment modals, running balance display
 - **CostCenters.razor**: Full CRUD with hierarchical parent selection, Activate/Deactivate/Close, budget display
 - **Projects.razor**: Full CRUD with Budget (MoneyDto), Manager/Customer selection, Activate/Deactivate/Close with actual end date
 - **CustomDimensions.razor**: Full CRUD with hierarchy support, JSON Attributes editor, parent dimension selection, activation/deactivation
@@ -358,7 +358,7 @@ All pages use `@rendermode InteractiveServer` with Bootstrap 5 styling and modal
 
 ### Navigation (NavMenu.razor)
 Updated with grouped module navigation:
-- **Inventory**: Items, Warehouses, Kardex
+- **Inventory**: Items, Warehouses, Cardex
 - **Dimensions**: Cost Centers, Projects, Custom Dimensions
 - **Numbering**: Number Sequences
 - **Tax**: Tax Codes
@@ -370,7 +370,7 @@ Route groups providing full CRUD + custom actions:
 |---|---|
 | `/api/inventory` | Items (CRUD, Activate/Deactivate/Discontinue/Block/Unblock, ByCode/ByType/LowStock) |
 |  | Warehouses (CRUD, Activate/Deactivate, ByCode/Active) |
-|  | Kardex (Read-only, ByItem/ByWarehouse/ByDateRange, CreateReceipt/Issue/Adjustment, CurrentStock) |
+|  | Cardex (Read-only, ByItem/ByWarehouse/ByDateRange, CreateReceipt/Issue/Adjustment, CurrentStock) |
 | `/api/dimensions` | CostCenters (CRUD, Hierarchy/Active, Activate/Deactivate/Close) |
 |  | Projects (CRUD, Active/ByManager/ByCustomer, Activate/Deactivate/Close) |
 |  | CustomDimensions (CRUD, ByCode/DimensionKey, Activate/Deactivate) |

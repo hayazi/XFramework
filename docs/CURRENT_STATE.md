@@ -21,12 +21,12 @@
   - **Parties Module**: Party aggregate with code/name/taxId/nationalId/contact; PartyRoleAssignment with validity periods; PartyRole enum (Customer, Supplier, Employee, Prospect, Carrier, Bank); Domain events (PartyCreated, PartyUpdated, PartyRoleAssigned, PartyRoleRemoved, PartyActivated, PartyDeactivated).
   - **Accounting Module**: Account aggregate with code/name/type/nature/currency/hierarchy; JournalEntry aggregate with lines, double-entry validation, status workflow (Draft→Submitted→Approved→Posted/Reversed/Cancelled); JournalLine value object; FiscalPeriod with Open/Closed/Locked states; Domain events for all state transitions.
 - **ERP Domain Extensions (R5 Phase 2)**:
-  - **Inventory Module**: Item aggregate (code, name, type, base unit, costing method, standard cost, stock flags); Warehouse aggregate (code, name, type, address, negative stock allowance); KardexEntry aggregate (receipt/issue/adjustment, running balance, cost tracking); CostingEngine (Average, FIFO, LIFO, Standard, Specific costing); Enums (ItemType, ItemStatus, CostingMethod, InventoryTransactionType, WarehouseType); Domain events for all state transitions.
+  - **Inventory Module**: Item aggregate (code, name, type, base unit, costing method, standard cost, stock flags); Warehouse aggregate (code, name, type, address, negative stock allowance); CardexEntry aggregate (receipt/issue/adjustment, running balance, cost tracking); CostingEngine (Average, FIFO, LIFO, Standard, Specific costing); Enums (ItemType, ItemStatus, CostingMethod, InventoryTransactionType, WarehouseType); Domain events for all state transitions.
   - **Dimensions Module**: CostCenter aggregate (hierarchical, budget, manager); Project aggregate (dates, budget, manager, customer); CustomDimension aggregate (flexible key-value attributes, hierarchy support); Enums (DimensionType, DimensionStatus); Domain events for all state transitions.
   - **Numbering Module**: NumberSequence aggregate (prefix/suffix, scope, auto-reset, format template, min/max); NumberingScope (Company, Branch, Warehouse, User, Global); NumberingStatus (Active, Inactive, Exhausted); Domain events for number generation, reset, exhaustion.
   - **Tax Module**: TaxCode aggregate (VAT, SalesTax, Withholding, Excise, CustomDuty); Calculation methods (Percentage, FixedAmount, Tiered, Custom); TaxApplication (OnNetAmount, OnGrossAmount, OnQuantity); TaxTier for tiered rates; IsRecoverable flag; Domain events for all state transitions.
 - **ERP Application Layer Services (R5 Phase 3)**:
-  - **Inventory**: IItemAppService, IWarehouseAppService, IKardexAppService with full CRUD + custom queries (GetByCode, GetByType, GetLowStock, Activate/Deactivate/Discontinue/Block/Unblock, GetCurrentStock)
+  - **Inventory**: IItemAppService, IWarehouseAppService, ICardexAppService with full CRUD + custom queries (GetByCode, GetByType, GetLowStock, Activate/Deactivate/Discontinue/Block/Unblock, GetCurrentStock)
   - **Dimensions**: ICostCenterAppService, IProjectAppService, ICustomDimensionAppService with full CRUD + hierarchy queries, activation/deactivation/close
   - **Numbering**: INumberSequenceAppService with CRUD + GetNextNumber, PeekNextNumber, Reset, scope-based lookup
   - **Tax**: ITaxCodeAppService with CRUD + CalculateTax, GetDefault, GetByType
@@ -34,11 +34,11 @@
   - Repository interface extended with FirstOrDefaultAsync, SingleOrDefaultAsync for Application layer queries without EF Core dependency
 - **ERP EF Core Integration (R6)**:
   - **Configurations**: All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage)
-  - **DbContext**: XFrameworkDbContext extended with DbSets for Items, Warehouses, KardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
+  - **DbContext**: XFrameworkDbContext extended with DbSets for Items, Warehouses, CardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
   - **Value Converters**: Dedicated ValueConverter classes (MoneyConverter, QuantityConverter, AddressConverter, PercentageConverter, MoneyNullableConverter) using JSON serialization for readonly record struct value objects
   - **Repository**: EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods for Application layer queries
 - **ERP Blazor UI & API Endpoints (R7)**:
-  - **Blazor Pages**: 8 interactive pages (Items, Warehouses, Kardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions
+  - **Blazor Pages**: 8 interactive pages (Items, Warehouses, Cardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions
   - **Navigation**: Updated NavMenu with grouped links for Inventory, Dimensions, Numbering, Tax modules
   - **Minimal API Endpoints**: Program.cs extended with 4 route groups under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` providing full CRUD + custom actions for all new modules
   - All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts

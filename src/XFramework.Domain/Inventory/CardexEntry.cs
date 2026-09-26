@@ -3,9 +3,9 @@ using XFramework.Domain.SharedKernel;
 
 namespace XFramework.Domain.Inventory;
 
-public sealed class KardexEntry : AggregateRoot<Guid>
+public sealed class CardexEntry : AggregateRoot<Guid>
 {
-    private KardexEntry() { }
+    private CardexEntry() { }
 
     public Guid ItemId { get; private set; }
     public Guid WarehouseId { get; private set; }
@@ -22,7 +22,7 @@ public sealed class KardexEntry : AggregateRoot<Guid>
     public Guid? ReferenceDocumentId { get; private set; }
     public int? ReferenceDocumentLine { get; private set; }
 
-    public static KardexEntry CreateReceipt(
+    public static CardexEntry CreateReceipt(
         Guid itemId,
         Guid warehouseId,
         string documentReference,
@@ -42,7 +42,7 @@ public sealed class KardexEntry : AggregateRoot<Guid>
         var totalCost = unitCost * quantity.Value;
         var runningBalance = quantity;
 
-        var entry = new KardexEntry
+        var entry = new CardexEntry
         {
             Id = Guid.NewGuid(),
             ItemId = itemId,
@@ -61,11 +61,11 @@ public sealed class KardexEntry : AggregateRoot<Guid>
             ReferenceDocumentLine = referenceDocumentLine
         };
 
-        entry.AddDomainEvent(new KardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
+        entry.AddDomainEvent(new CardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
         return entry;
     }
 
-    public static KardexEntry CreateIssue(
+    public static CardexEntry CreateIssue(
         Guid itemId,
         Guid warehouseId,
         string documentReference,
@@ -86,7 +86,7 @@ public sealed class KardexEntry : AggregateRoot<Guid>
         var totalCost = unitCost * quantity.Value;
         var runningBalance = new Quantity(runningBalanceBeforeIssue.Value - quantity.Value, quantity.Unit);
 
-        var entry = new KardexEntry
+        var entry = new CardexEntry
         {
             Id = Guid.NewGuid(),
             ItemId = itemId,
@@ -105,11 +105,11 @@ public sealed class KardexEntry : AggregateRoot<Guid>
             ReferenceDocumentLine = referenceDocumentLine
         };
 
-        entry.AddDomainEvent(new KardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
+        entry.AddDomainEvent(new CardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
         return entry;
     }
 
-    public static KardexEntry CreateAdjustment(
+    public static CardexEntry CreateAdjustment(
         Guid itemId,
         Guid warehouseId,
         string documentReference,
@@ -126,7 +126,7 @@ public sealed class KardexEntry : AggregateRoot<Guid>
 
         var totalCost = unitCost * (quantityIn.Value - quantityOut.Value);
 
-        var entry = new KardexEntry
+        var entry = new CardexEntry
         {
             Id = Guid.NewGuid(),
             ItemId = itemId,
@@ -143,7 +143,7 @@ public sealed class KardexEntry : AggregateRoot<Guid>
             Description = description?.Trim()
         };
 
-        entry.AddDomainEvent(new KardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
+        entry.AddDomainEvent(new CardexEntryCreated(entry.Id, entry.ItemId, entry.WarehouseId, entry.TransactionType, entry.RunningBalance));
         return entry;
     }
 

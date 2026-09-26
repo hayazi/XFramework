@@ -129,23 +129,23 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
         inventoryGroup.MapPost("/warehouses/{id:guid}/deactivate", async (IWarehouseAppService svc, Guid id, CancellationToken ct) =>
             await svc.DeactivateAsync(id, ct));
         // Kardex
-        inventoryGroup.MapGet("/kardex", async (IKardexAppService svc, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
+        inventoryGroup.MapGet("/cardex", async (ICardexAppService svc, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
             await svc.GetListAsync(new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct));
-        inventoryGroup.MapGet("/kardex/{id:guid}", async (IKardexAppService svc, Guid id, CancellationToken ct) =>
+        inventoryGroup.MapGet("/cardex/{id:guid}", async (ICardexAppService svc, Guid id, CancellationToken ct) =>
             await svc.GetAsync(id, ct) is { } dto ? Results.Ok(dto) : Results.NotFound());
-        inventoryGroup.MapGet("/kardex/item/{itemId:guid}", async (IKardexAppService svc, Guid itemId, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
+        inventoryGroup.MapGet("/cardex/item/{itemId:guid}", async (ICardexAppService svc, Guid itemId, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
             await svc.GetByItemAsync(itemId, new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct));
-        inventoryGroup.MapGet("/kardex/warehouse/{warehouseId:guid}", async (IKardexAppService svc, Guid warehouseId, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
+        inventoryGroup.MapGet("/cardex/warehouse/{warehouseId:guid}", async (ICardexAppService svc, Guid warehouseId, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
             await svc.GetByWarehouseAsync(warehouseId, new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct));
-        inventoryGroup.MapGet("/kardex/date-range", async (IKardexAppService svc, DateTime from, DateTime to, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
+        inventoryGroup.MapGet("/cardex/date-range", async (ICardexAppService svc, DateTime from, DateTime to, int skipCount = 0, int maxResultCount = 50, CancellationToken ct = default) =>
             await svc.GetByDateRangeAsync(from, to, new PagedAndSortedRequestDto { SkipCount = skipCount, MaxResultCount = maxResultCount }, ct));
-        inventoryGroup.MapPost("/kardex/receipt", async (IKardexAppService svc, KardexEntryCreateDto input, CancellationToken ct) =>
+        inventoryGroup.MapPost("/cardex/receipt", async (ICardexAppService svc, CardexEntryCreateDto input, CancellationToken ct) =>
             await svc.CreateReceiptAsync(input, ct));
-        inventoryGroup.MapPost("/kardex/issue", async (IKardexAppService svc, KardexEntryCreateDto input, CancellationToken ct) =>
+        inventoryGroup.MapPost("/cardex/issue", async (ICardexAppService svc, CardexEntryCreateDto input, CancellationToken ct) =>
             await svc.CreateIssueAsync(input, ct));
-        inventoryGroup.MapPost("/kardex/adjustment", async (IKardexAppService svc, KardexEntryCreateDto input, CancellationToken ct) =>
+        inventoryGroup.MapPost("/cardex/adjustment", async (ICardexAppService svc, CardexEntryCreateDto input, CancellationToken ct) =>
             await svc.CreateAdjustmentAsync(input, ct));
-        inventoryGroup.MapGet("/kardex/stock/{itemId:guid}/{warehouseId:guid}", async (IKardexAppService svc, Guid itemId, Guid warehouseId, CancellationToken ct) =>
+        inventoryGroup.MapGet("/cardex/stock/{itemId:guid}/{warehouseId:guid}", async (ICardexAppService svc, Guid itemId, Guid warehouseId, CancellationToken ct) =>
             await svc.GetCurrentStockAsync(itemId, warehouseId, ct));
 
         // Dimensions API

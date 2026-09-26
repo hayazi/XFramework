@@ -1,17 +1,17 @@
-@page "/kardex"
+@page "/cardex"
 @rendermode InteractiveServer
 
 @using XFramework.Application.Contracts.Inventory
 @using XFramework.Application.Contracts.Dtos
 @using XFramework.Domain.Inventory
 @using XFramework.Domain.SharedKernel
-@inject IKardexAppService KardexAppService
+@inject ICardexAppService CardexAppService
 @inject IItemAppService ItemAppService
 @inject IWarehouseAppService WarehouseAppService
 
-<PageTitle>Kardex Entries</PageTitle>
+<PageTitle>Cardex Entries</PageTitle>
 
-<h1>Kardex Entries</h1>
+<h1>Cardex Entries</h1>
 
 <div class="row mb-3">
     <div class="col-md-3">
@@ -118,7 +118,7 @@ else
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Item</label>
-                        <select class="form-select" @bind="_kardexForm.ItemId" @bind:event="onchange">
+                        <select class="form-select" @bind="_cardexForm.ItemId" @bind:event="onchange">
                             @foreach (var item in _items)
                             {
                                 <option value="@item.Id">@item.Code - @item.Name</option>
@@ -127,7 +127,7 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Warehouse</label>
-                        <select class="form-select" @bind="_kardexForm.WarehouseId" @bind:event="onchange">
+                        <select class="form-select" @bind="_cardexForm.WarehouseId" @bind:event="onchange">
                             @foreach (var wh in _warehouses)
                             {
                                 <option value="@wh.Id">@wh.Code - @wh.Name</option>
@@ -136,20 +136,20 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Transaction Date</label>
-                        <input type="date" class="form-control" @bind="_kardexForm.TransactionDate" @bind:event="onchange" />
+                        <input type="date" class="form-control" @bind="_cardexForm.TransactionDate" @bind:event="onchange" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Document Reference</label>
-                        <input type="text" class="form-control" @bind="_kardexForm.DocumentReference" @bind:event="oninput" />
+                        <input type="text" class="form-control" @bind="_cardexForm.DocumentReference" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Quantity</label>
                         <div class="row">
                             <div class="col-md-8">
-                                <input type="number" step="0.01" class="form-control" @bind="_kardexForm.Quantity" @bind:event="oninput" />
+                                <input type="number" step="0.01" class="form-control" @bind="_cardexForm.Quantity" @bind:event="oninput" />
                             </div>
                             <div class="col-md-4">
-                                <select class="form-select" @bind="_kardexForm.QuantityUnit" @bind:event="onchange">
+                                <select class="form-select" @bind="_cardexForm.QuantityUnit" @bind:event="onchange">
                                     @foreach (var u in Enum.GetValues<UnitOfMeasure>())
                                     {
                                         <option value="@u">@u</option>
@@ -160,11 +160,11 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Unit Cost Amount</label>
-                        <input type="number" step="0.01" class="form-control" @bind="_kardexForm.UnitCostAmount" @bind:event="oninput" />
+                        <input type="number" step="0.01" class="form-control" @bind="_cardexForm.UnitCostAmount" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Currency</label>
-                        <select class="form-select" @bind="_kardexForm.Currency" @bind:event="onchange">
+                        <select class="form-select" @bind="_cardexForm.Currency" @bind:event="onchange">
                             @foreach (var c in Enum.GetValues<Currency>())
                             {
                                 <option value="@c">@c</option>
@@ -173,7 +173,7 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Costing Method</label>
-                        <select class="form-select" @bind="_kardexForm.CostingMethod" @bind:event="onchange">
+                        <select class="form-select" @bind="_cardexForm.CostingMethod" @bind:event="onchange">
                             @foreach (var c in Enum.GetValues<CostingMethod>())
                             {
                                 <option value="@c">@c</option>
@@ -182,20 +182,20 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <input type="text" class="form-control" @bind="_kardexForm.Description" @bind:event="oninput" />
+                        <input type="text" class="form-control" @bind="_cardexForm.Description" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reference Document Id</label>
-                        <input type="text" class="form-control" @bind="_kardexForm.ReferenceDocumentId" @bind:event="oninput" />
+                        <input type="text" class="form-control" @bind="_cardexForm.ReferenceDocumentId" @bind:event="oninput" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reference Document Line</label>
-                        <input type="number" class="form-control" @bind="_kardexForm.ReferenceDocumentLine" @bind:event="oninput" />
+                        <input type="number" class="form-control" @bind="_cardexForm.ReferenceDocumentLine" @bind:event="oninput" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
-                    <button class="btn btn-primary" @onclick="SaveKardex">Create</button>
+                    <button class="btn btn-primary" @onclick="SaveCardex">Create</button>
                 </div>
             </div>
         </div>
@@ -203,12 +203,12 @@ else
 }
 
 @code {
-    private IReadOnlyList<KardexEntryDto>? _entries;
+    private IReadOnlyList<CardexEntryDto>? _entries;
     private List<ItemDto> _items = new();
     private List<WarehouseDto> _warehouses = new();
     private bool _showModal;
     private InventoryTransactionType _selectedType;
-    private KardexForm _kardexForm = new();
+    private CardexForm _cardexForm = new();
 
     // Filters
     private Guid? _filterItemId;
@@ -256,7 +256,7 @@ else
         }
     }
 
-    private class KardexForm
+    private class CardexForm
     {
         public Guid ItemId { get; set; }
         public Guid WarehouseId { get; set; }
@@ -274,7 +274,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        _kardexForm.TransactionDate = DateTime.Today;
+        _cardexForm.TransactionDate = DateTime.Today;
         await LoadData();
     }
 
@@ -293,22 +293,22 @@ else
     {
         if (_filterItemId.HasValue)
         {
-            var result = await KardexAppService.GetByItemAsync(_filterItemId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            var result = await CardexAppService.GetByItemAsync(_filterItemId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
             _entries = result.Items;
         }
         else if (_filterWarehouseId.HasValue)
         {
-            var result = await KardexAppService.GetByWarehouseAsync(_filterWarehouseId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            var result = await CardexAppService.GetByWarehouseAsync(_filterWarehouseId.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
             _entries = result.Items;
         }
         else if (_filterFromDate.HasValue && _filterToDate.HasValue)
         {
-            var result = await KardexAppService.GetByDateRangeAsync(_filterFromDate.Value, _filterToDate.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            var result = await CardexAppService.GetByDateRangeAsync(_filterFromDate.Value, _filterToDate.Value, new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
             _entries = result.Items;
         }
         else
         {
-            var result = await KardexAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
+            var result = await CardexAppService.GetListAsync(new PagedAndSortedRequestDto { SkipCount = 0, MaxResultCount = 100 });
             _entries = result.Items;
         }
     }
@@ -316,7 +316,7 @@ else
     private void OpenCreateModal(InventoryTransactionType type)
     {
         _selectedType = type;
-        _kardexForm = new KardexForm
+        _cardexForm = new CardexForm
         {
             TransactionDate = DateTime.Today,
             Quantity = 1,
@@ -328,38 +328,38 @@ else
     private void CloseModal()
     {
         _showModal = false;
-        _kardexForm = new KardexForm();
+        _cardexForm = new CardexForm();
     }
 
-    private async Task SaveKardex()
+    private async Task SaveCardex()
     {
         try
         {
-            var input = new KardexEntryCreateDto
+            var input = new CardexEntryCreateDto
             {
-                ItemId = _kardexForm.ItemId,
-                WarehouseId = _kardexForm.WarehouseId,
+                ItemId = _cardexForm.ItemId,
+                WarehouseId = _cardexForm.WarehouseId,
                 TransactionType = _selectedType,
-                TransactionDate = _kardexForm.TransactionDate,
-                DocumentReference = _kardexForm.DocumentReference,
-                Quantity = new QuantityDto { Value = _kardexForm.Quantity, Unit = _kardexForm.QuantityUnit },
-                UnitCost = new MoneyDto { Amount = _kardexForm.UnitCostAmount, Currency = _kardexForm.Currency },
-                CostingMethod = _kardexForm.CostingMethod,
-                Description = _kardexForm.Description,
-                ReferenceDocumentId = string.IsNullOrEmpty(_kardexForm.ReferenceDocumentId) ? null : Guid.Parse(_kardexForm.ReferenceDocumentId),
-                ReferenceDocumentLine = _kardexForm.ReferenceDocumentLine
+                TransactionDate = _cardexForm.TransactionDate,
+                DocumentReference = _cardexForm.DocumentReference,
+                Quantity = new QuantityDto { Value = _cardexForm.Quantity, Unit = _cardexForm.QuantityUnit },
+                UnitCost = new MoneyDto { Amount = _cardexForm.UnitCostAmount, Currency = _cardexForm.Currency },
+                CostingMethod = _cardexForm.CostingMethod,
+                Description = _cardexForm.Description,
+                ReferenceDocumentId = string.IsNullOrEmpty(_cardexForm.ReferenceDocumentId) ? null : Guid.Parse(_cardexForm.ReferenceDocumentId),
+                ReferenceDocumentLine = _cardexForm.ReferenceDocumentLine
             };
 
             switch (_selectedType)
             {
                 case InventoryTransactionType.Receipt:
-                    await KardexAppService.CreateReceiptAsync(input);
+                    await CardexAppService.CreateReceiptAsync(input);
                     break;
                 case InventoryTransactionType.Issue:
-                    await KardexAppService.CreateIssueAsync(input);
+                    await CardexAppService.CreateIssueAsync(input);
                     break;
                 case InventoryTransactionType.Adjustment:
-                    await KardexAppService.CreateAdjustmentAsync(input);
+                    await CardexAppService.CreateAdjustmentAsync(input);
                     break;
             }
 
