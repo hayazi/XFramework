@@ -25,6 +25,13 @@ builder.Services.AddXFrameworkInfrastructure(builder.Configuration);
 builder.Services.AddXFrameworkRabbitMQ(builder.Configuration);
 builder.Services.AddIdentityCore<XFrameworkIdentityUser>(o => { o.Password.RequiredLength = 8; o.Password.RequireDigit = true; o.Password.RequireUppercase = true; o.Password.RequireLowercase = true; o.Password.RequireNonAlphanumeric = false; o.User.RequireUniqueEmail = false; }).AddRoles<IdentityRole<Guid>>().AddEntityFrameworkStores<XFrameworkIdentityDbContext>().AddSignInManager();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+builder.Services.ConfigureApplicationCookie(o =>
+{
+    o.Cookie.HttpOnly = true;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    o.Cookie.SameSite = SameSiteMode.Lax;
+    o.SlidingExpiration = true;
+});
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
@@ -98,7 +105,29 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
     //        <button>Create Item</button>
     //    }
 
-        // Auth API (public)
+        // Auth endpoints (public)
+        // Form POST login (for regular form submission from Login page)
+        app.MapPost("/login", async (SignInManager<XFrameworkIdentityUser> signInManager, HttpContext http, IFormCollection form) =>
+        {
+            var username = form["Username"].ToString();
+            var password = form["Password"].ToString();
+            var rememberMe = form["RememberMe"].ToString() == "on";
+
+            var result = await signInManager.PasswordSignInAsync(username, password, rememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                return Results.Redirect("/");
+            }
+            if (result.IsLockedOut)
+            {
+                http.Response.Redirect("/login?error=locked");
+                return Results.Empty;
+            }
+            http.Response.Redirect("/login?error=invalid");
+            return Results.Empty;
+        }).AllowAnonymous().DisableAntiforgery();
+
+        // API login (for AJAX calls)
         var authGroup = app.MapGroup("/api/auth").AllowAnonymous();
         authGroup.MapPost("/login", async (SignInManager<XFrameworkIdentityUser> signInManager, HttpContext http, string username, string password, bool rememberMe) =>
         {

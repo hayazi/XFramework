@@ -8,7 +8,6 @@
 @inject NotificationService NotificationService
 @inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
-@inject HttpClient HttpClient
 
 <PageTitle>@L.Get("Login")</PageTitle>
 
@@ -20,20 +19,29 @@
                 <p class="text-muted">@L.Get("SignInToAccount")</p>
             </div>
 
-            <form @onsubmit="OnSubmit" style="gap: 1rem;">
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @_errorMessage
+                    <button type="button" class="btn-close" @onclick="() => _errorMessage = null" aria-label="Close"></button>
+                </div>
+            }
+
+            <form method="post" style="gap: 1rem;">
+                <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext!).RequestToken" />
                 <div class="mb-3">
                     <RadzenLabel Text="@L.Get("UsernameOrEmail")" For="Username" />
-                    <input type="text" class="form-control" @bind-value="_username" placeholder="@L.Get("EnterUsernameOrEmail")" required />
+                    <input type="text" class="form-control" name="Username" placeholder="@L.Get("EnterUsernameOrEmail")" required />
                 </div>
 
                 <div class="mb-3">
                     <RadzenLabel Text="@L.Get("Password")" For="Password" />
-                    <input type="password" class="form-control" @bind-value="_password" placeholder="@L.Get("EnterPassword")" required />
+                    <input type="password" class="form-control" name="Password" placeholder="@L.Get("EnterPassword")" required />
                 </div>
 
                 <div class="mb-3 d-flex align-items-center justify-content-between">
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" @bind-value="_rememberMe" id="RememberMe" />
+                        <input type="checkbox" class="form-check-input" name="RememberMe" id="RememberMe" />
                         <label class="form-check-label" for="RememberMe">@L.Get("RememberMe")</label>
                     </div>
                     <a href="/forgot-password" class="text-decoration-none small">@L.Get("ForgotPassword")</a>
@@ -56,9 +64,7 @@
     [Inject] private ILocalizationService L { get; set; } = default!;
 
     private bool _isLoading;
-    private string _username = "";
-    private string _password = "";
-    private bool _rememberMe;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,46 +72,17 @@
         {
             HttpContextAccessor.HttpContext.Response.Redirect("/");
         }
+
+        var error = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).Query;
+        if (error.Contains("error=locked"))
+        {
+            _errorMessage = L.Get("AccountLocked");
+        }
+        else if (error.Contains("error=invalid"))
+        {
+            _errorMessage = L.Get("InvalidCredentials");
+        }
+
         await base.OnInitializedAsync();
-    }
-
-    private async Task OnSubmit()
-    {
-        _isLoading = true;
-        try
-        {
-            var response = await HttpClient.PostAsJsonAsync("/api/auth/login", new
-            {
-                username = _username,
-                password = _password,
-                rememberMe = _rememberMe
-            });
-
-            if (response.IsSuccessStatusCode)
-            {
-                NavigationManager.NavigateTo("/", forceLoad: true);
-            }
-            else
-            {
-                var error = await response.Content.ReadFromJsonAsync<LoginError>();
-                if (error?.Error == "AccountLocked")
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("AccountLocked"));
-                }
-                else
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("InvalidCredentials"));
-                }
-            }
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
-
-    private class LoginError
-    {
-        public string? Error { get; set; }
     }
 }
