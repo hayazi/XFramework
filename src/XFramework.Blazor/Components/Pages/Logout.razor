@@ -2,8 +2,9 @@
 @using Microsoft.AspNetCore.Identity
 @using XFramework.EntityFrameworkCore.Identity
 @inject SignInManager<XFrameworkIdentityUser> SignInManager
-@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
+@inject HttpClient HttpClient
 
 <PageTitle>@L.Get("Logout")</PageTitle>
 
@@ -12,7 +13,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await SignInManager.SignOutAsync();
-        HttpContextAccessor.HttpContext!.Response.Redirect("/login");
+        await HttpClient.PostAsync("/api/auth/logout", null);
+        NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 }

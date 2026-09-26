@@ -8,6 +8,7 @@
 @inject NotificationService NotificationService
 @inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject HttpClient HttpClient
 
 <PageTitle>@L.Get("Login")</PageTitle>
 
@@ -19,21 +20,20 @@
                 <p class="text-muted">@L.Get("SignInToAccount")</p>
             </div>
 
-            <form method="post" @formname="login" style="gap: 1rem;">
-                <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext!).RequestToken" />
+            <form @onsubmit="OnSubmit" style="gap: 1rem;">
                 <div class="mb-3">
                     <RadzenLabel Text="@L.Get("UsernameOrEmail")" For="Username" />
-                    <input type="text" class="form-control" name="Username" placeholder="@L.Get("EnterUsernameOrEmail")" required />
+                    <input type="text" class="form-control" @bind-value="_username" placeholder="@L.Get("EnterUsernameOrEmail")" required />
                 </div>
 
                 <div class="mb-3">
                     <RadzenLabel Text="@L.Get("Password")" For="Password" />
-                    <input type="password" class="form-control" name="Password" placeholder="@L.Get("EnterPassword")" required />
+                    <input type="password" class="form-control" @bind-value="_password" placeholder="@L.Get("EnterPassword")" required />
                 </div>
 
                 <div class="mb-3 d-flex align-items-center justify-content-between">
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" name="RememberMe" id="RememberMe" />
+                        <input type="checkbox" class="form-check-input" @bind-value="_rememberMe" id="RememberMe" />
                         <label class="form-check-label" for="RememberMe">@L.Get("RememberMe")</label>
                     </div>
                     <a href="/forgot-password" class="text-decoration-none small">@L.Get("ForgotPassword")</a>
@@ -56,6 +56,9 @@
     [Inject] private ILocalizationService L { get; set; } = default!;
 
     private bool _isLoading;
+    private string _username = "";
+    private string _password = "";
+    private bool _rememberMe;
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,29 +69,43 @@
         await base.OnInitializedAsync();
     }
 
-    private async Task OnPostAsync(string Username, string Password, bool RememberMe = false)
+    private async Task OnSubmit()
     {
         _isLoading = true;
         try
         {
-            var result = await SignInManager.PasswordSignInAsync(Username, Password, RememberMe, lockoutOnFailure: false);
-            
-            if (result.Succeeded)
+            var response = await HttpClient.PostAsJsonAsync("/api/auth/login", new
             {
-                HttpContextAccessor.HttpContext!.Response.Redirect("/");
-            }
-            else if (result.IsLockedOut)
+                username = _username,
+                password = _password,
+                rememberMe = _rememberMe
+            });
+
+            if (response.IsSuccessStatusCode)
             {
-                NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("AccountLocked"));
+                NavigationManager.NavigateTo("/", forceLoad: true);
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("InvalidCredentials"));
+                var error = await response.Content.ReadFromJsonAsync<LoginError>();
+                if (error?.Error == "AccountLocked")
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("AccountLocked"));
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("InvalidCredentials"));
+                }
             }
         }
         finally
         {
             _isLoading = false;
         }
+    }
+
+    private class LoginError
+    {
+        public string? Error { get; set; }
     }
 }

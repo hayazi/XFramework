@@ -27,6 +27,7 @@ builder.Services.AddIdentityCore<XFrameworkIdentityUser>(o => { o.Password.Requi
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddLocalization(o => o.ResourcesPath = "Localization/Resources");
 builder.Services.AddScoped<ILocalizationService, BlazorLocalizationService>();
@@ -93,9 +94,30 @@ app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 // 6. In Razor components - check permission:
 //    @inject IAuthorizationService AuthorizationService
 //    @if ((await AuthorizationService.AuthorizeAsync(User, "Permission.Inventory.Items.Create")).Succeeded)
-//    {
-//        <button>Create Item</button>
-//    }
+    //    {
+    //        <button>Create Item</button>
+    //    }
+
+        // Auth API (public)
+        var authGroup = app.MapGroup("/api/auth").AllowAnonymous();
+        authGroup.MapPost("/login", async (SignInManager<XFrameworkIdentityUser> signInManager, HttpContext http, string username, string password, bool rememberMe) =>
+        {
+            var result = await signInManager.PasswordSignInAsync(username, password, rememberMe, lockoutOnFailure: false);
+            if (result.Succeeded)
+            {
+                return Results.Ok(new { redirectUrl = "/" });
+            }
+            if (result.IsLockedOut)
+            {
+                return Results.BadRequest(new { error = "AccountLocked" });
+            }
+            return Results.BadRequest(new { error = "InvalidCredentials" });
+        });
+        authGroup.MapPost("/logout", async (SignInManager<XFrameworkIdentityUser> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Ok(new { redirectUrl = "/login" });
+        });
 
         // Outbox Admin API
         var outboxGroup = app.MapGroup("/api/outbox").RequireAuthorization();
