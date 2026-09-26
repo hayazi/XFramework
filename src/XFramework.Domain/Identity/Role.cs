@@ -5,6 +5,7 @@ namespace XFramework.Domain.Identity;
 public sealed class Role : Entity<Guid>
 {
     private readonly List<RolePermission> _permissions = new();
+    private readonly List<UserRole> _users = new();
     private Role() { }
 
     public string Name { get; private set; } = string.Empty;
@@ -12,6 +13,7 @@ public sealed class Role : Entity<Guid>
     public bool IsSystemRole { get; private set; }
     public bool IsActive { get; private set; }
     public IReadOnlyCollection<RolePermission> Permissions => _permissions.AsReadOnly();
+    public IReadOnlyCollection<UserRole> Users => _users.AsReadOnly();
 
     public static Role Create(string name, string? displayName = null, bool isSystemRole=false)
     {

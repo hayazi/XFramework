@@ -385,7 +385,7 @@ namespace XFramework.EntityFrameworkCore.Migrations
 
                     b.HasIndex("ItemId", "WarehouseId", "TransactionDate");
 
-                    b.ToTable("KardexEntries", (string)null);
+                    b.ToTable("CardexEntries", (string)null);
                 });
 
             modelBuilder.Entity("XFramework.Domain.Inventory.Warehouse", b =>

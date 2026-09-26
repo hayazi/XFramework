@@ -10,84 +10,122 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L.Get("Home")
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="counter">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+                    </NavLink>
+                </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="weather">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+                    </NavLink>
+                </div>
 
-        <hr class="text-white-50 mx-2" />
+                <hr class="text-white-50 mx-2" />
 
-        <div class="nav-item px-3">
-            <span class="nav-link text-muted fw-bold small text-uppercase">Inventory</span>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="items">
-                <span class="bi bi-box-fill" aria-hidden="true"></span> Items
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="warehouses">
-                <span class="bi bi-building-fill" aria-hidden="true"></span> Warehouses
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="cardex">
-                <span class="bi bi-journal-text" aria-hidden="true"></span> Cardex Entries
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Inventory")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="items">
+                        <span class="bi bi-box-fill" aria-hidden="true"></span> @L.Get("Items")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="warehouses">
+                        <span class="bi bi-building-fill" aria-hidden="true"></span> @L.Get("Warehouses")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="cardex">
+                        <span class="bi bi-journal-text" aria-hidden="true"></span> @L.Get("Cardex")
+                    </NavLink>
+                </div>
 
-        <hr class="text-white-50 mx-2" />
+                <hr class="text-white-50 mx-2" />
 
-        <div class="nav-item px-3">
-            <span class="nav-link text-muted fw-bold small text-uppercase">Dimensions</span>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="cost-centers">
-                <span class="bi bi-diagram-3-fill" aria-hidden="true"></span> Cost Centers
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="projects">
-                <span class="bi bi-folder-fill" aria-hidden="true"></span> Projects
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="custom-dimensions">
-                <span class="bi bi-tags-fill" aria-hidden="true"></span> Custom Dimensions
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Dimensions")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="cost-centers">
+                        <span class="bi bi-diagram-3-fill" aria-hidden="true"></span> @L.Get("CostCenters")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="projects">
+                        <span class="bi bi-folder-fill" aria-hidden="true"></span> @L.Get("Projects")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="custom-dimensions">
+                        <span class="bi bi-tags-fill" aria-hidden="true"></span> @L.Get("CustomDimensions")
+                    </NavLink>
+                </div>
 
-        <hr class="text-white-50 mx-2" />
+                <hr class="text-white-50 mx-2" />
 
-        <div class="nav-item px-3">
-            <span class="nav-link text-muted fw-bold small text-uppercase">Numbering</span>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="number-sequences">
-                <span class="bi bi-hash" aria-hidden="true"></span> Number Sequences
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Numbering")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="number-sequences">
+                        <span class="bi bi-hash" aria-hidden="true"></span> @L.Get("NumberSequences")
+                    </NavLink>
+                </div>
 
-        <hr class="text-white-50 mx-2" />
+                <hr class="text-white-50 mx-2" />
 
-        <div class="nav-item px-3">
-            <span class="nav-link text-muted fw-bold small text-uppercase">Tax</span>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tax-codes">
-                <span class="bi bi-percent" aria-hidden="true"></span> Tax Codes
-            </NavLink>
-        </div>
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Tax")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="tax-codes">
+                        <span class="bi bi-percent" aria-hidden="true"></span> @L.Get("TaxCodes")
+                    </NavLink>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3 text-center py-2">
+                    <NavLink class="nav-link text-white" href="login">
+                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span> @L.Get("SignIn")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3 text-center py-1">
+                    <NavLink class="nav-link text-white" href="register">
+                        <span class="bi bi-person-plus-fill" aria-hidden="true"></span> @L.Get("Register")
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                <hr class="text-white-50 mx-2" />
+                <div class="nav-item px-3">
+                    <div class="nav-link text-white d-flex align-items-center justify-content-between">
+                        <span>
+                            <span class="bi bi-person-circle me-2" aria-hidden="true"></span> @context.User.Identity?.Name
+                        </span>
+                    </div>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logout">
+                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span> @L.Get("Logout")
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
     </nav>
 </div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+}

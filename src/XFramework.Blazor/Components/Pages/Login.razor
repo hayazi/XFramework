@@ -1,0 +1,94 @@
+@page "/login"
+@using Microsoft.AspNetCore.Identity
+@using XFramework.EntityFrameworkCore.Identity
+@using Radzen
+@using Radzen.Blazor
+@inject SignInManager<XFrameworkIdentityUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+<PageTitle>@L.Get("Login")</PageTitle>
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="card shadow-sm" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h3 class="mb-1">@L.Get("WelcomeBack")</h3>
+                <p class="text-muted">@L.Get("SignInToAccount")</p>
+            </div>
+
+            <form method="post" @formname="login" style="gap: 1rem;">
+                <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext!).RequestToken" />
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("UsernameOrEmail")" For="Username" />
+                    <input type="text" class="form-control" name="Username" placeholder="@L.Get("EnterUsernameOrEmail")" required />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("Password")" For="Password" />
+                    <input type="password" class="form-control" name="Password" placeholder="@L.Get("EnterPassword")" required />
+                </div>
+
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="RememberMe" id="RememberMe" />
+                        <label class="form-check-label" for="RememberMe">@L.Get("RememberMe")</label>
+                    </div>
+                    <a href="/forgot-password" class="text-decoration-none small">@L.Get("ForgotPassword")</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">@L.Get("SignIn")</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="text-muted small">
+                    @L.Get("DontHaveAccount")
+                    <a href="/register" class="text-decoration-none">@L.Get("Register")</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnPostAsync(string Username, string Password, bool RememberMe = false)
+    {
+        _isLoading = true;
+        try
+        {
+            var result = await SignInManager.PasswordSignInAsync(Username, Password, RememberMe, lockoutOnFailure: false);
+            
+            if (result.Succeeded)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else if (result.IsLockedOut)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("AccountLocked"));
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("InvalidCredentials"));
+            }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

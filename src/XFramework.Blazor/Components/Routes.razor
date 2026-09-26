@@ -1,6 +1,32 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+﻿<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                @if (!context.User.Identity?.IsAuthenticated ?? true)
+                {
+                    <NavigateTo Url="login" Replace="true" />
+                }
+                else
+                {
+                    <p class="text-center text-danger p-4">@L.Get("AccessDenied")</p>
+                }
+            </NotAuthorized>
+            <Authorizing>
+                <div class="text-center p-4">
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" ShowValue="false" Style="width: 100%; max-width: 300px; margin: 0 auto;" />
+                    <p class="mt-2 text-muted">@L.Get("Authorizing")</p>
+                </div>
+            </Authorizing>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <NotFound />
+        </LayoutView>
+    </NotFound>
 </Router>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+}

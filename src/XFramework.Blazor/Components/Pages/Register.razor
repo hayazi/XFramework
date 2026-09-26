@@ -1,0 +1,116 @@
+@page "/register"
+@using Microsoft.AspNetCore.Identity
+@using XFramework.EntityFrameworkCore.Identity
+@using Radzen
+@using Radzen.Blazor
+@inject UserManager<XFrameworkIdentityUser> UserManager
+@inject SignInManager<XFrameworkIdentityUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
+<PageTitle>@L.Get("Register")</PageTitle>
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="card shadow-sm" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h3 class="mb-1">@L.Get("CreateAccount")</h3>
+                <p class="text-muted">@L.Get("RegisterDescription")</p>
+            </div>
+
+            <form method="post" @formname="register" style="gap: 1rem;">
+                <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(HttpContextAccessor.HttpContext!).RequestToken" />
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("Username")" For="Username" />
+                    <input type="text" class="form-control" name="Username" placeholder="@L.Get("EnterUsername")" required />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("Email")" For="Email" />
+                    <input type="email" class="form-control" name="Email" placeholder="@L.Get("EnterEmail")" required />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("DisplayName")" For="DisplayName" />
+                    <input type="text" class="form-control" name="DisplayName" placeholder="@L.Get("EnterDisplayName")" />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("Password")" For="Password" />
+                    <input type="password" class="form-control" name="Password" placeholder="@L.Get("EnterPassword")" required />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="@L.Get("ConfirmPassword")" For="ConfirmPassword" />
+                    <input type="password" class="form-control" name="ConfirmPassword" placeholder="@L.Get("ConfirmPasswordPlaceholder")" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@_isLoading">@L.Get("Register")</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="text-muted small">
+                    @L.Get("AlreadyHaveAccount")
+                    <a href="/login" class="text-decoration-none">@L.Get("SignIn")</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private bool _isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnPostAsync(string Username, string Email, string DisplayName, string Password, string ConfirmPassword)
+    {
+        if (Password != ConfirmPassword)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), L.Get("PasswordsDoNotMatch"));
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            var user = new XFrameworkIdentityUser
+            {
+                UserName = Username,
+                Email = Email,
+                ApplicationUserId = Guid.NewGuid()
+            };
+
+            var result = await UserManager.CreateAsync(user, Password);
+
+            if (result.Succeeded)
+            {
+                await SignInManager.SignInAsync(user, isPersistent: false);
+                NotificationService.Notify(NotificationSeverity.Success, L.Get("Success"), L.Get("RegistrationSuccessful"));
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), error.Description);
+                }
+            }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

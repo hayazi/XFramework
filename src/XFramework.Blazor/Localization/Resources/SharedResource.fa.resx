@@ -156,4 +156,115 @@
   <data name="ToDate" xml:space="preserve">
     <value>تا تاریخ</value>
   </data>
+  <data name="WelcomeBack" xml:space="preserve">
+    <value>خوش آمدید</value>
+  </data>
+  <data name="SignInToAccount" xml:space="preserve">
+    <value>برای ورود به حساب کاربری خود</value>
+  </data>
+  <data name="UsernameOrEmail" xml:space="preserve">
+    <value>نام کاربری یا ایمیل</value>
+  </data>
+  <data name="EnterUsernameOrEmail" xml:space="preserve">
+    <value>نام کاربری یا ایمیل خود را وارد کنید</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>رمز عبور</value>
+  </data>
+  <data name="EnterPassword" xml:space="preserve">
+    <value>رمز عبور خود را وارد کنید</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>مرا به یاد بسپار</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>رمز عبور را فراموش کرده‌اید؟</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>ورود</value>
+  </data>
+  <data name="DontHaveAccount" xml:space="preserve">
+    <value>حساب کاربری ندارید؟</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>ثبت نام</value>
+  </data>
+  <data name="CreateAccount" xml:space="preserve">
+    <value>ایجاد حساب کاربری</value>
+  </data>
+  <data name="RegisterDescription" xml:space="preserve">
+    <value>جزئیات خود را برای ایجاد حساب وارد کنید</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>نام کاربری</value>
+  </data>
+  <data name="EnterUsername" xml:space="preserve">
+    <value>نام کاربری را وارد کنید</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>ایمیل</value>
+  </data>
+  <data name="EnterEmail" xml:space="preserve">
+    <value>ایمیل را وارد کنید</value>
+  </data>
+  <data name="DisplayName" xml:space="preserve">
+    <value>نمایش نام</value>
+  </data>
+  <data name="EnterDisplayName" xml:space="preserve">
+    <value>نام نمایش را وارد کنید</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>تایید رمز عبور</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>رمز عبور خود را تایید کنید</value>
+  </data>
+  <data name="AlreadyHaveAccount" xml:space="preserve">
+    <value>قبلاً ثبت نام کرده‌اید؟</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>ورود</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>خروج</value>
+  </data>
+  <data name="LoggedOut" xml:space="preserve">
+    <value>خروج از سیستم</value>
+  </data>
+  <data name="LogoutSuccessful" xml:space="preserve">
+    <value>شما با موفقیت خارج شدید</value>
+  </data>
+  <data name="LoginSuccessful" xml:space="preserve">
+    <value>ورود با موفقیت انجام شد</value>
+  </data>
+  <data name="RegistrationSuccessful" xml:space="preserve">
+    <value>ثبت نام با موفقیت انجام شد</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>نام کاربری یا رمز عبور نادرست است</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>حساب قفل شده است</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>رمزهای عبور یکسان نیستند</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>دسترسی غیرمجاز</value>
+  </data>
+  <data name="Authorizing" xml:space="preserve">
+    <value>در حال احراز هویت...</value>
+  </data>
+  <data name="Inventory" xml:space="preserve">
+    <value>موجودی انبار</value>
+  </data>
+  <data name="Dimensions" xml:space="preserve">
+    <value>ابعاد</value>
+  </data>
+  <data name="Numbering" xml:space="preserve">
+    <value>شماره‌گذاری</value>
+  </data>
+  <data name="Tax" xml:space="preserve">
+    <value>مالیات</value>
+  </data>
 </root>

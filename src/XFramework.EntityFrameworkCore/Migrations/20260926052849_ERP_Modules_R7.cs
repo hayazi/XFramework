@@ -110,7 +110,7 @@ namespace XFramework.EntityFrameworkCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "KardexEntries",
+                name: "CardexEntries",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -131,7 +131,7 @@ namespace XFramework.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_KardexEntries", x => x.Id);
+                    table.PrimaryKey("PK_CardexEntries", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -350,23 +350,23 @@ namespace XFramework.EntityFrameworkCore.Migrations
                 column: "Type");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KardexEntries_DocumentReference",
-                table: "KardexEntries",
+                name: "IX_CardexEntries_DocumentReference",
+                table: "CardexEntries",
                 column: "DocumentReference");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KardexEntries_ItemId_WarehouseId_TransactionDate",
-                table: "KardexEntries",
+                name: "IX_CardexEntries_ItemId_WarehouseId_TransactionDate",
+                table: "CardexEntries",
                 columns: new[] { "ItemId", "WarehouseId", "TransactionDate" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_KardexEntries_ReferenceDocumentId",
-                table: "KardexEntries",
+                name: "IX_CardexEntries_ReferenceDocumentId",
+                table: "CardexEntries",
                 column: "ReferenceDocumentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_KardexEntries_TransactionType",
-                table: "KardexEntries",
+                name: "IX_CardexEntries_TransactionType",
+                table: "CardexEntries",
                 column: "TransactionType");
 
             migrationBuilder.CreateIndex(
@@ -487,7 +487,7 @@ namespace XFramework.EntityFrameworkCore.Migrations
                 name: "Items");
 
             migrationBuilder.DropTable(
-                name: "KardexEntries");
+                name: "CardexEntries");
 
             migrationBuilder.DropTable(
                 name: "NumberSequences");

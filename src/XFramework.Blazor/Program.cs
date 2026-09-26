@@ -26,6 +26,7 @@ builder.Services.AddXFrameworkRabbitMQ(builder.Configuration);
 builder.Services.AddIdentityCore<XFrameworkIdentityUser>(o => { o.Password.RequiredLength = 8; o.Password.RequireDigit = true; o.Password.RequireUppercase = true; o.Password.RequireLowercase = true; o.Password.RequireNonAlphanumeric = false; o.User.RequireUniqueEmail = false; }).AddRoles<IdentityRole<Guid>>().AddEntityFrameworkStores<XFrameworkIdentityDbContext>().AddSignInManager();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddLocalization(o => o.ResourcesPath = "Localization/Resources");
 builder.Services.AddScoped<ILocalizationService, BlazorLocalizationService>();
