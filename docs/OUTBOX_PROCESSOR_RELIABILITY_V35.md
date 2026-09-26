@@ -1,50 +1,32 @@
 # Outbox Processor Reliability — v35
 
-This version continues from the user-verified 13/13 integration-test baseline.
+This version is based on the user's verified XFramework baseline.
 
 ## Verified baseline supplied by the user
 
-`XFramework.IntegrationTests`:
-- Total: 13
-- Failed: 0
-- Succeeded: 13
-- Skipped: 0
+- `XFramework.Tests`: 10 passed, 0 failed.
+- `XFramework.IntegrationTests`: 17 passed, 0 failed.
+- Target framework: .NET 10.
 
-## v35 changes
+## Changes
 
-### 1. Cancellation is no longer treated as a publish failure
+### Cancellation handling
 
-`OutboxProcessor.ProcessBatchAsync` now lets cancellation propagate when the supplied cancellation token is cancelled:
+`OutboxProcessor` now treats an `OperationCanceledException` caused by the processor's cancellation token as worker shutdown/cancellation rather than a publish failure.
 
-```csharp
-catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-{
-    throw;
-}
-```
+The claimed message is intentionally left in `Processing`. Its lease can expire and the existing lease-recovery mechanism can make it available again.
 
-This prevents a graceful application shutdown from incorrectly incrementing retry state or marking an outbox message for retry.
+### Processor reliability tests
 
-### 2. OutboxProcessor reliability tests
+Four tests cover:
 
-Added four tests covering:
+1. Successful publish → `Completed`.
+2. Retryable publish failure → `Pending` with retry schedule and error.
+3. Non-retryable publish failure → `Failed` with error.
+4. Cancellation during publish → cancellation propagates and no retry/failure state transition is attempted.
 
-- successful publish → completed
-- retryable publish failure → retry
-- non-retryable publish failure → failed
-- cancellation during publish → cancellation propagates and no retry/failure state is written
+These tests use an in-memory fake repository/event bus so they verify `OutboxProcessor` state-transition behavior without requiring RabbitMQ or SQL Server.
 
-These tests use in-memory fakes for the repository and event bus. They do not require RabbitMQ or SQL Server.
+## Next reliability boundary
 
-## Next validation
-
-Run both suites:
-
-```powershell
-dotnet test .\tests\XFramework.Tests\
-dotnet test .\tests\XFramework.IntegrationTests\
-```
-
-The existing 13 integration tests should remain green, and the new OutboxProcessor tests should pass.
-
-This document does not claim test execution in this environment.
+After these processor-level tests pass, the next step is to harden the production outbox worker around lease ownership, concurrent processors, and stale-worker protection. In particular, completion/retry/failure updates should be verified to affect only the message currently owned by the processor's `LockId`.

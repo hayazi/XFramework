@@ -12,6 +12,7 @@ V56 — ERP Application layer services (R5 Phase 3 completed).
 V57 — ERP EntityFrameworkCore integration (R6 completed).
 V58 — ERP Blazor UI & API Endpoints (R7 completed).
 V59 — ERP Parties & Accounting Application & Persistence (R8 completed).
+V60 — ERP Parties & Accounting Blazor UI & API (R9 completed).
 
 ## Completed work (high level)
 - Layered framework structure, application services and interceptor pipeline.
@@ -30,6 +31,7 @@ V59 — ERP Parties & Accounting Application & Persistence (R8 completed).
 - V57 (R6): ERP EF Core integration — All new domain entities have IEntityTypeConfiguration with proper indexing, unique constraints, and value object mapping via JSON serialization (Money, Quantity, Address, Percentage); XFrameworkDbContext extended with DbSets for all new entities; ValueConverter classes using JSON serialization for readonly record struct value objects; EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods; all tests pass (32 integration, 178 unit).
 - V58 (R7): ERP Blazor UI & API Endpoints — 8 interactive Blazor pages (Items, Warehouses, Kardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions (GetNextNumber, CalculateTax, Activate/Deactivate/Close, etc.); Navigation updated with grouped links for Inventory, Dimensions, Numbering, Tax modules; Minimal API endpoints in Program.cs under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` with full CRUD + custom actions; All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts; all tests pass (32 integration, 178 unit).
 - V59 (R8): ERP Parties & Accounting Application & Persistence — Parties (IPartyAppService with CRUD + role assignment/removal, queries by code/name/role/active, Activate/Deactivate), Accounting (IAccountAppService with hierarchy, Activate/Deactivate, SetParent/RemoveParent; IJournalEntryAppService with workflow operations Submit/Approve/Reject/Post/Reverse/Cancel; IFiscalPeriodAppService with Close/Reopen/Lock/Unlock/GetCurrentPeriod); EF Core configurations for Party, PartyRoleAssignment, Account, JournalEntry, FiscalPeriod with JSON serialization for ContactInfo, JournalLine list, DateRange; XFrameworkDbContext extended with DbSets for Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods; Migration `R8_Parties_Accounting` applied; all tests pass (32 integration, 178 unit).
+- V60 (R9): ERP Parties & Accounting Blazor UI & API — 5 new interactive Blazor pages (Parties, Accounts, JournalEntries, FiscalPeriods, OutboxMonitor) with RadzenDataGrid, server-side paging/sorting/filtering; NavMenu updated with grouped links for Parties and Accounting modules, plus Administration/OutboxMonitor; Minimal API endpoints in Program.cs under `/api/parties`, `/api/accounting` providing full CRUD for all new modules; All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, Radzen components, Persian (fa-IR) default culture with RTL support; 100+ new localization keys in SharedResource.en.resx and SharedResource.fa.resx; Outbox Monitor with stats cards and actions; all tests pass (32 integration, 178 unit).
 
 ## Recommended next work packages
 Each item requires source inspection, explicit acceptance criteria, tests, and a complete source ZIP.
@@ -171,6 +173,26 @@ Each item requires source inspection, explicit acceptance criteria, tests, and a
 - **DbContext Extensions** (XFrameworkDbContext):
   - Added DbSets: Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods
 - **Migration**: `R8_Parties_Accounting` applied successfully
+- All tests pass (32 integration, 178 unit)
+
+### R9 — ERP Parties & Accounting Blazor UI & API ✅ COMPLETED (V60)
+- **Blazor Pages** (src/XFramework.Blazor/Components/Pages/):
+  - Parties.razor: RadzenDataGrid with server-side paging/sorting/filtering, Code/Name/TaxId/NationalId/Status columns
+  - Accounts.razor: Chart of accounts listing with Type/Nature/Currency/Parent/IsDetail columns, hierarchy support
+  - JournalEntries.razor: Full listing with workflow status (Draft/Submitted/Approved/Posted/Reversed/Cancelled), posting status, party code, balanced indicator, Total Debit/Credit
+  - FiscalPeriods.razor: Period listing with Year/Period/DateRange/Status (Open/Locked/Closed) columns
+  - OutboxMonitor.razor: Stats cards (Total/Pending/Failed/Processing), single DataGrid with all messages, Retry/ForceComplete actions
+- **Navigation** (NavMenu.razor):
+  - New grouped sections: Parties (Parties), Accounting (Accounts, Journal Entries, Fiscal Periods), Administration (Outbox Monitor)
+  - User info display in sidebar when authenticated
+- **Minimal API Endpoints** (Program.cs):
+  - `/api/parties`: Full CRUD for Parties
+  - `/api/accounting`: Full CRUD for Accounts, JournalEntries, FiscalPeriods
+- **Localization**:
+  - 100+ new keys in SharedResource.en.resx and SharedResource.fa.resx
+  - Persian (fa-IR) default culture with RTL support
+  - Keys for: Party types, Contact info, Account types/natures, Document/Posting/FiscalPeriod statuses, Journal entry workflow, Outbox monitor
+- All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, Radzen components
 - All tests pass (32 integration, 178 unit)
 
 ## Definition of done for each milestone

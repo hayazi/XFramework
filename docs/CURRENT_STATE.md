@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V59 (R8 Parties & Accounting Application/Persistence completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence, Application services, and Blazor UI + Minimal API endpoints.
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6). V58 adds Blazor UI and Minimal API endpoints (R7). V59 adds Parties & Accounting Application & Persistence (R8).
+- Version label: V60 (R9 Parties & Accounting Blazor UI/API completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence, Application services, Blazor UI + Minimal API endpoints.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6). V58 adds Blazor UI and Minimal API endpoints (R7). V59 adds Parties & Accounting Application & Persistence (R8). V60 adds Parties & Accounting Blazor UI & API (R9).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -54,9 +54,16 @@
     - All configurations include proper indexes, unique constraints, foreign keys
     - XFrameworkDbContext extended with DbSets for Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods
     - Migration `R8_Parties_Accounting` applied
+- **ERP Parties & Accounting Blazor UI & API (R9)**:
+  - **Blazor Pages**: 5 new interactive pages (Parties, Accounts, JournalEntries, FiscalPeriods, OutboxMonitor) with RadzenDataGrid, server-side paging/sorting/filtering
+  - **Navigation**: NavMenu updated with grouped links for Parties and Accounting modules, plus Administration/OutboxMonitor
+  - **Minimal API Endpoints**: Program.cs extended with route groups under `/api/parties`, `/api/accounting` providing full CRUD for all new modules
+  - All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, Radzen components, Persian (fa-IR) default culture with RTL support
+  - **Localization**: 100+ new keys in SharedResource.en.resx and SharedResource.fa.resx for Parties, Accounting, Outbox modules
+  - **Outbox Monitor**: Stats cards (Total/Pending/Failed/Processing), single DataGrid with all messages, Retry/ForceComplete actions
 
 ## Immediate next task
-None - R8 complete. Ready for next phase planning (R9: Parties & Accounting Blazor UI/API).
+None - R9 complete. Ready for next phase planning (R10: Sales & Purchasing modules, or Identity & Authorization UI).
 
 ## Validation commands
 ```powershell

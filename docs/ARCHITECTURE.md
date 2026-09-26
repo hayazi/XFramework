@@ -470,3 +470,53 @@ public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
 ```
 
 **Migration:** `R8_Parties_Accounting` — Creates tables Parties, PartyRoleAssignments, Accounts, JournalEntries, FiscalPeriods with all indexes, foreign keys, and constraints.
+
+## ERP Parties & Accounting Blazor UI & API (R9)
+
+### Blazor Pages (src/XFramework.Blazor/Components/Pages/)
+All pages use `@rendermode InteractiveServer` with Bootstrap 5 styling, Radzen components (RadzenDataGrid, RadzenButton, RadzenDropDown, RadzenDatePicker, RadzenNumeric, RadzenCheckBox, RadzenTextArea), and Persian (fa-IR) default culture with RTL support:
+
+- **Parties.razor**: RadzenDataGrid with server-side paging/sorting/filtering. Columns: Code, Name, TaxId, NationalId, Status badge (Active/Inactive). Read-only listing (CRUD via API).
+- **Accounts.razor**: Chart of accounts listing with columns: Code, Name, Type badge (Asset/Liability/Equity/Revenue/Expense), Nature badge (Debit/Credit), Parent, Currency, Status, IsDetail checkbox. Read-only listing.
+- **JournalEntries.razor**: Full listing with workflow columns: Reference, Date, Description, DocumentStatus badge (Draft/Submitted/Approved/Rejected/Cancelled/Posted), PostingStatus badge (Unposted/Posted/Reversed), PartyCode, TotalDebit, TotalCredit, Balanced indicator (green/red icon). Read-only listing.
+- **FiscalPeriods.razor**: Period listing with columns: Name, Year, PeriodNumber, StartDate, EndDate, FiscalPeriodStatus badge (Open/Locked/Closed). Read-only listing.
+- **OutboxMonitor.razor**: Stats cards row (Total Messages, Pending, Failed, Processing counts), single DataGrid with all messages (Id, EventType, Module, Status badge, RetryCount, Created/Occurred timestamps), action buttons (Retry for Failed, ForceComplete for non-Completed).
+
+### Navigation (NavMenu.razor)
+Updated with new grouped module sections:
+- **Parties**: Parties (single link)
+- **Accounting**: Accounts, Journal Entries, Fiscal Periods (three links)
+- **Administration**: Outbox Monitor (single link)
+- User info display: Shows authenticated user name with person-circle icon in sidebar
+
+### Minimal API Endpoints (Program.cs)
+Route groups providing full CRUD for new modules:
+
+| Route Group | Endpoints |
+|---|---|
+| `/api/parties` | GET `/` (paged list), GET `/{id}` (by id), POST `/` (create), PUT `/{id}` (update), DELETE `/{id}` (delete) |
+| `/api/accounting` | Accounts: GET `/accounts` (paged), GET `/accounts/{id}`, POST `/accounts`, PUT `/accounts/{id}`, DELETE `/accounts/{id}` |
+|  | JournalEntries: GET `/journal-entries` (paged), GET `/journal-entries/{id}`, POST `/journal-entries`, PUT `/journal-entries/{id}`, DELETE `/journal-entries/{id}` |
+|  | FiscalPeriods: GET `/fiscal-periods` (paged), GET `/fiscal-periods/{id}`, POST `/fiscal-periods`, PUT `/fiscal-periods/{id}`, DELETE `/fiscal-periods/{id}` |
+
+All endpoints use the Application layer services (`IPartyAppService`, `IAccountAppService`, `IJournalEntryAppService`, `IFiscalPeriodAppService`) with proper DTO mapping and authorization.
+
+### Localization (src/XFramework.Blazor/Localization/Resources/)
+Extended `SharedResource.en.resx` and `SharedResource.fa.resx` with 100+ new keys:
+- **Party types**: Customer, Supplier, Employee, Prospect, Carrier, Bank
+- **Contact info**: Email, Phone, Mobile, Fax, Website, TaxId, CommercialRegister, Address, Street, City, State, PostalCode, Country
+- **Account types/natures**: Asset, Liability, Equity, Revenue, Expense; Debit, Credit
+- **Document/Posting/FiscalPeriod statuses**: Draft, Submitted, Approved, Rejected, Cancelled, Posted, Unposted, Reversed, Open, Locked, Closed
+- **Journal entry workflow**: Reference, Date, Party, TotalDebit, TotalCredit, Balanced, Lines, AddLine, Side, Amount, Dimension, Difference, View, Submit, Approve, Reject, Post, Reverse, Lock, Unlock, Reopen
+- **Fiscal period**: Year, Period, StartDate, EndDate, ClosingDate, ConfirmReopen, ReopenConfirmation, ReopenedSuccessfully
+- **Outbox monitor**: TotalMessages, PendingMessages, FailedMessages, ProcessingMessages, Refresh, Retry, ForceComplete, RetryQueued, ForceCompleted, ForceCompleteConfirmation, ConfirmForceComplete
+- **Common actions**: CreateParty/EditParty, CreateAccount/EditAccount, CreateFiscalPeriod/EditFiscalPeriod, CreateJournalEntry/EditJournalEntry/ViewJournalEntry, SubmitJournalEntry/ApproveJournalEntry/RejectJournalEntry/PostJournalEntry/ReverseJournalEntry
+- **Confirmations**: DeleteConfirmation, ConfirmDelete, ApproveConfirmation, RejectConfirmation, PostConfirmation, ReverseConfirmation, ClosePeriodConfirmation
+
+### Design Principles
+- UI layer remains thin: pages delegate to Application services via DI
+- Server-side paging/sorting/filtering via `LoadData` pattern for all DataGrids
+- No domain logic in Blazor components
+- Radzen components used consistently for professional UI
+- Persian localization with RTL support as default
+- Read-only listings initially; CRUD dialogs can be added via Radzen DialogService pattern

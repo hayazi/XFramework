@@ -39,3 +39,18 @@ This is a compact record of decisions made during project planning and implement
 
 ## ADR-012 — Verification honesty
 **Decision:** Clearly distinguish tests actually executed from tests skipped or gated by environment variables. Never invent build/test results.
+
+## ADR-013 — Blazor UI uses InteractiveServer with Radzen
+**Decision:** All Blazor pages use `@rendermode InteractiveServer` with Radzen components (RadzenDataGrid, RadzenButton, RadzenDropDown, RadzenDatePicker, RadzenNumeric, RadzenCheckBox, RadzenTextArea) for professional, consistent UI. Read-only listings use server-side paging/sorting/filtering via `LoadData` pattern. CRUD operations are not implemented in the current phase; they can be added via Radzen DialogService pattern later.
+
+## ADR-014 — Navigation structure by module
+**Decision:** NavMenu groups links by business module (Inventory, Dimensions, Numbering, Tax, Parties, Accounting, Administration) with section headers. Authenticated user info displayed in sidebar. Login/Register/Logout links shown when not authenticated.
+
+## ADR-015 — Persian (fa-IR) default culture with RTL
+**Decision:** Default culture is Persian (fa-IR) with RTL support. Localization via `SharedResource.en.resx` and `SharedResource.fa.resx`. All new modules add 100+ localization keys covering all UI labels, enums, and messages.
+
+## ADR-016 — Minimal API endpoints per module
+**Decision:** Each module exposes Minimal API endpoints in Program.cs under `/api/{module}` route groups. Parties: `/api/parties`, Accounting: `/api/accounting` (accounts, journal-entries, fiscal-periods). All endpoints use Application layer services with proper DTO mapping and authorization.
+
+## ADR-017 — Outbox Monitor as admin UI
+**Decision:** OutboxMonitor page provides operational visibility with stats cards (Total/Pending/Failed/Processing), single DataGrid with all messages, and Retry/ForceComplete actions for failed/stuck messages. Uses `IOutboxAdminService` via DI.
