@@ -1,0 +1,102 @@
+@page "/fiscal-periods"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Accounting
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Accounting
+@using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
+@inject IFiscalPeriodAppService FiscalPeriodAppService
+@inject NotificationService NotificationService
+
+<PageTitle>@L.Get("FiscalPeriods")</PageTitle>
+
+<div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@L.Get("FiscalPeriods")</h3>
+    </div>
+
+    <RadzenDataGrid @ref="grid"
+                    Data="@periods"
+                    TItem="FiscalPeriodDto"
+                    FilterMode="FilterMode.Simple"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    ShowPagerSummary="true"
+                    LoadData="@LoadData"
+                    Count="@totalCount"
+                    RowRender="@RowRender"
+                    class="shadow-sm">
+        <Columns>
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="Name" Title="@L.Get("Name")" Frozen="true" Width="200px" />
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="Year" Title="@L.Get("Year")" Width="80px" />
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="PeriodNumber" Title="@L.Get("Period")" Width="80px" />
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="DateRange.Start" Title="@L.Get("StartDate")" Width="120px" Format="yyyy/MM/dd" />
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="DateRange.End" Title="@L.Get("EndDate")" Width="120px" Format="yyyy/MM/dd" />
+            <RadzenDataGridColumn TItem="FiscalPeriodDto" Property="Status" Title="@L.Get("Status")" Width="120px">
+                <Template Context="period">
+                    <span class="badge @GetStatusBadgeClass(period.Status)">@L.Get($"FiscalPeriodStatus.{period.Status}")</span>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private RadzenDataGrid<FiscalPeriodDto> grid = default!;
+    private IEnumerable<FiscalPeriodDto> periods = Array.Empty<FiscalPeriodDto>();
+    private int totalCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var skip = args.Skip ?? 0;
+            var top = args.Top ?? 20;
+
+            var request = new PagedAndSortedRequestDto
+            {
+                SkipCount = skip,
+                MaxResultCount = top,
+                Sorting = args.OrderBy
+            };
+
+            var result = await FiscalPeriodAppService.GetListAsync(request);
+            periods = result.Items;
+            totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private void RowRender(RowRenderEventArgs<FiscalPeriodDto> args)
+    {
+        if (args.Data.Status == FiscalPeriodStatus.Closed)
+        {
+            args.Attributes["class"] = "table-success fw-bold";
+        }
+        else if (args.Data.Status == FiscalPeriodStatus.Locked)
+        {
+            args.Attributes["class"] = "table-warning";
+        }
+    }
+
+    private string GetStatusBadgeClass(FiscalPeriodStatus status) => status switch
+    {
+        FiscalPeriodStatus.Open => "bg-success",
+        FiscalPeriodStatus.Locked => "bg-warning text-dark",
+        FiscalPeriodStatus.Closed => "bg-primary",
+        _ => "bg-secondary"
+    };
+}

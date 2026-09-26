@@ -61,7 +61,7 @@
     {
         if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)
         {
-            NavigationManager.NavigateTo("/");
+            HttpContextAccessor.HttpContext.Response.Redirect("/");
         }
         await base.OnInitializedAsync();
     }
@@ -75,7 +75,7 @@
             
             if (result.Succeeded)
             {
-                NavigationManager.NavigateTo("/");
+                HttpContextAccessor.HttpContext!.Response.Redirect("/");
             }
             else if (result.IsLockedOut)
             {

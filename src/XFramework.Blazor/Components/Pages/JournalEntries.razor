@@ -1,0 +1,132 @@
+@page "/journal-entries"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Accounting
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Accounting
+@using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
+@inject IJournalEntryAppService JournalEntryAppService
+@inject NotificationService NotificationService
+
+<PageTitle>@L.Get("JournalEntries")</PageTitle>
+
+<div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@L.Get("JournalEntries")</h3>
+    </div>
+
+    <RadzenDataGrid @ref="grid"
+                    Data="@journalEntries"
+                    TItem="JournalEntryDto"
+                    FilterMode="FilterMode.Simple"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    ShowPagerSummary="true"
+                    LoadData="@LoadData"
+                    Count="@totalCount"
+                    RowRender="@RowRender"
+                    class="shadow-sm">
+        <Columns>
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="Reference" Title="@L.Get("Reference")" Frozen="true" Width="150px" />
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="Date" Title="@L.Get("Date")" Width="120px" Format="yyyy/MM/dd" />
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="Description" Title="@L.Get("Description")" Width="250px" />
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="Status" Title="@L.Get("Status")" Width="120px">
+                <Template Context="entry">
+                    <span class="badge @GetStatusBadgeClass(entry.Status)">@L.Get($"DocumentStatus.{entry.Status}")</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="PostingStatus" Title="@L.Get("PostingStatus")" Width="120px">
+                <Template Context="entry">
+                    <span class="badge @GetPostingStatusBadgeClass(entry.PostingStatus)">@L.Get($"PostingStatus.{entry.PostingStatus}")</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="PartyCode" Title="@L.Get("Party")" Width="120px" />
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="TotalDebit" Title="@L.Get("TotalDebit")" Width="120px" TextAlign="TextAlign.Right">
+                <Template Context="entry">
+                    <strong>@entry.TotalDebit?.Amount @entry.TotalDebit?.Currency</strong>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="TotalCredit" Title="@L.Get("TotalCredit")" Width="120px" TextAlign="TextAlign.Right">
+                <Template Context="entry">
+                    <strong>@entry.TotalCredit?.Amount @entry.TotalCredit?.Currency</strong>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="JournalEntryDto" Property="IsBalanced" Title="@L.Get("Balanced")" Width="90px" TextAlign="TextAlign.Center">
+                <Template Context="entry">
+                    <RadzenIcon Icon="@(entry.IsBalanced ? "check_circle" : "cancel")" Style="@(entry.IsBalanced ? "color: green" : "color: red")" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private RadzenDataGrid<JournalEntryDto> grid = default!;
+    private IEnumerable<JournalEntryDto> journalEntries = Array.Empty<JournalEntryDto>();
+    private int totalCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var skip = args.Skip ?? 0;
+            var top = args.Top ?? 20;
+
+            var request = new PagedAndSortedRequestDto
+            {
+                SkipCount = skip,
+                MaxResultCount = top,
+                Sorting = args.OrderBy
+            };
+
+            var result = await JournalEntryAppService.GetListAsync(request);
+            journalEntries = result.Items;
+            totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private void RowRender(RowRenderEventArgs<JournalEntryDto> args)
+    {
+        if (args.Data.Status == DocumentStatus.Cancelled)
+        {
+            args.Attributes["class"] = "table-secondary opacity-50";
+        }
+        else if (args.Data.PostingStatus == PostingStatus.Posted)
+        {
+            args.Attributes["class"] = "table-success fw-bold";
+        }
+    }
+
+    private string GetStatusBadgeClass(DocumentStatus status) => status switch
+    {
+        DocumentStatus.Draft => "bg-secondary",
+        DocumentStatus.Submitted => "bg-info text-dark",
+        DocumentStatus.Approved => "bg-primary",
+        DocumentStatus.Rejected => "bg-danger",
+        DocumentStatus.Cancelled => "bg-dark",
+        DocumentStatus.Posted => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private string GetPostingStatusBadgeClass(PostingStatus status) => status switch
+    {
+        PostingStatus.Unposted => "bg-secondary",
+        PostingStatus.Posted => "bg-success",
+        PostingStatus.Reversed => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}

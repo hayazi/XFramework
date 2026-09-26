@@ -1,0 +1,199 @@
+@page "/outbox"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Outbox
+@using XFramework.Application.Contracts.Dtos
+@using Radzen
+@using Radzen.Blazor
+@inject IOutboxAdminService OutboxAdminService
+@inject NotificationService NotificationService
+
+<PageTitle>@L.Get("OutboxMonitor")</PageTitle>
+
+<div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@L.Get("OutboxMonitor")</h3>
+        <RadzenButton Text="@L.Get("Refresh")" Icon="refresh" Click="@(e => LoadAllData())" />
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">@L.Get("TotalMessages")</h5>
+                    <p class="card-text display-4">@stats.TotalMessages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">@L.Get("PendingMessages")</h5>
+                    <p class="card-text display-4">@stats.PendingMessages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">@L.Get("FailedMessages")</h5>
+                    <p class="card-text display-4">@stats.FailedMessages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">@L.Get("ProcessingMessages")</h5>
+                    <p class="card-text display-4">@stats.ProcessingMessages</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single DataGrid with all messages -->
+    <RadzenDataGrid @ref="grid"
+                    Data="@messages"
+                    TItem="OutboxMessageSummary"
+                    FilterMode="FilterMode.Simple"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    ShowPagerSummary="true"
+                    LoadData="@LoadData"
+                    Count="@totalCount"
+                    class="shadow-sm">
+        <Columns>
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="Id" Title="@L.Get("Id")" Width="200px" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="EventType" Title="@L.Get("EventType")" Width="200px" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="ModuleName" Title="@L.Get("Module")" Width="120px" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="Status" Title="@L.Get("Status")" Width="120px">
+                <Template Context="msg">
+                    <span class="badge @GetStatusBadgeClass(msg.Status)">@msg.Status.ToString()</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="RetryCount" Title="@L.Get("RetryCount")" Width="100px" TextAlign="TextAlign.Center" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="CreatedOnUtc" Title="@L.Get("Created")" Width="150px" Format="yyyy/MM/dd HH:mm:ss" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Property="OccurredOnUtc" Title="@L.Get("Occurred")" Width="150px" Format="yyyy/MM/dd HH:mm:ss" />
+            <RadzenDataGridColumn TItem="OutboxMessageSummary" Title="@L.Get("Actions")" Width="150px" TextAlign="TextAlign.Center">
+                <Template Context="msg">
+                    <div class="btn-group btn-group-sm">
+                        @if (msg.Status == OutboxMessageStatus.Failed)
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="refresh" Size="ButtonSize.Small" Click="@(e => RetryMessage(msg))" Tooltip="@L.Get("Retry")" />
+                        }
+                        @if (msg.Status != OutboxMessageStatus.Completed)
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="check_circle" Size="ButtonSize.Small" Click="@(e => ForceComplete(msg))" Tooltip="@L.Get("ForceComplete")" />
+                        }
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private RadzenDataGrid<OutboxMessageSummary> grid = default!;
+    private IEnumerable<OutboxMessageSummary> messages = Array.Empty<OutboxMessageSummary>();
+    private int totalCount = 0;
+    private OutboxStatsDto stats = new(0, 0, 0, 0);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllData();
+    }
+
+    private async Task LoadAllData()
+    {
+        await LoadStats();
+        await LoadData();
+    }
+
+    private async Task LoadStats()
+    {
+        try
+        {
+            var result = await OutboxAdminService.GetStatsAsync();
+            stats = new OutboxStatsDto(
+                result.PendingCount + result.ProcessingCount + result.CompletedCount + result.FailedCount,
+                result.PendingCount,
+                result.FailedCount,
+                result.ProcessingCount);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private async Task LoadData(LoadDataArgs? args = null)
+    {
+        try
+        {
+            var skip = args?.Skip ?? 0;
+            var top = args?.Top ?? 20;
+            var page = (top > 0) ? (skip / top + 1) : 1;
+
+            // Get all messages regardless of status
+            var pending = await OutboxAdminService.GetPendingAsync(page, top * 4);
+            var processing = await OutboxAdminService.GetProcessingAsync(page, top);
+            var failed = await OutboxAdminService.GetFailedAsync(page, top);
+
+            var allMessages = pending
+                .Concat(processing)
+                .Concat(failed)
+                .OrderByDescending(m => m.CreatedOnUtc)
+                .ToList();
+
+            messages = allMessages;
+            totalCount = allMessages.Count;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private string GetStatusBadgeClass(OutboxMessageStatus status) => status switch
+    {
+        OutboxMessageStatus.Pending => "bg-warning text-dark",
+        OutboxMessageStatus.Processing => "bg-info text-dark",
+        OutboxMessageStatus.Completed => "bg-success",
+        OutboxMessageStatus.Failed => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private async Task RetryMessage(OutboxMessageSummary message)
+    {
+        try
+        {
+            await OutboxAdminService.RetryAsync(message.Id);
+            NotificationService.Notify(NotificationSeverity.Success, L.Get("Success"), L.Get("RetryQueued"));
+            await LoadAllData();
+            if (grid != null) await grid.Reload();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private async Task ForceComplete(OutboxMessageSummary message)
+    {
+        try
+        {
+            await OutboxAdminService.ForceCompleteAsync(message.Id);
+            NotificationService.Notify(NotificationSeverity.Success, L.Get("Success"), L.Get("ForceCompleted"));
+            await LoadAllData();
+            if (grid != null) await grid.Reload();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+}

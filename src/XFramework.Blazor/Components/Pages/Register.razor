@@ -69,7 +69,7 @@
     {
         if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true)
         {
-            NavigationManager.NavigateTo("/");
+            HttpContextAccessor.HttpContext.Response.Redirect("/");
         }
         await base.OnInitializedAsync();
     }
@@ -98,7 +98,7 @@
             {
                 await SignInManager.SignInAsync(user, isPersistent: false);
                 NotificationService.Notify(NotificationSeverity.Success, L.Get("Success"), L.Get("RegistrationSuccessful"));
-                NavigationManager.NavigateTo("/");
+                HttpContextAccessor.HttpContext!.Response.Redirect("/");
             }
             else
             {

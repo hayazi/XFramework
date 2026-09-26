@@ -1,0 +1,114 @@
+@page "/accounts"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Accounting
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Accounting
+@using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
+@inject IAccountAppService AccountAppService
+@inject NotificationService NotificationService
+
+<PageTitle>@L.Get("Accounts")</PageTitle>
+
+<div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@L.Get("Accounts")</h3>
+    </div>
+
+    <RadzenDataGrid @ref="grid"
+                    Data="@accounts"
+                    TItem="AccountDto"
+                    FilterMode="FilterMode.Simple"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    ShowPagerSummary="true"
+                    LoadData="@LoadData"
+                    Count="@totalCount"
+                    RowRender="@RowRender"
+                    class="shadow-sm">
+        <Columns>
+            <RadzenDataGridColumn TItem="AccountDto" Property="Code" Title="@L.Get("Code")" Frozen="true" Width="120px" />
+            <RadzenDataGridColumn TItem="AccountDto" Property="Name" Title="@L.Get("Name")" Width="250px" />
+            <RadzenDataGridColumn TItem="AccountDto" Property="Type" Title="@L.Get("AccountType")" Width="130px">
+                <Template Context="account">
+                    <span class="badge @GetAccountTypeBadgeClass(account.Type)">@account.Type.ToString()</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="AccountDto" Property="Nature" Title="@L.Get("Nature")" Width="100px">
+                <Template Context="account">
+                    <span class="badge @(account.Nature == AccountNature.Debit ? "bg-primary" : "bg-success")">@account.Nature.ToString()</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="AccountDto" Property="ParentAccountCode" Title="@L.Get("Parent")" Width="120px" />
+            <RadzenDataGridColumn TItem="AccountDto" Property="Currency" Title="@L.Get("Currency")" Width="100px" />
+            <RadzenDataGridColumn TItem="AccountDto" Property="IsActive" Title="@L.Get("Status")" Width="100px">
+                <Template Context="account">
+                    <span class="badge @(account.IsActive ? "bg-success" : "bg-secondary")">@(account.IsActive ? L.Get("Active") : L.Get("Inactive"))</span>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="AccountDto" Property="IsDetail" Title="@L.Get("IsDetail")" Width="100px">
+                <Template Context="account">
+                    <RadzenCheckBox Disabled="true" @bind-Value="account.IsDetail" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private RadzenDataGrid<AccountDto> grid = default!;
+    private IEnumerable<AccountDto> accounts = Array.Empty<AccountDto>();
+    private int totalCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var skip = args.Skip ?? 0;
+            var top = args.Top ?? 20;
+
+            var request = new PagedAndSortedRequestDto
+            {
+                SkipCount = skip,
+                MaxResultCount = top,
+                Sorting = args.OrderBy
+            };
+
+            var result = await AccountAppService.GetListAsync(request);
+            accounts = result.Items;
+            totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private void RowRender(RowRenderEventArgs<AccountDto> args)
+    {
+        if (!args.Data.IsActive)
+        {
+            args.Attributes["class"] = "table-secondary opacity-75";
+        }
+    }
+
+    private string GetAccountTypeBadgeClass(AccountType type) => type switch
+    {
+        AccountType.Asset => "bg-primary",
+        AccountType.Liability => "bg-warning text-dark",
+        AccountType.Equity => "bg-info text-dark",
+        AccountType.Revenue => "bg-success",
+        AccountType.Expense => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

@@ -1,0 +1,89 @@
+@page "/parties"
+@rendermode InteractiveServer
+
+@using XFramework.Application.Contracts.Parties
+@using XFramework.Application.Contracts.Dtos
+@using XFramework.Domain.Parties
+@using XFramework.Domain.SharedKernel
+@using Radzen
+@using Radzen.Blazor
+@inject IPartyAppService PartyAppService
+@inject NotificationService NotificationService
+
+<PageTitle>@L.Get("Parties")</PageTitle>
+
+<div class="container-fluid p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>@L.Get("Parties")</h3>
+    </div>
+
+    <RadzenDataGrid @ref="grid"
+                    Data="@parties"
+                    TItem="PartyDto"
+                    FilterMode="FilterMode.Simple"
+                    AllowPaging="true"
+                    PageSize="20"
+                    AllowSorting="true"
+                    ShowPagerSummary="true"
+                    LoadData="@LoadData"
+                    Count="@totalCount"
+                    RowRender="@RowRender"
+                    class="shadow-sm">
+        <Columns>
+            <RadzenDataGridColumn TItem="PartyDto" Property="Code" Title="@L.Get("Code")" Frozen="true" Width="120px" />
+            <RadzenDataGridColumn TItem="PartyDto" Property="Name" Title="@L.Get("Name")" Width="200px" />
+            <RadzenDataGridColumn TItem="PartyDto" Property="TaxId" Title="@L.Get("TaxId")" Width="150px" />
+            <RadzenDataGridColumn TItem="PartyDto" Property="NationalId" Title="@L.Get("NationalId")" Width="150px" />
+            <RadzenDataGridColumn TItem="PartyDto" Property="IsActive" Title="@L.Get("Status")" Width="100px">
+                <Template Context="party">
+                    <span class="badge @(party.IsActive ? "bg-success" : "bg-secondary")">@(party.IsActive ? L.Get("Active") : L.Get("Inactive"))</span>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</div>
+
+@code {
+    [Inject] private ILocalizationService L { get; set; } = default!;
+
+    private RadzenDataGrid<PartyDto> grid = default!;
+    private IEnumerable<PartyDto> parties = Array.Empty<PartyDto>();
+    private int totalCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task LoadData(LoadDataArgs args)
+    {
+        try
+        {
+            var skip = args.Skip ?? 0;
+            var top = args.Top ?? 20;
+
+            var request = new PagedAndSortedRequestDto
+            {
+                SkipCount = skip,
+                MaxResultCount = top,
+                Sorting = args.OrderBy
+            };
+
+            var result = await PartyAppService.GetListAsync(request);
+            parties = result.Items;
+            totalCount = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, L.Get("Error"), ex.Message);
+        }
+    }
+
+    private void RowRender(RowRenderEventArgs<PartyDto> args)
+    {
+        if (!args.Data.IsActive)
+        {
+            args.Attributes["class"] = "table-secondary opacity-75";
+        }
+    }
+}

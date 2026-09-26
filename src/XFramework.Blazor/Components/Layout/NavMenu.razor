@@ -30,6 +30,7 @@
 
                 <hr class="text-white-50 mx-2" />
 
+                <!-- INVENTORY MODULE -->
                 <div class="nav-item px-3">
                     <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Inventory")</span>
                 </div>
@@ -51,6 +52,7 @@
 
                 <hr class="text-white-50 mx-2" />
 
+                <!-- DIMENSIONS MODULE -->
                 <div class="nav-item px-3">
                     <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Dimensions")</span>
                 </div>
@@ -72,6 +74,7 @@
 
                 <hr class="text-white-50 mx-2" />
 
+                <!-- NUMBERING MODULE -->
                 <div class="nav-item px-3">
                     <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Numbering")</span>
                 </div>
@@ -83,12 +86,67 @@
 
                 <hr class="text-white-50 mx-2" />
 
+                <!-- TAX MODULE -->
                 <div class="nav-item px-3">
                     <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Tax")</span>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="tax-codes">
                         <span class="bi bi-percent" aria-hidden="true"></span> @L.Get("TaxCodes")
+                    </NavLink>
+                </div>
+
+                <hr class="text-white-50 mx-2" />
+
+                <!-- PARTIES MODULE (R8) -->
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Parties")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="parties">
+                        <span class="bi bi-people-fill" aria-hidden="true"></span> @L.Get("Parties")
+                    </NavLink>
+                </div>
+
+                <hr class="text-white-50 mx-2" />
+
+                <!-- ACCOUNTING MODULE (R8) -->
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Accounting")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="accounts">
+                        <span class="bi bi-journal-bookmark-fill" aria-hidden="true"></span> @L.Get("Accounts")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="journal-entries">
+                        <span class="bi bi-journal-richtext" aria-hidden="true"></span> @L.Get("JournalEntries")
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="fiscal-periods">
+                        <span class="bi bi-calendar-range-fill" aria-hidden="true"></span> @L.Get("FiscalPeriods")
+                    </NavLink>
+                </div>
+
+                <hr class="text-white-50 mx-2" />
+
+                <!-- OUTBOX ADMIN -->
+                <div class="nav-item px-3">
+                    <span class="nav-link text-muted fw-bold small text-uppercase">@L.Get("Administration")</span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="outbox">
+                        <span class="bi bi-envelope-fill" aria-hidden="true"></span> @L.Get("OutboxMonitor")
+                    </NavLink>
+                </div>
+
+                <hr class="text-white-50 mx-2" />
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logout">
+                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span> @L.Get("Logout")
                     </NavLink>
                 </div>
             </Authorized>
@@ -115,11 +173,6 @@
                             <span class="bi bi-person-circle me-2" aria-hidden="true"></span> @context.User.Identity?.Name
                         </span>
                     </div>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="logout">
-                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span> @L.Get("Logout")
-                    </NavLink>
                 </div>
             </Authorized>
         </AuthorizeView>

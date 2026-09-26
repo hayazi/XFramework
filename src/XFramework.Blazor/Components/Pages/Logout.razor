@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Identity
 @using XFramework.EntityFrameworkCore.Identity
 @inject SignInManager<XFrameworkIdentityUser> SignInManager
-@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
 @inject NotificationService NotificationService
 
 <PageTitle>@L.Get("Logout")</PageTitle>
@@ -13,6 +13,6 @@
     protected override async Task OnInitializedAsync()
     {
         await SignInManager.SignOutAsync();
-        NavigationManager.NavigateTo("/login");
+        HttpContextAccessor.HttpContext!.Response.Redirect("/login");
     }
 }
