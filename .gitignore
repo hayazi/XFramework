@@ -1,6 +1,37 @@
+# IDE
 /.vs
 *.dll
 *.exe
 *.pdb
 *.suo
 
+# Build outputs
+**/bin/
+**/obj/
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# User secrets
+**/secrets.json
+
+# Test results
+TestResults/
+*.trx
+
+# EF Core migrations (optional - keep if you want to track migrations)
+# **/Migrations/*.cs
+
+# Logs
+*.log
+
+# Local development
+.idea/
+.vscode/
+*.user
+*.userosscache
+
+# OS
+.DS_Store
+Thumbs.db
