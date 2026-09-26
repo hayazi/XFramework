@@ -27,10 +27,9 @@ else
                 <th>Code</th>
                 <th>Name</th>
                 <th>Type</th>
-                <th>Calculation</th>
-                <th>Rate/Amount</th>
-                <th>Default</th>
-                <th>Recoverable</th>
+                <th>Method</th>
+                <th>Rate / Amount</th>
+                <th>Application</th>
                 <th>Status</th>
                 <th>Actions</th>
             </tr>
@@ -44,8 +43,7 @@ else
                     <td>@tc.TaxType</td>
                     <td>@tc.CalculationMethod</td>
                     <td>@GetRateDisplay(tc)</td>
-                    <td>@(tc.IsDefault ? "Yes" : "No")</td>
-                    <td>@(tc.IsRecoverable ? "Yes" : "No")</td>
+                    <td>@tc.Application</td>
                     <td>
                         <span class="badge @GetStatusBadge(tc.Status)">@tc.Status</span>
                     </td>
@@ -83,71 +81,81 @@ else
                         <label class="form-label">Description</label>
                         <textarea class="form-control" @bind="_taxCodeForm.Description" @bind:event="oninput"></textarea>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Tax Type</label>
-                            <select class="form-select" @bind="_taxCodeForm.TaxType" @bind:event="onchange">
-                                @foreach (var t in Enum.GetValues<TaxType>())
-                                {
-                                    <option value="@t">@t</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Calculation Method</label>
-                            <select class="form-select" @bind="_taxCodeForm.CalculationMethod" @bind:event="onchange">
-                                @foreach (var c in Enum.GetValues<TaxCalculationMethod>())
-                                {
-                                    <option value="@c">@c</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Application</label>
-                            <select class="form-select" @bind="_taxCodeForm.Application" @bind:event="onchange">
-                                @foreach (var a in Enum.GetValues<TaxApplication>())
-                                {
-                                    <option value="@a">@a</option>
-                                }
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax Type</label>
+                        <select class="form-select" @bind="_taxCodeForm.TaxType" @bind:event="onchange">
+                            @foreach (var t in Enum.GetValues<TaxType>())
+                            {
+                                <option value="@t">@t</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Calculation Method</label>
+                        <select class="form-select" @bind="_taxCodeForm.CalculationMethod" @bind:event="onchange">
+                            @foreach (var c in Enum.GetValues<TaxCalculationMethod>())
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Application</label>
+                        <select class="form-select" @bind="_taxCodeForm.Application" @bind:event="onchange">
+                            @foreach (var a in Enum.GetValues<TaxApplication>())
+                            {
+                                <option value="@a">@a</option>
+                            }
+                        </select>
                     </div>
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Rate (%)</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.Rate" @bind:event="oninput" />
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Rate (Percentage)</label>
+                            <input type="number" step="0.0001" class="form-control" @bind="_taxCodeForm.Rate" @bind:event="oninput" placeholder="e.g., 9 for 9%" />
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Fixed Amount</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.FixedAmount" @bind:event="oninput" />
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Per Unit Amount</label>
-                            <input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.PerUnitAmount" @bind:event="oninput" />
+                            <input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.FixedAmount" @bind:event="oninput" placeholder="For fixed amount method" />
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fixed Amount Currency</label>
+                        <select class="form-select" @bind="_taxCodeForm.FixedAmountCurrency" @bind:event="onchange">
+                            <option value="">Select...</option>
+                            @foreach (var c in Enum.GetValues<Currency>())
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Per Unit (UoM)</label>
+                        <select class="form-select" @bind="_taxCodeForm.PerUnit" @bind:event="onchange">
+                            <option value="">Select...</option>
+                            @foreach (var u in Enum.GetValues<UnitOfMeasure>())
+                            {
+                                <option value="@u">@u</option>
+                            }
+                        </select>
+                    </div>
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Currency</label>
-                            <select class="form-select" @bind="_taxCodeForm.Currency" @bind:event="onchange">
-                                @foreach (var c in Enum.GetValues<Currency>())
-                                {
-                                    <option value="@c">@c</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Effective From</label>
                             <input type="date" class="form-control" @bind="_taxCodeForm.EffectiveFrom" @bind:event="onchange" />
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Effective To</label>
                             <input type="date" class="form-control" @bind="_taxCodeForm.EffectiveTo" @bind:event="onchange" />
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Account Id</label>
-                        <input type="text" class="form-control" @bind="_taxCodeForm.AccountIdString" @bind:event="oninput" placeholder="GUID (optional)" />
+                        <label class="form-label">Status</label>
+                        <select class="form-select" @bind="_taxCodeForm.Status" @bind:event="onchange">
+                            @foreach (var s in Enum.GetValues<TaxStatus>())
+                            {
+                                <option value="@s">@s</option>
+                            }
+                        </select>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -160,16 +168,11 @@ else
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" @bind="_taxCodeForm.Status" @bind:event="onchange">
-                            @foreach (var s in Enum.GetValues<TaxStatus>())
-                            {
-                                <option value="@s">@s</option>
-                            }
-                        </select>
+                        <label class="form-label">Account Id</label>
+                        <input type="text" class="form-control" @bind="_taxCodeForm.AccountIdString" @bind:event="oninput" placeholder="GUID (optional)" />
                     </div>
                     <hr />
-                    <h6>Tax Tiers (for Tiered calculation)</h6>
+                    <h6>Tiers (for Tiered calculation method)</h6>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -185,20 +188,67 @@ else
                                 {
                                     var tier = _taxCodeForm.Tiers[i];
                                     <tr>
-                                        <td><input type="number" step="0.01" class="form-control" @bind="tier.ThresholdFrom" @bind:event="oninput" /></td>
-                                        <td><input type="number" step="0.01" class="form-control" @bind="tier.ThresholdTo" @bind:event="oninput" /></td>
-                                        <td><input type="number" step="0.01" class="form-control" @bind="tier.Rate" @bind:event="oninput" /></td>
-                                        <td><button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveTier(i)">Remove</button></td>
+                                        <td><input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.Tiers[i].ThresholdFrom" @bind:event="oninput" /></td>
+                                        <td><input type="number" step="0.01" class="form-control" @bind="_taxCodeForm.Tiers[i].ThresholdTo" @bind:event="oninput" /></td>
+                                        <td><input type="number" step="0.0001" class="form-control" @bind="_taxCodeForm.Tiers[i].Rate" @bind:event="oninput" /></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveTier(i)" type="button">Remove</button>
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="AddTier">Add Tier</button>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="AddTier">Add Tier</button>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
                     <button class="btn btn-primary" @onclick="SaveTaxCode">@(_editingTaxCode != null ? "Update" : "Create")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Calculate Modal -->
+@if (_showCalculateModal)
+{
+    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Calculate Tax: @_calculatingTaxCode?.Code</h5>
+                    <button type="button" class="btn-close" @onclick="CloseCalculateModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tax Base Amount</label>
+                        <input type="number" step="0.01" class="form-control" @bind="_calculateForm.BaseAmount" @bind:event="oninput" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax Base Currency</label>
+                        <select class="form-select" @bind="_calculateForm.BaseCurrency" @bind:event="onchange">
+                            @foreach (var c in Enum.GetValues<Currency>())
+                            {
+                                <option value="@c">@c</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity (for quantity-based)</label>
+                        <input type="number" step="0.01" class="form-control" @bind="_calculateForm.Quantity" @bind:event="oninput" />
+                    </div>
+                    @if (_calculationResult != null)
+                    {
+                        <div class="alert alert-success">
+                            <h6>Result</h6>
+                            <p><strong>Tax Amount:</strong> @_calculationResult.Amount @_calculationResult.Currency</p>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseCalculateModal">Close</button>
+                    <button class="btn btn-primary" @onclick="CalculateTax">Calculate</button>
                 </div>
             </div>
         </div>
@@ -226,61 +276,17 @@ else
     </div>
 }
 
-<!-- Calculate Modal -->
-@if (_showCalculateModal)
-{
-    <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Calculate Tax - @_calculateTaxCode?.Code</h5>
-                    <button type="button" class="btn-close" @onclick="CloseCalculateModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Base Amount</label>
-                        <input type="number" step="0.01" class="form-control" @bind="_calculateForm.BaseAmount" @bind:event="oninput" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Currency</label>
-                        <select class="form-select" @bind="_calculateForm.Currency" @bind:event="onchange">
-                            @foreach (var c in Enum.GetValues<Currency>())
-                            {
-                                <option value="@c">@c</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Quantity (optional)</label>
-                        <input type="number" step="0.01" class="form-control" @bind="_calculateForm.Quantity" @bind:event="oninput" placeholder="Optional" />
-                    </div>
-                    @if (_calculateResult != null)
-                    {
-                        <div class="alert alert-success">
-                            <strong>Tax Amount:</strong> @_calculateResult.Amount @_calculateResult.Currency
-                        </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseCalculateModal">Close</button>
-                    <button class="btn btn-primary" @onclick="CalculateTax">Calculate</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     private IReadOnlyList<TaxCodeDto>? _taxCodes;
     private bool _showModal;
-    private bool _showDeleteConfirm;
     private bool _showCalculateModal;
+    private bool _showDeleteConfirm;
     private TaxCodeDto? _editingTaxCode;
-    private TaxCodeDto? _calculateTaxCode;
+    private TaxCodeDto? _calculatingTaxCode;
     private Guid _deleteId;
     private TaxCodeForm _taxCodeForm = new();
-    private CalculateForm _calculateForm = new();
-    private MoneyDto? _calculateResult;
+    private CalculateTaxForm _calculateForm = new();
+    private MoneyDto? _calculationResult;
 
     private class TaxCodeForm
     {
@@ -290,37 +296,36 @@ else
         public TaxType TaxType { get; set; } = TaxType.VAT;
         public TaxCalculationMethod CalculationMethod { get; set; } = TaxCalculationMethod.Percentage;
         public TaxApplication Application { get; set; } = TaxApplication.OnNetAmount;
-        public decimal Rate { get; set; } = 0;
-        public decimal FixedAmount { get; set; } = 0;
-        public decimal PerUnitAmount { get; set; } = 0;
-        public Currency Currency { get; set; } = Currency.IRR;
+        public decimal? Rate { get; set; }
+        public decimal? FixedAmount { get; set; }
+        public Currency? FixedAmountCurrency { get; set; }
+        public UnitOfMeasure? PerUnit { get; set; }
         public DateTime EffectiveFrom { get; set; } = DateTime.Today;
         public DateTime? EffectiveTo { get; set; }
+        public TaxStatus Status { get; set; } = TaxStatus.Active;
+        public bool IsDefault { get; set; } = false;
+        public bool IsRecoverable { get; set; } = false;
         public string? AccountIdString { get; set; }
         public Guid? AccountId => Guid.TryParse(AccountIdString, out var g) ? g : null;
-        public bool IsDefault { get; set; } = false;
-        public bool IsRecoverable { get; set; } = true;
-        public TaxStatus Status { get; set; } = TaxStatus.Active;
         public List<TierForm> Tiers { get; set; } = new();
     }
 
     private class TierForm
     {
         public decimal ThresholdFrom { get; set; }
-        public decimal? ThresholdTo { get; set; }
+        public decimal ThresholdTo { get; set; }
         public decimal Rate { get; set; }
     }
 
-    private class CalculateForm
+    private class CalculateTaxForm
     {
-        public decimal BaseAmount { get; set; } = 1000000;
-        public Currency Currency { get; set; } = Currency.IRR;
+        public decimal BaseAmount { get; set; } = 100;
+        public Currency BaseCurrency { get; set; } = Currency.IRR;
         public decimal? Quantity { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _taxCodeForm.EffectiveFrom = DateTime.Today;
         await LoadData();
     }
 
@@ -333,10 +338,7 @@ else
     private void OpenCreateModal()
     {
         _editingTaxCode = null;
-        _taxCodeForm = new TaxCodeForm
-        {
-            EffectiveFrom = DateTime.Today
-        };
+        _taxCodeForm = new TaxCodeForm { EffectiveFrom = DateTime.Today };
         _showModal = true;
     }
 
@@ -352,21 +354,21 @@ else
             CalculationMethod = tc.CalculationMethod,
             Application = tc.Application,
             Rate = tc.Rate,
-            FixedAmount = tc.FixedAmount.Amount,
-            PerUnitAmount = tc.PerUnitAmount?.Amount ?? 0,
-            Currency = tc.FixedAmount.Currency,
+            FixedAmount = tc.FixedAmount?.Amount,
+            FixedAmountCurrency = tc.FixedAmount?.Currency,
+            PerUnit = tc.PerUnit,
             EffectiveFrom = tc.EffectiveFrom,
             EffectiveTo = tc.EffectiveTo,
-            AccountIdString = tc.AccountId?.ToString(),
+            Status = tc.Status,
             IsDefault = tc.IsDefault,
             IsRecoverable = tc.IsRecoverable,
-            Status = tc.Status,
-            Tiers = tc.Tiers.Select(t => new TierForm
+            AccountIdString = tc.AccountId?.ToString(),
+            Tiers = tc.Tiers?.Select(t => new TierForm
             {
                 ThresholdFrom = t.ThresholdFrom,
                 ThresholdTo = t.ThresholdTo,
                 Rate = t.Rate
-            }).ToList()
+            }).ToList() ?? new()
         };
         _showModal = true;
     }
@@ -385,24 +387,23 @@ else
 
     private void RemoveTier(int index)
     {
-        if (index >= 0 && index < _taxCodeForm.Tiers.Count)
-        {
-            _taxCodeForm.Tiers.RemoveAt(index);
-        }
+        _taxCodeForm.Tiers.RemoveAt(index);
     }
 
     private async Task SaveTaxCode()
     {
         try
         {
-            var tiers = _taxCodeForm.Tiers
-                .Where(t => t.ThresholdFrom >= 0)
-                .Select(t => new TaxTierDto
-                {
-                    ThresholdFrom = t.ThresholdFrom,
-                    ThresholdTo = t.ThresholdTo,
-                    Rate = t.Rate
-                }).ToList();
+            var tiers = _taxCodeForm.Tiers.Select(t => new TaxTierDto
+            {
+                ThresholdFrom = t.ThresholdFrom,
+                ThresholdTo = t.ThresholdTo,
+                Rate = t.Rate
+            }).ToList();
+
+            MoneyDto? fixedAmount = _taxCodeForm.FixedAmount.HasValue && _taxCodeForm.FixedAmountCurrency.HasValue
+                ? new MoneyDto { Amount = _taxCodeForm.FixedAmount.Value, Currency = _taxCodeForm.FixedAmountCurrency.Value }
+                : null;
 
             if (_editingTaxCode != null)
             {
@@ -414,14 +415,14 @@ else
                     CalculationMethod = _taxCodeForm.CalculationMethod,
                     Application = _taxCodeForm.Application,
                     Rate = _taxCodeForm.Rate,
-                    FixedAmount = new MoneyDto { Amount = _taxCodeForm.FixedAmount, Currency = _taxCodeForm.Currency },
-                    PerUnitAmount = _taxCodeForm.PerUnitAmount > 0 ? new MoneyDto { Amount = _taxCodeForm.PerUnitAmount, Currency = _taxCodeForm.Currency } : null,
+                    FixedAmount = fixedAmount,
+                    PerUnit = _taxCodeForm.PerUnit,
+                    Status = _taxCodeForm.Status,
                     EffectiveFrom = _taxCodeForm.EffectiveFrom,
                     EffectiveTo = _taxCodeForm.EffectiveTo,
-                    AccountId = _taxCodeForm.AccountId,
                     IsDefault = _taxCodeForm.IsDefault,
                     IsRecoverable = _taxCodeForm.IsRecoverable,
-                    Status = _taxCodeForm.Status,
+                    AccountId = _taxCodeForm.AccountId,
                     Tiers = tiers
                 };
                 await TaxCodeAppService.UpdateAsync(_editingTaxCode.Id, updateDto);
@@ -436,15 +437,14 @@ else
                     TaxType = _taxCodeForm.TaxType,
                     CalculationMethod = _taxCodeForm.CalculationMethod,
                     Application = _taxCodeForm.Application,
-                    Rate = _taxCodeForm.Rate,
-                    FixedAmount = new MoneyDto { Amount = _taxCodeForm.FixedAmount, Currency = _taxCodeForm.Currency },
-                    PerUnitAmount = _taxCodeForm.PerUnitAmount > 0 ? new MoneyDto { Amount = _taxCodeForm.PerUnitAmount, Currency = _taxCodeForm.Currency } : null,
+                    Rate = _taxCodeForm.Rate ?? 0,
+                    FixedAmount = fixedAmount,
+                    PerUnit = _taxCodeForm.PerUnit,
                     EffectiveFrom = _taxCodeForm.EffectiveFrom,
                     EffectiveTo = _taxCodeForm.EffectiveTo,
-                    AccountId = _taxCodeForm.AccountId,
                     IsDefault = _taxCodeForm.IsDefault,
                     IsRecoverable = _taxCodeForm.IsRecoverable,
-                    Status = _taxCodeForm.Status,
+                    AccountId = _taxCodeForm.AccountId,
                     Tiers = tiers
                 };
                 await TaxCodeAppService.CreateAsync(createDto);
@@ -452,7 +452,35 @@ else
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex)
+        catch
+        {
+            // TODO: Show error notification
+        }
+    }
+
+    private void OpenCalculateModal(TaxCodeDto tc)
+    {
+        _calculatingTaxCode = tc;
+        _calculateForm = new CalculateTaxForm { BaseCurrency = Currency.IRR };
+        _calculationResult = null;
+        _showCalculateModal = true;
+    }
+
+    private void CloseCalculateModal()
+    {
+        _showCalculateModal = false;
+        _calculatingTaxCode = null;
+        _calculationResult = null;
+    }
+
+    private async Task CalculateTax()
+    {
+        try
+        {
+            var baseAmount = new MoneyDto { Amount = _calculateForm.BaseAmount, Currency = _calculateForm.BaseCurrency };
+            _calculationResult = await TaxCodeAppService.CalculateTaxAsync(_calculatingTaxCode!.Id, baseAmount, _calculateForm.Quantity);
+        }
+        catch
         {
             // TODO: Show error notification
         }
@@ -478,36 +506,6 @@ else
         await LoadData();
     }
 
-    private void OpenCalculateModal(TaxCodeDto tc)
-    {
-        _calculateTaxCode = tc;
-        _calculateForm = new CalculateForm
-        {
-            BaseAmount = 1000000,
-            Currency = tc.FixedAmount.Currency
-        };
-        _calculateResult = null;
-        _showCalculateModal = true;
-    }
-
-    private void CloseCalculateModal()
-    {
-        _showCalculateModal = false;
-        _calculateTaxCode = null;
-        _calculateResult = null;
-    }
-
-    private async Task CalculateTax()
-    {
-        if (_calculateTaxCode != null)
-        {
-            _calculateResult = await TaxCodeAppService.CalculateTaxAsync(
-                _calculateTaxCode.Id,
-                new MoneyDto { Amount = _calculateForm.BaseAmount, Currency = _calculateForm.Currency },
-                _calculateForm.Quantity);
-        }
-    }
-
     private string GetStatusBadge(TaxStatus status) => status switch
     {
         TaxStatus.Active => "bg-success",
@@ -520,10 +518,9 @@ else
     {
         return tc.CalculationMethod switch
         {
-            TaxCalculationMethod.Percentage => $"{tc.Rate}%",
-            TaxCalculationMethod.FixedAmount => $"{tc.FixedAmount.Amount} {tc.FixedAmount.Currency}",
+            TaxCalculationMethod.Percentage => $"{tc.Rate} %",
+            TaxCalculationMethod.FixedAmount => tc.FixedAmount != null ? $"{tc.FixedAmount.Amount} {tc.FixedAmount.Currency}" : "-",
             TaxCalculationMethod.Tiered => "Tiered",
-            TaxCalculationMethod.Custom => "Custom",
             _ => "-"
         };
     }

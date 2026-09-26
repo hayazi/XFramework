@@ -195,25 +195,25 @@ else
         _showModal = true;
     }
 
-    private void OpenEditModal(WarehouseDto wh)
-    {
-        _editingWarehouse = wh;
-        _warehouseForm = new WarehouseForm
+private void OpenEditModal(WarehouseDto wh)
         {
-            Code = wh.Code,
-            Name = wh.Name,
-            Description = wh.Description,
-            Type = wh.Type,
-            AddressStreet = wh.Address?.Street,
-            AddressCity = wh.Address?.City,
-            AddressState = wh.Address?.State,
-            AddressPostalCode = wh.Address?.PostalCode,
-            AddressCountry = wh.Address?.Country,
-            AllowNegativeStock = wh.AllowNegativeStock,
-            ManagerIdString = wh.ManagerId?.ToString()
-        };
-        _showModal = true;
-    }
+            _editingWarehouse = wh;
+            _warehouseForm = new WarehouseForm
+            {
+                Code = wh.Code,
+                Name = wh.Name,
+                Description = wh.Description,
+                Type = wh.Type,
+                AddressStreet = wh.Address?.Street ?? string.Empty,
+                AddressCity = wh.Address?.City ?? string.Empty,
+                AddressState = wh.Address?.State ?? string.Empty,
+                AddressPostalCode = wh.Address?.PostalCode ?? string.Empty,
+                AddressCountry = wh.Address?.Country ?? string.Empty,
+                AllowNegativeStock = wh.AllowNegativeStock,
+                ManagerIdString = wh.ManagerId?.ToString()
+            };
+            _showModal = true;
+        }
 
     private void CloseModal()
     {

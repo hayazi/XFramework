@@ -103,7 +103,7 @@ else
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Manager Id</label>
-                        <input type="text" class="form-control" @bind="_costCenterForm.ManagerIdString" @bind:event="oninput" placeholder="GUID" />
+                        <input type="text" class="form-control" @bind="_costCenterForm.ManagerId" @bind:event="oninput" placeholder="GUID" />
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -191,8 +191,7 @@ else
         public DimensionStatus Status { get; set; } = DimensionStatus.Active;
         public string? ParentCostCenterIdString { get; set; }
         public Guid? ParentCostCenterId => Guid.TryParse(ParentCostCenterIdString, out var g) ? g : null;
-        public string? ManagerIdString { get; set; }
-        public Guid? ManagerId => Guid.TryParse(ManagerIdString, out var g) ? g : null;
+        public string? ManagerId { get; set; }
         public decimal? BudgetAmount { get; set; }
         public Currency? BudgetCurrency { get; set; }
     }
@@ -226,7 +225,7 @@ else
             Description = cc.Description,
             Status = cc.Status,
             ParentCostCenterIdString = cc.ParentCostCenterId?.ToString(),
-            ManagerIdString = cc.ManagerId?.ToString(),
+            ManagerId = cc.ManagerId,
             BudgetAmount = cc.BudgetAmount,
             BudgetCurrency = cc.BudgetCurrency
         };

@@ -1,9 +1,9 @@
 # Current Project State
 
 ## Snapshot
-- Version label: V57 source baseline (R6 EntityFrameworkCore integration completed).
-- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence.
-- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6).
+- Version label: V58 (R7 Blazor UI / API Endpoints completed).
+- Main engineering focus: ERP domain modules (SharedKernel, Parties, Accounting, Inventory, Dimensions, Numbering, Tax) with full EF Core persistence and Blazor UI + Minimal API endpoints.
+- V48 confirmed by user. V49 was documentation-only. V50 adds trace propagation. V51 adds metrics. V52 adds admin API. V53 adds security & audit. V54 adds ERP domain foundation (R5 Phase 1). V55 adds ERP domain extensions (R5 Phase 2). V56 adds Application layer services (R5 Phase 3). V57 adds EF Core integration (R6). V58 adds Blazor UI and Minimal API endpoints (R7).
 
 ## Known established behavior
 - Outbox messages are claimed in batches with lock/lease ownership.
@@ -37,9 +37,14 @@
   - **DbContext**: XFrameworkDbContext extended with DbSets for Items, Warehouses, KardexEntries, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes
   - **Value Converters**: Dedicated ValueConverter classes (MoneyConverter, QuantityConverter, AddressConverter, PercentageConverter, MoneyNullableConverter) using JSON serialization for readonly record struct value objects
   - **Repository**: EfCoreRepository implements new FirstOrDefaultAsync/SingleOrDefaultAsync methods for Application layer queries
+- **ERP Blazor UI & API Endpoints (R7)**:
+  - **Blazor Pages**: 8 interactive pages (Items, Warehouses, Kardex, CostCenters, Projects, CustomDimensions, NumberSequences, TaxCodes) with full CRUD modals, filtering, and custom actions
+  - **Navigation**: Updated NavMenu with grouped links for Inventory, Dimensions, Numbering, Tax modules
+  - **Minimal API Endpoints**: Program.cs extended with 4 route groups under `/api/inventory`, `/api/dimensions`, `/api/numbering`, `/api/tax` providing full CRUD + custom actions for all new modules
+  - All pages use `@rendermode InteractiveServer`, Bootstrap 5 styling, proper DTO alignment with Application.Contracts
 
 ## Immediate next task
-R7 — Blazor UI / API Endpoints for new modules
+None - R7 complete. Ready for next phase planning.
 
 ## Validation commands
 ```powershell

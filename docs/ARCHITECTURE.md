@@ -341,3 +341,40 @@ Dedicated `ValueConverter` classes in `XFramework.EntityFrameworkCore.ValueConve
 - `SingleOrDefaultAsync(IQueryable<TEntity>, CancellationToken)`
 
 Implemented in `EfCoreRepository` and `EfCoreRoleRepository` for clean Application layer queries without EF Core dependency.
+
+## ERP Blazor UI & API Endpoints (R7)
+
+### Blazor Pages (src/XFramework.Blazor/Components/Pages/)
+All pages use `@rendermode InteractiveServer` with Bootstrap 5 styling and modal-based CRUD forms:
+
+- **Items.razor**: Full CRUD for Items with custom actions (Activate, Deactivate, Discontinue, Block, Unblock), low-stock filter, item type/status filtering
+- **Warehouses.razor**: Full CRUD for Warehouses with Activate/Deactivate, Address via AddressDto, type/status filtering
+- **Kardex.razor**: Filterable list (Item, Warehouse, Date Range) with Create Receipt/Issue/Adjustment modals, running balance display
+- **CostCenters.razor**: Full CRUD with hierarchical parent selection, Activate/Deactivate/Close, budget display
+- **Projects.razor**: Full CRUD with Budget (MoneyDto), Manager/Customer selection, Activate/Deactivate/Close with actual end date
+- **CustomDimensions.razor**: Full CRUD with hierarchy support, JSON Attributes editor, parent dimension selection, activation/deactivation
+- **NumberSequences.razor**: Full CRUD with Format preview, GetNextNumber, Reset, scope/auto-reset configuration, status display
+- **TaxCodes.razor**: Full CRUD with CalculateTax modal, Tiered tax tier editor, Percentage/FixedAmount/Tiered calculation methods, tax type filtering
+
+### Navigation (NavMenu.razor)
+Updated with grouped module navigation:
+- **Inventory**: Items, Warehouses, Kardex
+- **Dimensions**: Cost Centers, Projects, Custom Dimensions
+- **Numbering**: Number Sequences
+- **Tax**: Tax Codes
+
+### Minimal API Endpoints (Program.cs)
+Route groups providing full CRUD + custom actions:
+
+| Route Group | Endpoints |
+|---|---|
+| `/api/inventory` | Items (CRUD, Activate/Deactivate/Discontinue/Block/Unblock, ByCode/ByType/LowStock) |
+|  | Warehouses (CRUD, Activate/Deactivate, ByCode/Active) |
+|  | Kardex (Read-only, ByItem/ByWarehouse/ByDateRange, CreateReceipt/Issue/Adjustment, CurrentStock) |
+| `/api/dimensions` | CostCenters (CRUD, Hierarchy/Active, Activate/Deactivate/Close) |
+|  | Projects (CRUD, Active/ByManager/ByCustomer, Activate/Deactivate/Close) |
+|  | CustomDimensions (CRUD, ByCode/DimensionKey, Activate/Deactivate) |
+| `/api/numbering` | NumberSequences (CRUD, ByCode/Scope, GetNextNumber, PeekNextNumber, Reset, Activate/Deactivate) |
+| `/api/tax` | TaxCodes (CRUD, ByCode/Active/ByType, CalculateTax, GetDefault, Activate/Deactivate) |
+
+All endpoints use the Application layer services (IItemAppService, IWarehouseAppService, etc.) with proper DTO mapping.
